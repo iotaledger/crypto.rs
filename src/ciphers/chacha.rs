@@ -18,12 +18,17 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-pub const XCHACHA20POLY1305_KEY_SIZE: usize = 32;
-pub const XCHACHA20POLY1305_NONCE_SIZE: usize = 24;
-pub const XCHACHA20POLY1305_TAG_SIZE: usize = 16;
-
+#[cfg(feature = "xchacha20poly1305")]
 use chacha20poly1305::aead::{AeadMutInPlace, NewAead};
 
+#[cfg(feature = "xchacha20poly1305")]
+pub const XCHACHA20POLY1305_KEY_SIZE: usize = 32;
+#[cfg(feature = "xchacha20poly1305")]
+pub const XCHACHA20POLY1305_NONCE_SIZE: usize = 24;
+#[cfg(feature = "xchacha20poly1305")]
+pub const XCHACHA20POLY1305_TAG_SIZE: usize = 16;
+
+#[cfg(feature = "xchacha20poly1305")]
 pub fn xchacha20poly1305_encrypt(
     ciphertext: &mut [u8],
     tag: &mut [u8; XCHACHA20POLY1305_TAG_SIZE],
