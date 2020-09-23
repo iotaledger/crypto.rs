@@ -1,0 +1,12 @@
+[package]
+name = "iota-crypto"
+version = "0.1.0"
+license = "MIT"
+authors = ["Gustav Behm <gustav.behm@iota.org>"]
+edition = "2018"
+
+[lib]
+name = "crypto"
+
+[dependencies]
+chacha20poly1305 = "0.6.0"
