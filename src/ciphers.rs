@@ -31,12 +31,24 @@ pub fn xchacha20poly1305_encrypt(
     key: &[u8; XCHACHA20POLY1305_KEY_SIZE],
     nonce: &[u8; XCHACHA20POLY1305_NONCE_SIZE],
     associated_data: &[u8],
-) -> () {
+) -> crate::Result<()> {
+    if plain.len() > ciphertext.len() {
+        return Err(crate::Error::BufferSize {
+            what: "output buffer",
+            needs: plain.len(),
+            has: ciphertext.len()
+        });
+    }
     ciphertext.copy_from_slice(plain);
 
     let k = chacha20poly1305::Key::from_slice(key);
     let n = chacha20poly1305::XNonce::from_slice(nonce);
     let mut c = chacha20poly1305::XChaCha20Poly1305::new(k);
-    let t = c.encrypt_in_place_detached(n, associated_data, ciphertext).expect("TODO: map errors");
-    tag.copy_from_slice(t.as_slice());
+    match c.encrypt_in_place_detached(n, associated_data, ciphertext) {
+        Ok(t) => {
+            tag.copy_from_slice(t.as_slice());
+            Ok(())
+        }
+        Err(_) => Err(crate::Error::CipherError { alg: "XChaCha20Poly1305" })
+    }
 }

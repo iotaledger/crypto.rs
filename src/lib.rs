@@ -19,3 +19,10 @@
 // SOFTWARE.
 
 pub mod ciphers;
+
+pub enum Error {
+    BufferSize { what: &'static str, needs: usize, has: usize },
+    CipherError { alg: &'static str },
+}
+
+pub type Result<T> = std::result::Result<T, Error>;
