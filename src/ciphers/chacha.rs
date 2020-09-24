@@ -19,6 +19,15 @@
 // SOFTWARE.
 
 #[cfg(feature = "xchacha20poly1305")]
+pub enum Error {
+    BufferSize { what: &'static str, needs: usize, has: usize },
+    CipherError { alg: &'static str },
+}
+
+#[cfg(feature = "xchacha20poly1305")]
+pub type Result<T> = std::result::Result<T, Error>;
+
+#[cfg(feature = "xchacha20poly1305")]
 use chacha20poly1305::aead::{AeadMutInPlace, NewAead};
 
 #[cfg(feature = "xchacha20poly1305")]
@@ -38,7 +47,7 @@ pub fn xchacha20poly1305_encrypt(
     associated_data: &[u8],
 ) -> crate::Result<()> {
     if plain.len() > ciphertext.len() {
-        return Err(crate::Error::BufferSize {
+        return Err(Error::BufferSize {
             what: "output buffer",
             needs: plain.len(),
             has: ciphertext.len()
@@ -54,6 +63,6 @@ pub fn xchacha20poly1305_encrypt(
             tag.copy_from_slice(t.as_slice());
             Ok(())
         }
-        Err(_) => Err(crate::Error::CipherError { alg: "XChaCha20Poly1305" })
+        Err(_) => Err(Error::CipherError { alg: "XChaCha20Poly1305" })
     }
 }
