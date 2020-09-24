@@ -19,15 +19,6 @@
 // SOFTWARE.
 
 #[cfg(feature = "xchacha20poly1305")]
-pub enum Error {
-    BufferSize { what: &'static str, needs: usize, has: usize },
-    CipherError { alg: &'static str },
-}
-
-#[cfg(feature = "xchacha20poly1305")]
-pub type Result<T> = std::result::Result<T, Error>;
-
-#[cfg(feature = "xchacha20poly1305")]
 use chacha20poly1305::aead::{AeadMutInPlace, NewAead};
 
 #[cfg(feature = "xchacha20poly1305")]
