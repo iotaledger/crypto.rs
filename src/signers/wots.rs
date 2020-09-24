@@ -14,6 +14,9 @@
 use crate::signers::Error;
 
 #[cfg(feature = "wots")]
+use crate::signers::Error as SignatureError;
+
+#[cfg(feature = "wots")]
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 #[cfg(feature = "wots")]
 use bee_crypto::ternary::{
@@ -97,7 +100,7 @@ impl WotsSeed {
     /// Creates a `Seed` from trits.
     pub fn from_trits(buf: TritBuf<T1B1Buf>) -> Result<Self, Error> {
         if buf.len() != HASH_LENGTH {
-            return Err(Error::InvalidLength(buf.len()));
+            return Err(Error::SignatureError { alg: "wots", error_type: SignatureError::InvalidLength(buf.len()) });
         }
 
         Ok(Self(buf))
@@ -166,7 +169,7 @@ impl WotsPrivateKey {
 
         // This should only be checked if `Sponge` is `Kerl` but we are currently limited by the lack of specialization.
         if entropy[HASH_LENGTH - 1] != Btrit::Zero {
-            return Err(Error::NonNullEntropyLastTrit);
+            return Err(Error::SignatureError { alg: "ed25519", error_type: SignatureError::NonNullEntropyLastTrit });
         }
 
         let mut sponge = Kerl::default();
@@ -174,7 +177,7 @@ impl WotsPrivateKey {
 
         sponge
             .digest_into(entropy, &mut state)
-            .map_err(|_| Error::FailedSpongeOperation)?;
+            .map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::FailedSpongeOperation })?;
 
         Ok(WotsPrivateKey(state))
     }
@@ -193,7 +196,7 @@ impl WotsPrivateKey {
                 sponge
                     .absorb(chunk)
                     .and_then(|_| sponge.squeeze_into(chunk))
-                    .map_err(|_| Error::FailedSpongeOperation)?;
+                    .map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::FailedSpongeOperation })?;
                 sponge.reset();
             }
         }
@@ -202,13 +205,13 @@ impl WotsPrivateKey {
         for (i, chunk) in hashed_private_key.chunks(SIGNATURE_FRAGMENT_LENGTH).enumerate() {
             sponge
                 .digest_into(chunk, &mut digests[i * HASH_LENGTH..(i + 1) * HASH_LENGTH])
-                .map_err(|_| Error::FailedSpongeOperation)?;
+                .map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::FailedSpongeOperation })?;
         }
 
         // Hash the digests together to produce the public key.
         sponge
             .digest_into(&digests, &mut public_key_state)
-            .map_err(|_| Error::FailedSpongeOperation)?;
+            .map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::FailedSpongeOperation })?;
 
         Ok(WotsPublicKey(public_key_state))
     }
@@ -237,7 +240,7 @@ impl WotsPrivateKey {
 //                 sponge
 //                     .absorb(chunk)
 //                     .and_then(|_| sponge.squeeze_into(chunk))
-//                     .map_err(|_| Self::Error::FailedSpongeOperation)?;
+//                     .map_err(|_| Self::Error::SignatureError { alg: "ed25519", error_type: SignatureError::FailedSpongeOperation })?;
 //                 sponge.reset();
 //             }
 //         }
@@ -273,7 +276,7 @@ impl WotsSignature {
     /// Creates a signature from trits.
     pub fn from_trits(state: TritBuf<T1B1Buf>) -> Result<Self, Error> {
         if state.len() % SIGNATURE_FRAGMENT_LENGTH != 0 {
-            return Err(Error::InvalidSignatureLength(state.len()));
+            return Err(Error::SignatureError { alg: "wots", error_type: SignatureError::InvalidSignatureLength(state.len()) });
         }
 
         Ok(Self(state))

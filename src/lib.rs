@@ -21,10 +21,12 @@
 pub mod ciphers;
 pub mod signers;
 
+use signers::Error as SignatureError;
 
 pub enum Error {
     BufferSize { what: &'static str, needs: usize, has: usize },
     CipherError { alg: &'static str },
+    SignatureError { alg: &'static str , error_type: SignatureError}
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

@@ -12,7 +12,9 @@
 //! Binary seed to derive private keys, public keys and signatures from.
 
 #[cfg(feature = "ed25519")]
-use crate::signers::Error;
+use crate::Error;
+#[cfg(feature = "ed25519")]
+use crate::signers::Error as SignatureError;
 #[cfg(feature = "ed25519")]
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 #[cfg(feature = "ed25519")]
@@ -64,7 +66,7 @@ impl Ed25519Seed {
     /// Convert this seed to a byte array.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         Ok(Self(
-            ed25519_dalek::SecretKey::from_bytes(bytes).map_err(|_| Error::ConvertError)?,
+            ed25519_dalek::SecretKey::from_bytes(bytes).map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::ConvertError })?,
         ))
     }
 }
@@ -90,11 +92,11 @@ impl Ed25519PrivateKey {
     /// * `seed`    A seed to deterministically derive a private key from.
     pub fn generate_from_seed(seed: &Ed25519Seed, path: &BIP32Path) -> Result<Self, Error> {
         let subseed = derive_key_from_path(seed.as_bytes(), Curve::Ed25519, path)
-            .map_err(|_| Error::PrivateKeyError)?
+            .map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::PrivateKeyError })?
             .key;
 
         Ok(Self(
-            ed25519_dalek::SecretKey::from_bytes(&subseed).map_err(|_| Error::PrivateKeyError)?,
+            ed25519_dalek::SecretKey::from_bytes(&subseed).map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::PrivateKeyError })?,
         ))
     }
 
@@ -116,7 +118,7 @@ impl Ed25519PrivateKey {
     /// Convert this private key to a byte array.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         Ok(Self(
-            ed25519_dalek::SecretKey::from_bytes(bytes).map_err(|_| Error::ConvertError)?,
+            ed25519_dalek::SecretKey::from_bytes(bytes).map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::ConvertError })?,
         ))
     }
 }
@@ -149,7 +151,7 @@ impl Ed25519PublicKey {
     /// Convert this public key to a byte array.
     pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
         Ok(Self(
-            ed25519_dalek::PublicKey::from_bytes(bytes).map_err(|_| Error::ConvertError)?,
+            ed25519_dalek::PublicKey::from_bytes(bytes).map_err(|_| Error::SignatureError { alg: "ed25519", error_type: SignatureError::ConvertError })?,
         ))
     }
 }
