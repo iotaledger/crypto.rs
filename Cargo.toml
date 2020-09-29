@@ -11,7 +11,23 @@ name = "crypto"
 [features]
 default = []
 
+rsa = [
+  "paste",
+  "rand/getrandom",
+  "rsa_",
+  "sha2",
+  "signature",
+  "zeroize"
+]
+
 xchacha20poly1305 = [ "chacha20poly1305" ]
 
 [dependencies]
 chacha20poly1305 = { version = "0.6.0", optional = true }
+
+paste = { version = "1.0", default-features = false, optional = true }
+rand = { version = "0.7", default-features = false, optional = true }
+rsa_ = { package = "rsa", version = "0.3", default-features = false, optional = true }
+sha2 = { version = "0.9", default-features = false, optional = true }
+signature = { version = "1.2", default-features = false, optional = true }
+zeroize = { version = "1.1", default-features = false, optional =  true }

@@ -18,14 +18,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-pub mod ciphers;
-pub mod signers;
-
-#[derive(Debug)]
-pub enum Error {
-    BufferSize { what: &'static str, needs: usize, has: usize },
-    CipherError { alg: &'static str },
-    SignatureError { alg: &'static str },
-}
-
-pub type Result<T, E = Error> = std::result::Result<T, E>;
+#[cfg(feature = "rsa")]
+pub mod rsa;
