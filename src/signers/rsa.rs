@@ -379,12 +379,6 @@ impl AsRef<[u8]> for RsaSignature {
     }
 }
 
-impl ::signature::Signature for RsaSignature {
-    fn from_bytes(bytes: &[u8]) -> Result<Self, ::signature::Error> {
-        Ok(Self(bytes.into()))
-    }
-}
-
 // =============================================================================
 // Tests
 // =============================================================================
@@ -404,22 +398,34 @@ mod tests {
         let secret: RsaPrivateKey = RsaPrivateKey::random(&mut OsRng, RsaBits::B2048).unwrap();
         let public: RsaPublicKey = secret.public_key();
 
-        let signature: RsaSignature = secret.sign_pkcs1_sha256(b"hello world").unwrap();
-        public.verify_pkcs1_sha256(b"hello world", signature).unwrap();
+        let signature: RsaSignature = secret.sign_pkcs1_sha256(b"pkcs1 sha256").unwrap();
+        public
+            .verify_pkcs1_sha256(b"pkcs1 sha256", signature)
+            .unwrap();
 
-        let signature: RsaSignature = secret.sign_pkcs1_sha384(b"hello world").unwrap();
-        public.verify_pkcs1_sha384(b"hello world", signature).unwrap();
+        let signature: RsaSignature = secret.sign_pkcs1_sha384(b"pkcs1 sha384").unwrap();
+        public
+            .verify_pkcs1_sha384(b"pkcs1 sha384", signature)
+            .unwrap();
 
-        let signature: RsaSignature = secret.sign_pkcs1_sha512(b"hello world").unwrap();
-        public.verify_pkcs1_sha512(b"hello world", signature).unwrap();
+        let signature: RsaSignature = secret.sign_pkcs1_sha512(b"pkcs1 sha512").unwrap();
+        public
+            .verify_pkcs1_sha512(b"pkcs1 sha512", signature)
+            .unwrap();
 
-        let signature: RsaSignature = secret.sign_pss_sha256(OsRng, b"hello world").unwrap();
-        public.verify_pss_sha256(OsRng, b"hello world", signature).unwrap();
+        let signature: RsaSignature = secret.sign_pss_sha256(OsRng, b"pss sha256").unwrap();
+        public
+            .verify_pss_sha256(OsRng, b"pss sha256", signature)
+            .unwrap();
 
-        let signature: RsaSignature = secret.sign_pss_sha384(OsRng, b"hello world").unwrap();
-        public.verify_pss_sha384(OsRng, b"hello world", signature).unwrap();
+        let signature: RsaSignature = secret.sign_pss_sha384(OsRng, b"pss sha384").unwrap();
+        public
+            .verify_pss_sha384(OsRng, b"pss sha384", signature)
+            .unwrap();
 
-        let signature: RsaSignature = secret.sign_pss_sha512(OsRng, b"hello world").unwrap();
-        public.verify_pss_sha512(OsRng, b"hello world", signature).unwrap();
+        let signature: RsaSignature = secret.sign_pss_sha512(OsRng, b"pss sha512").unwrap();
+        public
+            .verify_pss_sha512(OsRng, b"pss sha512", signature)
+            .unwrap();
     }
 }
