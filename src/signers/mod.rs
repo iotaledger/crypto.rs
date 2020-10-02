@@ -18,22 +18,5 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[derive(Debug)]
-pub enum Error {
-    BufferSize {
-        what: &'static str,
-        needs: usize,
-        has: usize,
-    },
-    CipherError {
-        alg: &'static str,
-    },
-    SignatureError {
-        alg: &'static str,
-    },
-    RngError {
-        what: &'static str,
-    },
-}
-
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+#[cfg(feature = "hmac")]
+pub mod hmac;

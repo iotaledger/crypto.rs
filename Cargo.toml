@@ -14,6 +14,12 @@ default = ["std"]
 std = ["alloc"]
 alloc = []
 
+hmac = [
+  "hmac-crate",
+  "sha2",
+  "zeroize",
+]
+
 key-box = [
   "alloc",
   "zeroize",
@@ -29,5 +35,7 @@ xchacha20poly1305 = [
 
 [dependencies]
 chacha20poly1305 = { version = "0.6.0", default-features = false, optional = true }
+hmac-crate = { version = "0.9", default-features = false, optional = true, package = "hmac" }
 rand-crate = { version = "0.7", default-features = false, optional = true, package = "rand" }
+sha2 = { version = "0.9", default-features = false, optional = true }
 zeroize = { version = "1.1", default-features = false, optional =  true }
