@@ -25,6 +25,9 @@ extern crate alloc;
 #[cfg(feature = "std")]
 extern crate std;
 
+#[macro_use]
+mod macros;
+
 pub mod ciphers;
 pub mod error;
 

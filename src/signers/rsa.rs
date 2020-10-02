@@ -292,6 +292,8 @@ impl PrivateKey {
     }
 }
 
+impl_secret_debug!(PrivateKey);
+
 impl Zeroize for PrivateKey {
     fn zeroize(&mut self) {
         self.0.zeroize();
