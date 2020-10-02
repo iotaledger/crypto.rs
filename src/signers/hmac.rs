@@ -48,8 +48,6 @@ where
     K: AsRef<[u8]>,
     M: AsRef<[u8]>,
 {
-    let out: &mut [u8] = out.as_mut();
-
     if out.len() != D::OutputSize::to_usize() {
         return Err(Error::BufferSize {
             what: "output buffer",
