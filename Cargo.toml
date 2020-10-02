@@ -29,6 +29,13 @@ rand = [
   "rand-crate/getrandom"
 ]
 
+rsa = [
+  "alloc",
+  "rsa-crate",
+  "sha2",
+  "zeroize"
+]
+
 xchacha20poly1305 = [
   "chacha20poly1305/xchacha20poly1305"
 ]
@@ -37,5 +44,6 @@ xchacha20poly1305 = [
 chacha20poly1305 = { version = "0.6.0", default-features = false, optional = true }
 hmac-crate = { version = "0.9", default-features = false, optional = true, package = "hmac" }
 rand-crate = { version = "0.7", default-features = false, optional = true, package = "rand" }
+rsa-crate = { version = "0.3", default-features = false, optional = true, package = "rsa" }
 sha2 = { version = "0.9", default-features = false, optional = true }
 zeroize = { version = "1.1", default-features = false, optional =  true }

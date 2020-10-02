@@ -20,3 +20,6 @@
 
 #[cfg(feature = "hmac")]
 pub mod hmac;
+
+#[cfg(feature = "rsa")]
+pub mod rsa;
