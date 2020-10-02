@@ -18,8 +18,10 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-pub mod ciphers;
-pub mod error;
+#[derive(Debug)]
+pub enum Error {
+    BufferSize { what: &'static str, needs: usize, has: usize },
+    CipherError { alg: &'static str },
+}
 
-pub use error::Error;
-pub use error::Result;
+pub type Result<T> = core::result::Result<T, Error>;
