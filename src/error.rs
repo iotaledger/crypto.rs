@@ -18,6 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+pub type Result<T, E = Error> = core::result::Result<T, E>;
+
 #[derive(Debug)]
 pub enum Error {
     BufferSize {
@@ -36,4 +38,18 @@ pub enum Error {
     },
 }
 
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+impl core::fmt::Display for Error {
+    fn fmt(&self, f: &mut core::fmt::Formatter) -> core::fmt::Result {
+        match self {
+            Self::BufferSize { what, needs, has } => {
+                write!(f, "Invalid {} Buffer: {}/{}", what, has, needs)
+            }
+            Self::CipherError { alg } => write!(f, "Cipher Error: {}", alg),
+            Self::SignatureError { alg } => write!(f, "Signature Error: {}", alg),
+            Self::RngError { what } => write!(f, "Rng Error: {}", what),
+        }
+    }
+}
+
+#[cfg(feature = "std")]
+impl std::error::Error for Error {}
