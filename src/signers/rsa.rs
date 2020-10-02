@@ -19,36 +19,24 @@
 // SOFTWARE.
 
 use alloc::vec::Vec;
+use rsa_crate::BigUint;
+use rsa_crate::Hash;
 use rsa_crate::PaddingScheme;
 use rsa_crate::PublicKey as _;
 use rsa_crate::PublicKeyParts as _;
-use rsa_crate::RSAPublicKey;
 use rsa_crate::RSAPrivateKey;
-use rsa_crate::BigUint;
-use rsa_crate::Hash;
+use rsa_crate::RSAPublicKey;
 use sha2::Digest as _;
 use zeroize::Zeroize;
 
 use crate::error::Error;
 use crate::error::Result;
+#[cfg(feature = "rand")]
+use crate::rand::CryptoRng;
+#[cfg(feature = "rand")]
+use crate::rand::RngCore;
 
 const RSA_ERR: Error = Error::SignatureError { alg: "rsa" };
-
-// =============================================================================
-// RSA Padding
-// =============================================================================
-
-fn pad_pkcs1_sha256() -> PaddingScheme {
-    PaddingScheme::new_pkcs1v15_sign(Some(Hash::SHA2_256))
-}
-
-fn pad_pkcs1_sha384() -> PaddingScheme {
-    PaddingScheme::new_pkcs1v15_sign(Some(Hash::SHA2_384))
-}
-
-fn pad_pkcs1_sha512() -> PaddingScheme {
-    PaddingScheme::new_pkcs1v15_sign(Some(Hash::SHA2_512))
-}
 
 // =============================================================================
 // RSA Public Key
@@ -70,12 +58,16 @@ impl PublicKey {
 
     /// Creates a `PublicKey` by parsing a PKCS#1-encoded document.
     pub fn from_pkcs1(pkcs1: impl AsRef<[u8]>) -> Result<Self> {
-        RSAPublicKey::from_pkcs1(pkcs1.as_ref()).map_err(|_| RSA_ERR).map(Self)
+        RSAPublicKey::from_pkcs1(pkcs1.as_ref())
+            .map_err(|_| RSA_ERR)
+            .map(Self)
     }
 
     /// Creates a `PublicKey` by parsing a PKCS#8-encoded document.
     pub fn from_pkcs8(pkcs8: impl AsRef<[u8]>) -> Result<Self> {
-        RSAPublicKey::from_pkcs8(pkcs8.as_ref()).map_err(|_| RSA_ERR).map(Self)
+        RSAPublicKey::from_pkcs8(pkcs8.as_ref())
+            .map_err(|_| RSA_ERR)
+            .map(Self)
     }
 
     /// Returns the modulus of the `PublicKey`.
@@ -94,7 +86,11 @@ impl PublicKey {
         message: impl AsRef<[u8]>,
         signature: impl AsRef<[u8]>,
     ) -> Result<()> {
-        self.verify(sha2::Sha256::digest(message.as_ref()), signature, pad_pkcs1_sha256())
+        self.verify(
+            sha2::Sha256::digest(message.as_ref()),
+            signature,
+            pad_pkcs1_sha256(),
+        )
     }
 
     /// Verifies an RSA signature using RSASSA-PKCS#1.5 padding and SHA-384.
@@ -103,7 +99,11 @@ impl PublicKey {
         message: impl AsRef<[u8]>,
         signature: impl AsRef<[u8]>,
     ) -> Result<()> {
-        self.verify(sha2::Sha384::digest(message.as_ref()), signature, pad_pkcs1_sha384())
+        self.verify(
+            sha2::Sha384::digest(message.as_ref()),
+            signature,
+            pad_pkcs1_sha384(),
+        )
     }
 
     /// Verifies an RSA signature using RSASSA-PKCS#1.5 padding and SHA-512.
@@ -112,7 +112,56 @@ impl PublicKey {
         message: impl AsRef<[u8]>,
         signature: impl AsRef<[u8]>,
     ) -> Result<()> {
-        self.verify(sha2::Sha512::digest(message.as_ref()), signature, pad_pkcs1_sha512())
+        self.verify(
+            sha2::Sha512::digest(message.as_ref()),
+            signature,
+            pad_pkcs1_sha512(),
+        )
+    }
+
+    /// Verifies an RSA signature using RSASSA-PSS padding and SHA-256.
+    #[cfg(feature = "rand")]
+    pub fn verify_pss_sha256<R, M, S>(&self, rng: R, message: M, signature: S) -> Result<()>
+    where
+        R: RngCore + CryptoRng + 'static,
+        M: AsRef<[u8]>,
+        S: AsRef<[u8]>,
+    {
+        self.verify(
+            sha2::Sha256::digest(message.as_ref()),
+            signature,
+            pad_pss_sha256(rng),
+        )
+    }
+
+    /// Verifies an RSA signature using RSASSA-PSS padding and SHA-384.
+    #[cfg(feature = "rand")]
+    pub fn verify_pss_sha384<R, M, S>(&self, rng: R, message: M, signature: S) -> Result<()>
+    where
+        R: RngCore + CryptoRng + 'static,
+        M: AsRef<[u8]>,
+        S: AsRef<[u8]>,
+    {
+        self.verify(
+            sha2::Sha384::digest(message.as_ref()),
+            signature,
+            pad_pss_sha384(rng),
+        )
+    }
+
+    /// Verifies an RSA signature using RSASSA-PSS padding and SHA-512.
+    #[cfg(feature = "rand")]
+    pub fn verify_pss_sha512<R, M, S>(&self, rng: R, message: M, signature: S) -> Result<()>
+    where
+        R: RngCore + CryptoRng + 'static,
+        M: AsRef<[u8]>,
+        S: AsRef<[u8]>,
+    {
+        self.verify(
+            sha2::Sha512::digest(message.as_ref()),
+            signature,
+            pad_pss_sha512(rng),
+        )
     }
 
     /// Verifies an RSA signature using the specified padding algorithm.
@@ -136,6 +185,17 @@ impl PublicKey {
 pub struct PrivateKey(RSAPrivateKey);
 
 impl PrivateKey {
+    /// Creates a new random `PrivateKey`.
+    #[cfg(feature = "rand")]
+    pub fn random<R>(rng: &mut R, bits: RsaBits) -> Result<Self>
+    where
+        R: RngCore + CryptoRng,
+    {
+        RSAPrivateKey::new(rng, bits.bits())
+            .map_err(|_| RSA_ERR)
+            .map(Self)
+    }
+
     /// Creates a new `PrivateKey` from primitive components.
     pub fn new(n: BigUint, e: BigUint, d: BigUint, primes: Vec<BigUint>) -> Result<Self> {
         // Construct the RSA key
@@ -148,7 +208,7 @@ impl PrivateKey {
         Ok(Self(key))
     }
 
-    /// Creates an a` by parsing a PKCS#1/PKCS#8-encoded document.
+    /// Creates a `PrivateKey` by parsing a PKCS#1/PKCS#8-encoded document.
     pub fn from_slice(slice: impl AsRef<[u8]>) -> Result<Self> {
         Self::from_pkcs8(&slice).or_else(|_| Self::from_pkcs1(slice))
     }
@@ -197,6 +257,36 @@ impl PrivateKey {
         self.sign(sha2::Sha512::digest(message.as_ref()), pad_pkcs1_sha512())
     }
 
+    /// Signs the given message using RSASSA-PSS padding and SHA-256.
+    #[cfg(feature = "rand")]
+    pub fn sign_pss_sha256<R, M>(&self, rng: R, message: M) -> Result<Vec<u8>>
+    where
+        R: RngCore + CryptoRng + 'static,
+        M: AsRef<[u8]>,
+    {
+        self.sign(sha2::Sha256::digest(message.as_ref()), pad_pss_sha256(rng))
+    }
+
+    /// Signs the given message using RSASSA-PSS padding and SHA-384.
+    #[cfg(feature = "rand")]
+    pub fn sign_pss_sha384<R, M>(&self, rng: R, message: M) -> Result<Vec<u8>>
+    where
+        R: RngCore + CryptoRng + 'static,
+        M: AsRef<[u8]>,
+    {
+        self.sign(sha2::Sha384::digest(message.as_ref()), pad_pss_sha384(rng))
+    }
+
+    /// Signs the given message using RSASSA-PSS padding and SHA-512.
+    #[cfg(feature = "rand")]
+    pub fn sign_pss_sha512<R, M>(&self, rng: R, message: M) -> Result<Vec<u8>>
+    where
+        R: RngCore + CryptoRng + 'static,
+        M: AsRef<[u8]>,
+    {
+        self.sign(sha2::Sha512::digest(message.as_ref()), pad_pss_sha512(rng))
+    }
+
     fn sign(&self, message: impl AsRef<[u8]>, padding: PaddingScheme) -> Result<Vec<u8>> {
         self.0.sign(padding, message.as_ref()).map_err(|_| RSA_ERR)
     }
@@ -212,4 +302,65 @@ impl Drop for PrivateKey {
     fn drop(&mut self) {
         self.zeroize();
     }
+}
+
+// =============================================================================
+// RSA Bits
+// =============================================================================
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum RsaBits {
+    B2048,
+    B3072,
+    B4096,
+}
+
+impl RsaBits {
+    pub const fn bits(self) -> usize {
+        match self {
+            Self::B2048 => 2048,
+            Self::B3072 => 3072,
+            Self::B4096 => 4096,
+        }
+    }
+}
+
+// =============================================================================
+// RSA Padding
+// =============================================================================
+
+fn pad_pkcs1_sha256() -> PaddingScheme {
+    PaddingScheme::new_pkcs1v15_sign(Some(Hash::SHA2_256))
+}
+
+fn pad_pkcs1_sha384() -> PaddingScheme {
+    PaddingScheme::new_pkcs1v15_sign(Some(Hash::SHA2_384))
+}
+
+fn pad_pkcs1_sha512() -> PaddingScheme {
+    PaddingScheme::new_pkcs1v15_sign(Some(Hash::SHA2_512))
+}
+
+#[cfg(feature = "rand")]
+fn pad_pss_sha256<R>(rng: R) -> PaddingScheme
+where
+    R: RngCore + CryptoRng + 'static,
+{
+    PaddingScheme::new_pss::<sha2::Sha256, R>(rng)
+}
+
+#[cfg(feature = "rand")]
+fn pad_pss_sha384<R>(rng: R) -> PaddingScheme
+where
+    R: RngCore + CryptoRng + 'static,
+{
+    PaddingScheme::new_pss::<sha2::Sha384, R>(rng)
+}
+
+#[cfg(feature = "rand")]
+fn pad_pss_sha512<R>(rng: R) -> PaddingScheme
+where
+    R: RngCore + CryptoRng + 'static,
+{
+    PaddingScheme::new_pss::<sha2::Sha512, R>(rng)
 }

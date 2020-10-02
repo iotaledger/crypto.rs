@@ -21,5 +21,5 @@
 #[cfg(feature = "hmac")]
 pub mod hmac;
 
-#[cfg(feature = "rsa")]
+#[cfg(feature = "rsa-core")]
 pub mod rsa;

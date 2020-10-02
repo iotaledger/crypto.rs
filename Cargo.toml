@@ -29,7 +29,9 @@ rand = [
   "rand-crate/getrandom"
 ]
 
-rsa = [
+rsa = ["rsa-core", "rand"]
+
+rsa-core = [
   "alloc",
   "rsa-crate",
   "sha2",
