@@ -14,6 +14,12 @@ default = ["std"]
 std = ["alloc"]
 alloc = []
 
+ecdsa = [
+  "k256-core",
+  "p256-core",
+  "zeroize",
+]
+
 hmac = [
   "hmac-crate",
   "sha2",
@@ -23,6 +29,20 @@ hmac = [
 key-box = [
   "alloc",
   "zeroize",
+]
+
+k256-core = [
+  "k256/ecdsa-core",
+  "k256/ecdsa",
+  "k256/sha256",
+  "k256/zeroize"
+]
+
+p256-core = [
+  "p256/ecdsa-core",
+  "p256/ecdsa",
+  "p256/sha256",
+  "p256/zeroize"
 ]
 
 rand = [
@@ -45,6 +65,8 @@ xchacha20poly1305 = [
 [dependencies]
 chacha20poly1305 = { version = "0.6.0", default-features = false, optional = true }
 hmac-crate = { version = "0.9", default-features = false, optional = true, package = "hmac" }
+k256 = { version = "0.5", default-features = false, optional = true }
+p256 = { version = "0.5", default-features = false, optional = true }
 rand-crate = { version = "0.7", default-features = false, optional = true, package = "rand" }
 rsa-crate = { version = "0.3", default-features = false, optional = true, package = "rsa" }
 sha2 = { version = "0.9", default-features = false, optional = true }
