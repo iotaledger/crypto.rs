@@ -30,6 +30,8 @@ use hmac_crate::NewMac as _;
 use crate::error::Error;
 use crate::error::Result;
 
+const HMAC_ERR: Error = Error::SignatureError { alg: "hmac" };
+
 // TODO: Move to a digest module
 // - HashAlgorithm::Sha256::output_size();
 pub const SHA256_OUTPUT_SIZE: usize = 256 / 8; // 32
@@ -74,8 +76,7 @@ where
     let mut mac: Hmac<D> = new_mac(key)?;
 
     mac.update(message.as_ref());
-    mac.verify(signature.as_ref())
-        .map_err(|_| Error::SignatureError { alg: "hmac" })?;
+    mac.verify(signature.as_ref()).map_err(|_| HMAC_ERR)?;
 
     Ok(())
 }
@@ -128,5 +129,5 @@ where
     D: Clone + Default + BlockInput + FixedOutput + Reset + Update,
     K: AsRef<[u8]>,
 {
-    Hmac::new_varkey(key.as_ref()).map_err(|_| Error::SignatureError { alg: "hmac" })
+    Hmac::new_varkey(key.as_ref()).map_err(|_| HMAC_ERR)
 }
