@@ -41,7 +41,7 @@ pub fn xchacha20poly1305_encrypt(
         return Err(crate::Error::BufferSize {
             what: "output buffer",
             needs: plain.len(),
-            has: ciphertext.len()
+            has: ciphertext.len(),
         });
     }
     ciphertext.copy_from_slice(plain);
@@ -54,6 +54,8 @@ pub fn xchacha20poly1305_encrypt(
             tag.copy_from_slice(t.as_slice());
             Ok(())
         }
-        Err(_) => Err(crate::Error::CipherError { alg: "XChaCha20Poly1305" })
+        Err(_) => Err(crate::Error::CipherError {
+            alg: "XChaCha20Poly1305",
+        }),
     }
 }

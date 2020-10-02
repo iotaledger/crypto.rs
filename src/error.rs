@@ -20,8 +20,14 @@
 
 #[derive(Debug)]
 pub enum Error {
-    BufferSize { what: &'static str, needs: usize, has: usize },
-    CipherError { alg: &'static str },
+    BufferSize {
+        what: &'static str,
+        needs: usize,
+        has: usize,
+    },
+    CipherError {
+        alg: &'static str,
+    },
 }
 
 pub type Result<T, E = Error> = core::result::Result<T, E>;
