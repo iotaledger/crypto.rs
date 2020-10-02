@@ -27,6 +27,8 @@ extern crate std;
 
 pub mod ciphers;
 pub mod error;
+#[cfg(feature = "key-box")]
+pub mod key_box;
 
 pub use error::Error;
 pub use error::Result;
