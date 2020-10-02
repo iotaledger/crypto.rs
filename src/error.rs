@@ -24,4 +24,4 @@ pub enum Error {
     CipherError { alg: &'static str },
 }
 
-pub type Result<T> = core::result::Result<T, Error>;
+pub type Result<T, E = Error> = core::result::Result<T, E>;
