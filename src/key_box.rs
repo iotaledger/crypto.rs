@@ -75,6 +75,24 @@ pub struct KeyBox<T>(Box<[u8]>, PhantomData<T>)
 where
     T: KeyType;
 
+impl<T> KeyBox<T>
+where
+    T: KeyType,
+{
+    #[cfg(feature = "rand")]
+    pub fn random<R>(size: usize, rng: &mut R) -> crate::Result<Self>
+    where
+        R: crate::rand::RngCore + crate::rand::CryptoRng,
+    {
+        let mut data: Vec<u8> = alloc::vec![0; size];
+
+        rng.try_fill_bytes(&mut data)
+            .map_err(|_| crate::Error::RngError { what: "fill" })?;
+
+        Ok(data.into())
+    }
+}
+
 impl<T> Zeroize for KeyBox<T>
 where
     T: KeyType,

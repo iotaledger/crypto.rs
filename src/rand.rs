@@ -18,19 +18,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[derive(Debug)]
-pub enum Error {
-    BufferSize {
-        what: &'static str,
-        needs: usize,
-        has: usize,
-    },
-    CipherError {
-        alg: &'static str,
-    },
-    RngError {
-        what: &'static str,
-    },
-}
+pub use rand_crate::CryptoRng;
+pub use rand_crate::Rng;
+pub use rand_crate::RngCore;
 
-pub type Result<T, E = Error> = core::result::Result<T, E>;
+pub use rand_crate::rngs::OsRng;
