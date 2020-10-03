@@ -19,7 +19,7 @@
 // SOFTWARE.
 
 use alloc::vec::Vec;
-use rsa_crate::BigUint;
+pub use rsa_crate::BigUint;
 use rsa_crate::Hash;
 use rsa_crate::PaddingScheme;
 use rsa_crate::PublicKey as _;
