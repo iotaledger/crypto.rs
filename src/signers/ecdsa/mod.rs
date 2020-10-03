@@ -48,7 +48,7 @@ pub enum Curve {
 // ECDSA Public Key
 // =============================================================================
 
-#[derive(Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum PublicKey {
     P256(p256::PublicKey),
     P384,

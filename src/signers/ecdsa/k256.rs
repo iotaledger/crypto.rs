@@ -48,7 +48,7 @@ pub type Coord = (Point, Point);
 // ECDSA (K-256) Public Key
 // =========================================================================
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PublicKey(VerifyKey);
 
 impl PublicKey {

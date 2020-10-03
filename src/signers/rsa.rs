@@ -42,7 +42,7 @@ const RSA_ERR: Error = Error::SignatureError { alg: "rsa" };
 // RSA Public Key
 // =============================================================================
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct PublicKey(RSAPublicKey);
 
 impl PublicKey {
