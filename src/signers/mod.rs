@@ -24,5 +24,8 @@ pub mod hmac;
 #[cfg(feature = "ecdsa")]
 pub mod ecdsa;
 
+#[cfg(feature = "eddsa")]
+pub mod eddsa;
+
 #[cfg(feature = "rsa-core")]
 pub mod rsa;
