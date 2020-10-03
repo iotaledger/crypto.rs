@@ -24,6 +24,8 @@ use p256::ecdsa::signature::Verifier as _;
 use p256::ecdsa::Signature;
 use p256::ecdsa::SigningKey;
 use p256::ecdsa::VerifyKey;
+use p256::EncodedPoint;
+use p256::FieldBytes;
 use zeroize::Zeroize;
 
 use crate::error::Error;
@@ -51,6 +53,14 @@ pub type Coord = (Point, Point);
 pub struct PublicKey(VerifyKey);
 
 impl PublicKey {
+    pub fn from_coord(x: impl AsRef<[u8]>, y: impl AsRef<[u8]>) -> Result<Self> {
+        let x: &FieldBytes = FieldBytes::from_slice(x.as_ref());
+        let y: &FieldBytes = FieldBytes::from_slice(y.as_ref());
+        let p: EncodedPoint = EncodedPoint::from_affine_coordinates(x, y, false);
+
+        Self::from_primitive(&p)
+    }
+
     /// Creates a `PublicKey` from big-endian bytes.
     pub fn from_slice(bytes: impl AsRef<[u8]>) -> Result<Self> {
         VerifyKey::new(bytes.as_ref())

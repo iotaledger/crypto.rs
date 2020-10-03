@@ -57,6 +57,15 @@ pub enum PublicKey {
 }
 
 impl PublicKey {
+    pub fn from_coord(curve: Curve, x: impl AsRef<[u8]>, y: impl AsRef<[u8]>) -> Result<Self> {
+        match curve {
+            Curve::P256 => p256::PublicKey::from_coord(x, y).map(Self::P256),
+            Curve::P384 => todo!("PublicKey::from_coord(P384)"),
+            Curve::P521 => todo!("PublicKey::from_coord(P521)"),
+            Curve::K256 => k256::PublicKey::from_coord(x, y).map(Self::K256),
+        }
+    }
+
     pub fn from_slice(curve: Curve, slice: impl AsRef<[u8]>) -> Result<Self> {
         match curve {
             Curve::P256 => p256::PublicKey::from_slice(slice).map(Self::P256),
