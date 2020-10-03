@@ -23,6 +23,11 @@ pub use ::sha2;
 
 use crate::error::Result;
 
+pub type SHA2_224 = sha2::Sha224;
+pub type SHA2_256 = sha2::Sha256;
+pub type SHA2_384 = sha2::Sha384;
+pub type SHA2_512 = sha2::Sha512;
+
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub enum HashAlgorithm {
     SHA2_224,
@@ -38,10 +43,10 @@ impl HashAlgorithm {
         f: impl FnOnce(&[u8]) -> Result<()>,
     ) -> Result<()> {
         match self {
-            Self::SHA2_224 => f(&sha2::Sha224::digest(message.as_ref())),
-            Self::SHA2_256 => f(&sha2::Sha256::digest(message.as_ref())),
-            Self::SHA2_384 => f(&sha2::Sha384::digest(message.as_ref())),
-            Self::SHA2_512 => f(&sha2::Sha512::digest(message.as_ref())),
+            Self::SHA2_224 => f(&SHA2_224::digest(message.as_ref())),
+            Self::SHA2_256 => f(&SHA2_256::digest(message.as_ref())),
+            Self::SHA2_384 => f(&SHA2_384::digest(message.as_ref())),
+            Self::SHA2_512 => f(&SHA2_512::digest(message.as_ref())),
         }
     }
 }
