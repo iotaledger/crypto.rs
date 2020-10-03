@@ -29,6 +29,10 @@ extern crate std;
 mod macros;
 
 pub mod ciphers;
+
+#[cfg(feature = "digest")]
+pub mod digest;
+
 pub mod error;
 
 #[cfg(feature = "key-box")]

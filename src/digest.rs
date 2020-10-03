@@ -18,13 +18,30 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[macro_export]
-macro_rules! impl_secret_debug {
-    ($ty:ty) => {
-        impl ::core::fmt::Debug for $ty {
-            fn fmt(&self, f: &mut ::core::fmt::Formatter) -> ::core::fmt::Result {
-                f.write_fmt(format_args!("{}(*Secret*)", stringify!($ty)))
-            }
-        }
-    };
+pub use ::digest_crate::*;
+pub use ::sha2;
+
+use crate::error::Result;
+
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub enum HashAlgorithm {
+  SHA2_224,
+  SHA2_256,
+  SHA2_384,
+  SHA2_512,
+}
+
+impl HashAlgorithm {
+  pub fn digest_fn(
+    self,
+    message: impl AsRef<[u8]>,
+    f: impl FnOnce(&[u8]) -> Result<()>,
+  ) -> Result<()> {
+    match self {
+      Self::SHA2_224 => f(&sha2::Sha224::digest(message.as_ref())),
+      Self::SHA2_256 => f(&sha2::Sha256::digest(message.as_ref())),
+      Self::SHA2_384 => f(&sha2::Sha384::digest(message.as_ref())),
+      Self::SHA2_512 => f(&sha2::Sha512::digest(message.as_ref())),
+    }
+  }
 }
