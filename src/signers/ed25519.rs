@@ -11,7 +11,7 @@
 
 //! Binary seed to derive private keys, public keys and signatures from.
 
-use crate::signers::Error;
+use crate::Error;
 
 use ed25519_dalek::{ExpandedSecretKey, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH};
 use serde::{Deserialize, Serialize};

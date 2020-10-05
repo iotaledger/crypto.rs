@@ -35,11 +35,7 @@ pub fn xchacha20poly1305_encrypt(
     associated_data: &[u8],
 ) -> crate::Result<()> {
     if plain.len() > ciphertext.len() {
-        return Err(Error::BufferSize {
-            what: "output buffer",
-            needs: plain.len(),
-            has: ciphertext.len()
-        });
+        return Err(Error::BufferSize(plain.len(),ciphertext.len()));
     }
     ciphertext.copy_from_slice(plain);
 
@@ -51,6 +47,6 @@ pub fn xchacha20poly1305_encrypt(
             tag.copy_from_slice(t.as_slice());
             Ok(())
         }
-        Err(_) => Err(Error::CipherError { alg: "XChaCha20Poly1305" })
+        Err(_) => Err(Error::CipherError)
     }
 }

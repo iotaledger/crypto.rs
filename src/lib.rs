@@ -24,12 +24,36 @@ extern crate bee_common_derive;
 pub mod ciphers;
 pub mod signers;
 
-use signers::Error as SignatureError;
+use core::fmt;
 
+// pub enum Error {
+//     BufferSize { what: &'static str, needs: usize, has: usize },
+//     CipherError { alg: &'static str },
+//     SignatureError { alg: &'static str , error_type: SignatureError}
+// }
+
+/// Error type of crypto.rs
+#[derive(Debug)]
 pub enum Error {
-    BufferSize { what: &'static str, needs: usize, has: usize },
-    CipherError { alg: &'static str },
-    SignatureError { alg: &'static str , error_type: SignatureError}
+    /// Buffer Error
+    BufferSize(usize, usize),
+    ///  Cipher Error
+    CipherError,
+    /// Convertion Error
+    ConvertError,
+    /// Private Key Error
+    PrivateKeyError,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::BufferSize(needs, has) => write!(f, "Buffer output needs {:?}, but it only has {:?}.", needs, has),
+            Error::CipherError => write!(f, "There's a  error when handling XChaCha20Poly1305."),
+            Error::ConvertError => write!(f, "Failed to convert bytes to target primitives."),
+            Error::PrivateKeyError => write!(f, "Failed to generate private key."),
+        }
+    }
 }
 
 pub type Result<T> = core::result::Result<T, Error>;
