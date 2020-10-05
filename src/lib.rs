@@ -18,6 +18,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+#[macro_use]
+extern crate bee_common_derive;
+
 pub mod ciphers;
 pub mod signers;
 
