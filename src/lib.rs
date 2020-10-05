@@ -17,6 +17,7 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+#![no_std]
 
 #[macro_use]
 extern crate bee_common_derive;
@@ -25,12 +26,6 @@ pub mod ciphers;
 pub mod signers;
 
 use core::fmt;
-
-// pub enum Error {
-//     BufferSize { what: &'static str, needs: usize, has: usize },
-//     CipherError { alg: &'static str },
-//     SignatureError { alg: &'static str , error_type: SignatureError}
-// }
 
 /// Error type of crypto.rs
 #[derive(Debug)]

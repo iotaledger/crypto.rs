@@ -52,7 +52,7 @@ impl Ed25519Seed {
     }
 
     /// Convert this seed to a byte array.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(bytes: &[u8; SECRET_KEY_LENGTH]) -> Result<Self, Error> {
         Ok(Self(
             ed25519_dalek::SecretKey::from_bytes(bytes).map_err(|_| Error::ConvertError)?,
         ))
@@ -101,7 +101,7 @@ impl Ed25519PrivateKey {
     }
 
     /// Convert this private key to a byte array.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(bytes: &[u8; SECRET_KEY_LENGTH]) -> Result<Self, Error> {
         Ok(Self(
             ed25519_dalek::SecretKey::from_bytes(bytes).map_err(|_| Error::ConvertError)?,
         ))
@@ -131,7 +131,7 @@ impl Ed25519PublicKey {
     }
 
     /// Convert this public key to a byte array.
-    pub fn from_bytes(bytes: &[u8]) -> Result<Self, Error> {
+    pub fn from_bytes(bytes: &[u8; PUBLIC_KEY_LENGTH]) -> Result<Self, Error> {
         Ok(Self(
             ed25519_dalek::PublicKey::from_bytes(bytes).map_err(|_| Error::ConvertError)?,
         ))
