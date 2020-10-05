@@ -13,7 +13,6 @@
 use thiserror::Error;
 
 pub mod ed25519;
-pub mod wots;
 
 /// Errors occuring during signing operations.
 #[derive(Debug, Error)]

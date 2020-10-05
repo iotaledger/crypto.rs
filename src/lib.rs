@@ -29,4 +29,4 @@ pub enum Error {
     SignatureError { alg: &'static str , error_type: SignatureError}
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+pub type Result<T> = core::result::Result<T, Error>;
