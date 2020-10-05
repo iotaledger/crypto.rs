@@ -14,6 +14,7 @@
 use crate::Error;
 
 use ed25519_dalek::{ExpandedSecretKey, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH};
+use rand::{CryptoRng, RngCore};
 use serde::{Deserialize, Serialize};
 use signature::{Signature, Signer, Verifier};
 use slip10::{derive_key_from_path, BIP32Path, Curve};
@@ -33,12 +34,11 @@ impl Zeroize for Ed25519Seed {
 
 impl Ed25519Seed {
     /// Creates a new random `Seed`.
-    #[cfg(feature = "std")]
-    pub fn rand() -> Self {
-        // `ThreadRng` implements `CryptoRng` so it is safe to use in cryptographic contexts.
-        // https://rust-random.github.io/rand/rand/trait.CryptoRng.html
-        let mut rng = rand::thread_rng();
-        Self(ed25519_dalek::SecretKey::generate(&mut rng))
+    pub fn rand<T>(rng: &mut T) -> Self
+    where
+        T: CryptoRng + RngCore
+    {
+        Self(ed25519_dalek::SecretKey::generate(rng))
     }
 
     /// View this seed as a byte array.
