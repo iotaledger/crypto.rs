@@ -33,6 +33,7 @@ impl Zeroize for Ed25519Seed {
 
 impl Ed25519Seed {
     /// Creates a new random `Seed`.
+    #[cfg(feature = "random")]
     pub fn rand<T>(rng: &mut T) -> Self
     where
         T: CryptoRng + RngCore

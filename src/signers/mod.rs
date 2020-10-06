@@ -10,4 +10,5 @@
 // See the License for the specific language governing permissions and limitations under the License.
 //! Binary signing scheme primitives.
 
+#[cfg(feature = "ed25519")]
 pub mod ed25519;

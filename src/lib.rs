@@ -19,6 +19,7 @@
 // SOFTWARE.
 #![no_std]
 
+#[cfg(feature = "ed25519")]
 #[macro_use]
 extern crate bee_common_derive;
 
