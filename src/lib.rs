@@ -32,7 +32,7 @@ use core::fmt;
 #[derive(Debug)]
 pub enum Error {
     /// Buffer Error
-    BufferSize(usize, usize),
+    BufferSize{ needs: usize, has: usize},
     ///  Cipher Error
     CipherError,
     /// Convertion Error
@@ -44,7 +44,7 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::BufferSize(needs, has) => write!(f, "Buffer output needs {:?}, but it only has {:?}.", needs, has),
+            Error::BufferSize{needs, has} => write!(f, "Buffer output needs {:?}, but it only has {:?}.", needs, has),
             Error::CipherError => write!(f, "There's a  error when handling XChaCha20Poly1305."),
             Error::ConvertError => write!(f, "Failed to convert bytes to target primitives."),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
