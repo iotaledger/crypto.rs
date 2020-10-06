@@ -15,7 +15,6 @@ use crate::Error;
 
 use ed25519_dalek::{ExpandedSecretKey, PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, SIGNATURE_LENGTH};
 use rand::{CryptoRng, RngCore};
-use serde::{Deserialize, Serialize};
 use signature::{Signature, Signer, Verifier};
 use slip10::{derive_key_from_path, BIP32Path, Curve};
 use zeroize::Zeroize;
@@ -116,7 +115,7 @@ impl Signer<Ed25519Signature> for Ed25519PrivateKey {
 }
 
 /// Ed25519 public key.
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug)]
 pub struct Ed25519PublicKey(ed25519_dalek::PublicKey);
 
 impl Ed25519PublicKey {
@@ -146,7 +145,7 @@ impl Verifier<Ed25519Signature> for Ed25519PublicKey {
 }
 
 /// Ed25519 signature
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct Ed25519Signature(ed25519_dalek::Signature);
 
 impl Ed25519Signature {
