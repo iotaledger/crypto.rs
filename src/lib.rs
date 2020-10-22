@@ -39,6 +39,8 @@ pub enum Error {
     ConvertError,
     /// Private Key Error
     PrivateKeyError,
+    /// Signature Error
+    SignatureError
 }
 
 impl fmt::Display for Error {
