@@ -24,6 +24,8 @@ pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 use core::convert::TryFrom;
+extern crate alloc;
+use alloc::boxed::Box;
 
 use core::convert::AsRef;
 
@@ -180,6 +182,9 @@ impl Ed25519Signature {
 
 impl Signature for Ed25519Signature {
     fn from_bytes(bytes: &[u8]) -> Result<Self, signature::Error> {
-        Ok(Self(ed25519_zebra::Signature::try_from(bytes)?))
+            Ok(Self(
+                ed25519_zebra::Signature::try_from(bytes)
+                    .map_err(|e| signature::Error::from(Box::new(e)))?,
+            ))
     }
 }
