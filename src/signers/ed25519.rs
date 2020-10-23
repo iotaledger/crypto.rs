@@ -13,25 +13,21 @@
 
 use crate::Error;
 
-use ed25519_dalek::{ExpandedSecretKey/*, PUBLIC_KEY_LENGTH,*/ /*SECRET_KEY_LENGTH,*/ /*SIGNATURE_LENGTH*/};
 use rand::{CryptoRng, RngCore};
-use signature::{Signature, Signer, Verifier};
+//use signature::{Signature, Signer, Verifier};
 use slip10::{derive_key_from_path, BIP32Path, Curve};
-use zeroize::Zeroize;
+//use zeroize::Zeroize;
 
 use ed25519_zebra;
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 use core::convert::TryFrom;
-extern crate alloc;
-use alloc::boxed::Box;
 
 use core::convert::AsRef;
 
 /// Binary `Ed25519`-based `Seed` to derive private keys, public keys and signatures from.
-//#[derive(SecretDebug, SecretDisplay, SecretDrop)]
-//pub struct Ed25519Seed(ed25519_dalek::SecretKey);
+#[derive(SecretDebug, SecretDisplay/*, SecretDrop*/)]
 pub struct Ed25519Seed(ed25519_zebra::SigningKey);
 
 /*impl Zeroize for Ed25519Seed {
@@ -47,7 +43,6 @@ impl Ed25519Seed {
     where
         T: CryptoRng + RngCore
     {
-        //Self(ed25519_dalek::SecretKey::generate(rng))
         Self(ed25519_zebra::SigningKey::new(rng))
     }
 
@@ -72,8 +67,7 @@ impl Ed25519Seed {
 }
 
 /// Ed25519 private key.
-//#[derive(SecretDebug, SecretDisplay, SecretDrop)]
-//pub struct Ed25519PrivateKey(ed25519_dalek::SecretKey);
+#[derive(SecretDebug, SecretDisplay/*, SecretDrop*/)]
 pub struct Ed25519PrivateKey(ed25519_zebra::SigningKey);
 
 //impl Zeroize for Ed25519PrivateKey {
@@ -124,12 +118,11 @@ impl Ed25519PrivateKey {
     }
 }
 
-impl Signer<Ed25519Signature> for Ed25519PrivateKey {
+/*impl Signer<Ed25519Signature> for Ed25519PrivateKey {
     fn try_sign(&self, msg: &[u8]) -> Result<Ed25519Signature, signature::Error> {
-        let key = (&self.0).into();
-        Ok(Ed25519Signature(self.0.sign(msg, &(&self.0).into())))
+        Ok(Ed25519Signature(self.0.sign(msg)))
     }
-}
+}*/
 
 /// Ed25519 public key.
 #[derive(Debug)]
@@ -156,12 +149,14 @@ impl Ed25519PublicKey {
     }
 }
 
-impl Verifier<Ed25519Signature> for Ed25519PublicKey {
-    fn verify(&self, msg: &[u8], signature: &Ed25519Signature) -> Result<(), signature::Error> {
-        self.0.verify(msg, &signature.0)?;
+/*impl Verifier<Ed25519Signature> for Ed25519PublicKey {
+    fn verify(&self, signature: &Ed25519Signature, msg: &[u8]) -> Result<(), signature::Error> {
+        if self.0.verify(&signature.0, msg).is_err() {
+            return Err(signature::Error::new());//todo: error isn't being propagated
+        };
         Ok(())
     }
-}
+}*/
 
 /// Ed25519 signature
 #[derive(Clone, Debug)]
@@ -176,15 +171,16 @@ impl Ed25519Signature {
 
 /*impl AsRef<[u8]> for Ed25519Signature {
     fn as_ref(&self) -> &[u8] {
-        &self.0.as_ref()
+        let mut bytes_copied: [u8; SIGNATURE_LENGTH] = [0u8; SIGNATURE_LENGTH];
+        bytes_copied.copy_from_slice(&bytes[..]);
     }
 }*/
 
-impl Signature for Ed25519Signature {
+/*impl Signature for Ed25519Signature {
     fn from_bytes(bytes: &[u8]) -> Result<Self, signature::Error> {
             Ok(Self(
                 ed25519_zebra::Signature::try_from(bytes)
-                    .map_err(|e| signature::Error::from(Box::new(e)))?,
+                .map_err(|e| signature::Error::new())?//todo: error isn't being propagated
             ))
     }
-}
+}*/
