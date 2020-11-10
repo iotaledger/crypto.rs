@@ -1,186 +1,127 @@
 // Copyright 2020 IOTA Stiftung
 //
-// Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
-// the License. You may obtain a copy of the License at
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the "Software"), to deal
+// in the Software without restriction, including without limitation the rights
+// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+// copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
 //
-//     http://www.apache.org/licenses/LICENSE-2.0
+// The above copyright notice and this permission notice shall be included in all
+// copies or substantial portions of the Software.
 //
-// Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
-// an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and limitations under the License.
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+// SOFTWARE.
 
-//! Binary seed to derive private keys, public keys and signatures from.
-
-use crate::Error;
-
-use rand::{CryptoRng, RngCore};
-//use signature::{Signature, Signer, Verifier};
-use slip10::{derive_key_from_path, BIP32Path, Curve};
-//use zeroize::Zeroize;
-
-use ed25519_zebra;
-pub const SECRET_KEY_LENGTH: usize = 32;
-pub const PUBLIC_KEY_LENGTH: usize = 32;
-pub const SIGNATURE_LENGTH: usize = 64;
 use core::convert::TryFrom;
 
-use core::convert::AsRef;
+pub const SECRET_KEY_LENGTH: usize = 32;
+pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
+pub const SIGNATURE_LENGTH: usize = 64;
 
-/// Binary `Ed25519`-based `Seed` to derive private keys, public keys and signatures from.
-#[derive(SecretDebug, SecretDisplay/*, SecretDrop*/)]
-pub struct Ed25519Seed(ed25519_zebra::SigningKey);
+pub struct SecretKey(ed25519_zebra::SigningKey);
 
-/*impl Zeroize for Ed25519Seed {
-    fn zeroize(&mut self) {
-        self.0.zeroize()
-    }
-}*/
-
-impl Ed25519Seed {
-    /// Creates a new random `Seed`.
-    #[cfg(feature = "random")]
-    pub fn rand<T>(rng: &mut T) -> Self
-    where
-        T: CryptoRng + RngCore
-    {
-        Self(ed25519_zebra::SigningKey::new(rng))
+impl SecretKey {
+    pub fn public_key(&self) -> PublicKey {
+        PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
     }
 
-    /// View this seed as a byte array.
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-
-    /// Convert this seed to a byte array.
-    pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
+    pub fn to_le_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
         self.0.into()
     }
 
-    /// Convert this seed to a byte array.
-    pub fn from_bytes(bytes: &[u8; SECRET_KEY_LENGTH]) -> Result<Self, Error> {
-        let mut bytes_copied: [u8; SECRET_KEY_LENGTH] = [0u8; SECRET_KEY_LENGTH];
-        bytes_copied.copy_from_slice(&bytes[..SECRET_KEY_LENGTH]);
-        Ok(Self(
-            ed25519_zebra::SigningKey::try_from(bytes_copied).map_err(|_| Error::ConvertError)?,
-        ))
+    pub fn from_le_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> crate::Result<Self> {
+        Ok(SecretKey(ed25519_zebra::SigningKey::from(bs)))
+    }
+
+    pub fn sign(&self, msg: &[u8]) -> Signature {
+        Signature(self.0.sign(msg))
     }
 }
 
-/// Ed25519 private key.
-#[derive(SecretDebug, SecretDisplay/*, SecretDrop*/)]
-pub struct Ed25519PrivateKey(ed25519_zebra::SigningKey);
+pub struct PublicKey(ed25519_zebra::VerificationKey);
 
-//impl Zeroize for Ed25519PrivateKey {
-    //fn zeroize(&mut self) {
-        //self.0.zeroize()
-    //}
-//}
-
-impl Ed25519PrivateKey {
-    /// Deterministically generates and returns a private key from a seed and an index.
-    ///
-    /// # Arguments
-    ///
-    /// * `seed`    A seed to deterministically derive a private key from.
-    pub fn generate_from_seed(seed: &Ed25519Seed, path: &BIP32Path) -> Result<Self, Error> {
-        let subseed = derive_key_from_path(seed.as_bytes(), Curve::Ed25519, path)
-            .map_err(|_| Error::PrivateKeyError)?
-            .key;
-        let mut subseed_bits: [u8; SECRET_KEY_LENGTH] = [0u8; SECRET_KEY_LENGTH];
-        subseed_bits.copy_from_slice(&subseed[..SECRET_KEY_LENGTH]);
-        Ok(Self(
-            ed25519_zebra::SigningKey::try_from(subseed_bits).map_err(|_| Error::PrivateKeyError)?,
-        ))
-    }
-
-    /// Returns the public counterpart of a private key.
-    pub fn generate_public_key(&self) -> Ed25519PublicKey {
-        Ed25519PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
-    }
-
-    /// View this private key as a byte array.
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-
-    /// Convert this private key to a byte array.
-    pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
+impl PublicKey {
+    pub fn to_compressed_bytes(&self) -> [u8; COMPRESSED_PUBLIC_KEY_LENGTH] {
         self.0.into()
     }
 
-    /// Convert this private key to a byte array.
-    pub fn from_bytes(bytes: &[u8; SECRET_KEY_LENGTH]) -> Result<Self, Error> {
-        let mut bytes_copied: [u8; SECRET_KEY_LENGTH] = [0u8; SECRET_KEY_LENGTH];
-        bytes_copied.copy_from_slice(&bytes[..SECRET_KEY_LENGTH]);
-        Ok(Self(
-            ed25519_zebra::SigningKey::try_from(bytes_copied).map_err(|_| Error::ConvertError)?,
-        ))
+    pub fn from_compressed_bytes(bs: [u8; COMPRESSED_PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
+        ed25519_zebra::VerificationKey::try_from(bs)
+            .map(|vk| Self(vk))
+            .map_err(|_| crate::Error::ConvertError {
+                from: "compressed bytes", to: "Ed25519 public key"
+            })
     }
 }
 
-/*impl Signer<Ed25519Signature> for Ed25519PrivateKey {
-    fn try_sign(&self, msg: &[u8]) -> Result<Ed25519Signature, signature::Error> {
-        Ok(Ed25519Signature(self.0.sign(msg)))
-    }
-}*/
+pub struct Signature(ed25519_zebra::Signature);
 
-/// Ed25519 public key.
-#[derive(Debug)]
-pub struct Ed25519PublicKey(ed25519_zebra::VerificationKey);
-
-impl Ed25519PublicKey {
-    /// View this public key as a byte array.
-    pub fn as_bytes(&self) -> &[u8] {
-        self.0.as_ref()
-    }
-
-    /// Convert this public key to a byte array.
-    pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
-        self.0.into()
-    }
-
-    /// Convert this public key to a byte array.
-    pub fn from_bytes(bytes: &[u8; PUBLIC_KEY_LENGTH]) -> Result<Self, Error> {
-        let mut bytes_copied: [u8; PUBLIC_KEY_LENGTH] = [0u8; PUBLIC_KEY_LENGTH];
-        bytes_copied.copy_from_slice(&bytes[..PUBLIC_KEY_LENGTH]);
-        Ok(Self(
-            ed25519_zebra::VerificationKey::try_from(bytes_copied).map_err(|_| Error::ConvertError)?,
-        ))
-    }
-}
-
-/*impl Verifier<Ed25519Signature> for Ed25519PublicKey {
-    fn verify(&self, signature: &Ed25519Signature, msg: &[u8]) -> Result<(), signature::Error> {
-        if self.0.verify(&signature.0, msg).is_err() {
-            return Err(signature::Error::new());//todo: error isn't being propagated
-        };
-        Ok(())
-    }
-}*/
-
-/// Ed25519 signature
-#[derive(Clone, Debug)]
-pub struct Ed25519Signature(ed25519_zebra::Signature);
-
-impl Ed25519Signature {
-    /// Convert this public key to a byte array.
+impl Signature {
     pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
         self.0.into()
     }
+
+    pub fn from_bytes(bs: [u8; SIGNATURE_LENGTH]) -> Self {
+        Self(ed25519_zebra::Signature::from(bs))
+    }
 }
 
-/*impl AsRef<[u8]> for Ed25519Signature {
-    fn as_ref(&self) -> &[u8] {
-        let mut bytes_copied: [u8; SIGNATURE_LENGTH] = [0u8; SIGNATURE_LENGTH];
-        bytes_copied.copy_from_slice(&bytes[..]);
+pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
+    match pk.0.verify(&sig.0, msg) {
+        Ok(_) => true,
+        Err(_) => false,
     }
-}*/
+}
 
-/*impl Signature for Ed25519Signature {
-    fn from_bytes(bytes: &[u8]) -> Result<Self, signature::Error> {
-            Ok(Self(
-                ed25519_zebra::Signature::try_from(bytes)
-                .map_err(|e| signature::Error::new())?//todo: error isn't being propagated
-            ))
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct TestVector {
+        secret_key: &'static str,
+        public_key: &'static str,
+        message: &'static str,
+        signature: &'static str,
     }
-}*/
+
+    #[test]
+    fn test_vectors() {
+        let tvs = [
+            TestVector {
+                secret_key: "c9ca40a493121e7510ffc0fda37cf0f97a7d3e08d3de53771d5a908b9b021bd0",
+                public_key: "a5bd70055aeb203c8c53f81185d82fa3fd53372f4d8b65a47973d36224de2f6f",
+                message: "e9a4924677e5f7679d2bdcf3c9b12b9cf2508486ed1d930bc33872791e76f673a234df09fb50e3985992162eac38865f60de813d386cdfbe9b84678cf56bfd9616dd53ecf9d454fe712e9abc26623c01491d1c8730855dec75ac3da77c47fce1261068737eea0c9409",
+                signature: "de7b58c93f321912fa29aa3c3f07a559019b8dc1b6d0b1cb34640f99632ee02edddff29f25f6495c4dfac10666868b10ae4f0202c4efa2ded05efa9b9be2da0e",
+            },
+        ];
+
+        for tv in tvs.iter() {
+            let mut skb = [0; SECRET_KEY_LENGTH];
+            hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
+            let sk = SecretKey::from_le_bytes(skb).unwrap();
+            assert_eq!(skb, sk.to_le_bytes());
+
+            let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+            hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
+            assert_eq!(pkb, sk.public_key().to_compressed_bytes());
+            let pk = PublicKey::from_compressed_bytes(pkb).unwrap();
+            assert_eq!(pkb, pk.to_compressed_bytes());
+            // TODO: assert_eq!(pk, sk.public_key()); why no equality on ed25519_zebra::VerificationKey?
+
+            let msg = hex::decode(tv.message).unwrap();
+
+            let mut sigb = [0; SIGNATURE_LENGTH];
+            hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
+            assert_eq!(sigb, sk.sign(&msg).to_bytes());
+            let sig = Signature::from_bytes(sigb);
+            assert!(verify(&pk, &sig, &msg));
+        }
+    }
+}
+

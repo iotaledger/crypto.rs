@@ -47,6 +47,6 @@ pub fn xchacha20poly1305_encrypt(
             tag.copy_from_slice(t.as_slice());
             Ok(())
         }
-        Err(_) => Err(Error::CipherError)
+        Err(_) => Err(Error::CipherError { alg: "xchacha20poly1305_encrypt" })
     }
 }

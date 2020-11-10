@@ -19,10 +19,6 @@
 // SOFTWARE.
 #![no_std]
 
-#[cfg(feature = "ed25519")]
-#[macro_use]
-extern crate bee_common_derive;
-
 pub mod ciphers;
 pub mod signers;
 
@@ -32,11 +28,11 @@ use core::fmt;
 #[derive(Debug)]
 pub enum Error {
     /// Buffer Error
-    BufferSize{ needs: usize, has: usize},
+    BufferSize { needs: usize, has: usize },
     ///  Cipher Error
-    CipherError,
+    CipherError { alg: &'static str },
     /// Convertion Error
-    ConvertError,
+    ConvertError { from: &'static str, to: &'static str },
     /// Private Key Error
     PrivateKeyError
 }
@@ -44,9 +40,11 @@ pub enum Error {
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::BufferSize{needs, has} => write!(f, "Buffer output needs {:?}, but it only has {:?}.", needs, has),
-            Error::CipherError => write!(f, "There's a  error when handling XChaCha20Poly1305."),
-            Error::ConvertError => write!(f, "Failed to convert bytes to target primitives."),
+            Error::BufferSize { needs, has } =>
+                write!(f, "buffer needs {} bytes, but it only has {}", needs, has),
+            Error::CipherError { alg } => write!(f, "error in algorithm {}", alg),
+            Error::ConvertError { from, to } =>
+                write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
         }
     }
