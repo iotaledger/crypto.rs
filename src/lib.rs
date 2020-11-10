@@ -17,12 +17,37 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+#![no_std]
 
 pub mod ciphers;
+pub mod signers;
 
+use core::fmt;
+
+/// Error type of crypto.rs
+#[derive(Debug)]
 pub enum Error {
-    BufferSize { what: &'static str, needs: usize, has: usize },
+    /// Buffer Error
+    BufferSize { needs: usize, has: usize },
+    ///  Cipher Error
     CipherError { alg: &'static str },
+    /// Convertion Error
+    ConvertError { from: &'static str, to: &'static str },
+    /// Private Key Error
+    PrivateKeyError
 }
 
-pub type Result<T> = std::result::Result<T, Error>;
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Error::BufferSize { needs, has } =>
+                write!(f, "buffer needs {} bytes, but it only has {}", needs, has),
+            Error::CipherError { alg } => write!(f, "error in algorithm {}", alg),
+            Error::ConvertError { from, to } =>
+                write!(f, "failed to convert {} to {}", from, to),
+            Error::PrivateKeyError => write!(f, "Failed to generate private key."),
+        }
+    }
+}
+
+pub type Result<T> = core::result::Result<T, Error>;

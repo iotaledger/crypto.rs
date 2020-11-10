@@ -18,17 +18,14 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
-#[cfg(feature = "xchacha20poly1305")]
+use crate::Error;
+
 use chacha20poly1305::aead::{AeadMutInPlace, NewAead};
 
-#[cfg(feature = "xchacha20poly1305")]
 pub const XCHACHA20POLY1305_KEY_SIZE: usize = 32;
-#[cfg(feature = "xchacha20poly1305")]
 pub const XCHACHA20POLY1305_NONCE_SIZE: usize = 24;
-#[cfg(feature = "xchacha20poly1305")]
 pub const XCHACHA20POLY1305_TAG_SIZE: usize = 16;
 
-#[cfg(feature = "xchacha20poly1305")]
 pub fn xchacha20poly1305_encrypt(
     ciphertext: &mut [u8],
     tag: &mut [u8; XCHACHA20POLY1305_TAG_SIZE],
@@ -38,11 +35,7 @@ pub fn xchacha20poly1305_encrypt(
     associated_data: &[u8],
 ) -> crate::Result<()> {
     if plain.len() > ciphertext.len() {
-        return Err(crate::Error::BufferSize {
-            what: "output buffer",
-            needs: plain.len(),
-            has: ciphertext.len()
-        });
+        return Err(Error::BufferSize{ needs:plain.len(), has: ciphertext.len()});
     }
     ciphertext.copy_from_slice(plain);
 
@@ -54,6 +47,6 @@ pub fn xchacha20poly1305_encrypt(
             tag.copy_from_slice(t.as_slice());
             Ok(())
         }
-        Err(_) => Err(crate::Error::CipherError { alg: "XChaCha20Poly1305" })
+        Err(_) => Err(Error::CipherError { alg: "xchacha20poly1305_encrypt" })
     }
 }
