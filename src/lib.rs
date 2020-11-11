@@ -25,6 +25,13 @@ pub mod ciphers;
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
 
+#[cfg(feature = "rand")]
+pub mod rand;
+
+#[cfg(test)]
+#[macro_use]
+extern crate alloc;
+
 use core::fmt;
 
 /// Error type of crypto.rs
@@ -37,7 +44,8 @@ pub enum Error {
     /// Convertion Error
     ConvertError { from: &'static str, to: &'static str },
     /// Private Key Error
-    PrivateKeyError
+    PrivateKeyError,
+    SystemError { call: &'static str, raw_os_error: Option<i32> },
 }
 
 impl fmt::Display for Error {
@@ -49,6 +57,10 @@ impl fmt::Display for Error {
             Error::ConvertError { from, to } =>
                 write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
+            Error::SystemError { call, raw_os_error: None } =>
+                write!(f, "system error when calling {}", call),
+            Error::SystemError { call, raw_os_error: Some(errno) } =>
+                write!(f, "system error when calling {}: {}", call, errno),
         }
     }
 }
