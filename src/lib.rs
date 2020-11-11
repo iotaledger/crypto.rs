@@ -17,10 +17,13 @@
 // LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
+
 #![no_std]
 
 pub mod ciphers;
-pub mod signers;
+
+#[cfg(feature = "ed25519")]
+pub mod ed25519;
 
 use core::fmt;
 
