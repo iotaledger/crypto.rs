@@ -18,7 +18,7 @@ name = "crypto"
 default = []
 xchacha20poly1305 = [ "chacha20poly1305" ]
 ed25519 = [ "ed25519-zebra" ]
-rand = ["getrandom"]
+random = ["getrandom"]
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }
@@ -35,3 +35,4 @@ default-features = false
 
 [dev-dependencies]
 hex = "0.4.2"
+rand = "0.7.3"

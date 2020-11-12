@@ -1,15 +1,15 @@
 // Copyright 2020 IOTA Stiftung
 //
-// Licensed under the Apache License, Version 2.0 (the "License"); 
+// Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with
 // the License. You may obtain a copy of the License at
 //
 //     http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS, 
+// distributed under the License is distributed on an "AS IS" BASIS,
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and 
+// See the License for the specific language governing permissions and
 // limitations under the License.
 
 use core::convert::TryFrom;
@@ -21,6 +21,13 @@ pub const SIGNATURE_LENGTH: usize = 64;
 pub struct SecretKey(ed25519_zebra::SigningKey);
 
 impl SecretKey {
+    #[cfg(feature = "random")]
+    pub fn generate() -> crate::Result<Self> {
+        let mut bs = [0u8; SECRET_KEY_LENGTH];
+        crate::rand::fill(&mut bs)?;
+        Self::from_le_bytes(bs)
+    }
+
     pub fn public_key(&self) -> PublicKey {
         PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
     }
@@ -85,7 +92,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vectors() {
+    fn test_vectors() -> crate::Result<()> {
         let tvs = [
             // generated using: utils/test_vectors/pynacl
             TestVector {
@@ -111,13 +118,13 @@ mod tests {
         for tv in tvs.iter() {
             let mut skb = [0; SECRET_KEY_LENGTH];
             hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
-            let sk = SecretKey::from_le_bytes(skb).unwrap();
+            let sk = SecretKey::from_le_bytes(skb)?;
             assert_eq!(skb, sk.to_le_bytes());
 
             let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
             hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
             assert_eq!(pkb, sk.public_key().to_compressed_bytes());
-            let pk = PublicKey::from_compressed_bytes(pkb).unwrap();
+            let pk = PublicKey::from_compressed_bytes(pkb)?;
             assert_eq!(pkb, pk.to_compressed_bytes());
             // TODO: assert_eq!(pk, sk.public_key()); why no equality on ed25519_zebra::VerificationKey?
 
@@ -128,7 +135,33 @@ mod tests {
             assert_eq!(sigb, sk.sign(&msg).to_bytes());
             let sig = Signature::from_bytes(sigb);
             assert!(verify(&pk, &sig, &msg));
+            assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+
+            crate::test_utils::corrupt(&mut sigb);
+            let incorrect_sig = Signature::from_bytes(sigb);
+            assert!(! verify(&pk, &incorrect_sig, &msg));
         }
+
+        Ok(())
+    }
+
+    #[cfg(feature = "random")]
+    #[test]
+    fn test_generate() -> crate::Result<()> {
+        let sk = SecretKey::generate()?;
+        let msg = crate::test_utils::fresh::bytestring();
+
+        let sig = sk.sign(&msg);
+
+        assert!(verify(&sk.public_key(), &sig, &msg));
+        assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+
+        let mut sigb = sig.to_bytes();
+        crate::test_utils::corrupt(&mut sigb);
+        let incorrect_sig = Signature::from_bytes(sigb);
+        assert!(! verify(&sk.public_key(), &incorrect_sig, &msg));
+
+        Ok(())
     }
 }
 

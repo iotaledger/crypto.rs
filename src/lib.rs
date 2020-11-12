@@ -19,12 +19,15 @@ pub mod ciphers;
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
 
-#[cfg(feature = "rand")]
+#[cfg(feature = "random")]
 pub mod rand;
 
 #[cfg(test)]
 #[macro_use]
 extern crate alloc;
+
+#[cfg(test)]
+mod test_utils;
 
 use core::fmt;
 
