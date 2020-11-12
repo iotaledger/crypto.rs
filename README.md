@@ -25,5 +25,5 @@ cargo doc --workspace --no-deps --open
 
 ## Running Tests
 ```
-cargo test --all
+cargo test --lib --all-features
 ```
