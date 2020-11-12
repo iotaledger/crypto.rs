@@ -12,5 +12,5 @@
 // See the License for the specific language governing permissions and 
 // limitations under the License.
 
-#[cfg(feature = "xchacha20poly1305")]
+#[cfg(feature = "chacha")]
 pub mod chacha;
