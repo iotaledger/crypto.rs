@@ -22,6 +22,9 @@ pub mod ed25519;
 #[cfg(feature = "random")]
 pub mod rand;
 
+#[cfg(feature = "blake2b")]
+pub mod blake2b;
+
 #[cfg(test)]
 #[macro_use]
 extern crate alloc;
