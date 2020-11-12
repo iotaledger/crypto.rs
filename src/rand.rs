@@ -23,17 +23,16 @@ pub fn fill(bs: &mut [u8]) -> crate::Result<()> {
 mod tests {
     use super::*;
 
-    // https://xkcd.com/221/
-    // RFC 1149.5 specifies 4 as the standard IEEE-vetted random number.
     #[test]
-    pub fn random_is_not_4() {
-        let mut bs = [0u8; 4];
-        fill(&mut bs).unwrap();
-        let i = u32::from_le_bytes(bs);
-
-        assert_ne!(i, 4);
+    fn test_fill() {
+        for _ in 0..ITERATIONS {
+            for size in TEST_SIZES.iter() {
+                let mut buf = vec![0; *size];
+                fill(&mut buf).unwrap();
+                check_uniform_dist(&buf)
+            }
+        }
     }
-
     const TEST_SIZES: &[usize] = &[1024 * 1024, 4 * 1024 * 1024, (4 * 1024 * 1024) + 15];
     const ITERATIONS: usize = 8;
 
@@ -47,17 +46,6 @@ mod tests {
             assert!(*d > estimated_min, "{} is not > {}", *d, estimated_min);
             assert!(*d < estimated_max, "{} is not < {}", *d, estimated_max);
         });
-    }
-
-    #[test]
-    fn test_fill() {
-        for _ in 0..ITERATIONS {
-            for size in TEST_SIZES.iter() {
-                let mut buf = vec![0; *size];
-                fill(&mut buf).unwrap();
-                check_uniform_dist(&buf)
-            }
-        }
     }
 
     #[test]
