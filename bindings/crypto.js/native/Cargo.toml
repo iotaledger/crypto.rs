@@ -1,0 +1,18 @@
+[package]
+name = "crypto.js"
+version = "0.1.0"
+authors = ["Daniel Thompson-Yvetot <denjell@mailscript.com>"]
+license = "Apache-2.0"
+build = "build.rs"
+edition = "2018"
+exclude = ["artifacts.json", "index.node"]
+
+[lib]
+name = "crypto.js"
+crate-type = ["cdylib"]
+
+[build-dependencies]
+neon-build = "0.5.1"
+
+[dependencies]
+neon = "0.5.1"
