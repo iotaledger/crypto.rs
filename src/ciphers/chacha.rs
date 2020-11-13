@@ -43,7 +43,7 @@ pub mod xchacha20poly1305 {
             Ok(t) => {
                 tag.copy_from_slice(t.as_slice());
                 Ok(())
-            }
+            },
             Err(_) => Err(Error::CipherError { alg: "xchacha20poly1305::encrypt" })
         }
     }

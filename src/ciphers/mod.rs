@@ -14,3 +14,6 @@
 
 #[cfg(feature = "chacha")]
 pub mod chacha;
+
+#[cfg(feature = "aes")]
+pub mod aes;
