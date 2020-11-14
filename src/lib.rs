@@ -16,6 +16,9 @@
 
 pub mod ciphers;
 
+#[macro_use]
+extern crate serde_derive;
+
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
 

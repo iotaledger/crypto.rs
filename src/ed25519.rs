@@ -18,6 +18,7 @@ pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
+#[derive(Debug)]
 pub struct SecretKey(ed25519_zebra::SigningKey);
 
 impl SecretKey {
@@ -45,6 +46,7 @@ impl SecretKey {
     }
 }
 
+#[derive(Debug)]
 pub struct PublicKey(ed25519_zebra::VerificationKey);
 
 impl PublicKey {
@@ -61,6 +63,7 @@ impl PublicKey {
     }
 }
 
+#[derive(Debug)]
 pub struct Signature(ed25519_zebra::Signature);
 
 impl Signature {
