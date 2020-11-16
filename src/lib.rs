@@ -15,6 +15,7 @@
 #![no_std]
 
 pub mod ciphers;
+pub mod hashes;
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
@@ -43,22 +44,27 @@ pub enum Error {
     ConvertError { from: &'static str, to: &'static str },
     /// Private Key Error
     PrivateKeyError,
-    SystemError { call: &'static str, raw_os_error: Option<i32> },
+    SystemError {
+        call: &'static str,
+        raw_os_error: Option<i32>,
+    },
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::BufferSize { needs, has } =>
-                write!(f, "buffer needs {} bytes, but it only has {}", needs, has),
+            Error::BufferSize { needs, has } => write!(f, "buffer needs {} bytes, but it only has {}", needs, has),
             Error::CipherError { alg } => write!(f, "error in algorithm {}", alg),
-            Error::ConvertError { from, to } =>
-                write!(f, "failed to convert {} to {}", from, to),
+            Error::ConvertError { from, to } => write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
-            Error::SystemError { call, raw_os_error: None } =>
-                write!(f, "system error when calling {}", call),
-            Error::SystemError { call, raw_os_error: Some(errno) } =>
-                write!(f, "system error when calling {}: {}", call, errno),
+            Error::SystemError {
+                call,
+                raw_os_error: None,
+            } => write!(f, "system error when calling {}", call),
+            Error::SystemError {
+                call,
+                raw_os_error: Some(errno),
+            } => write!(f, "system error when calling {}: {}", call, errno),
         }
     }
 }

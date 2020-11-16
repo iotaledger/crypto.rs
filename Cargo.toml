@@ -18,8 +18,9 @@ name = "crypto"
 default = []
 chacha = [ "chacha20poly1305" ]
 ed25519 = [ "ed25519-zebra" ]
-random = ["getrandom"]
-aes = ["aes-gcm"]
+random = [ "getrandom" ]
+aes = [ "aes-gcm" ]
+curl-p = [ "bee-ternary" ]
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }
@@ -38,6 +39,11 @@ default-features = false
 version = "0.8.0"
 optional = true
 features = [ "aes" ]
+default-features = false
+
+[dependencies.bee-ternary]
+version = "0.3.4-alpha"
+optional = true
 default-features = false
 
 [dev-dependencies]
