@@ -42,6 +42,9 @@ pub mod fresh {
 }
 
 pub fn corrupt(bs: &mut [u8]) {
+    if bs.is_empty() {
+        return;
+    }
     loop {
         let i = rand::random::<usize>() % bs.len();
         let b = bs[i];
