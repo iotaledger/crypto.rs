@@ -42,7 +42,7 @@ pub mod fresh {
 }
 
 pub fn corrupt(bs: &mut [u8]) {
-    if bs.len() == 0 {
+    if bs.is_empty() {
         return;
     }
     loop {
