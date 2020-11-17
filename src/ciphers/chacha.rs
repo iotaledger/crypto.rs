@@ -147,15 +147,15 @@ pub mod xchacha20poly1305 {
                 decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &nonce, &associated_data)?;
                 assert_eq!(decrypted_plain_text, plaintext);
 
-                let mut corrupted_tag = tag.clone();
+                let mut corrupted_tag = tag;
                 crate::test_utils::corrupt(&mut corrupted_tag);
                 assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &corrupted_tag, &nonce, &associated_data).is_err());
 
-                let mut corrupted_nonce = nonce.clone();
+                let mut corrupted_nonce = nonce;
                 crate::test_utils::corrupt(&mut corrupted_nonce);
                 assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &corrupted_nonce, &associated_data).is_err());
 
-                if associated_data.len() > 0 {
+                if !associated_data.is_empty() {
                     let mut corrupted_associated_data = associated_data.clone();
                     crate::test_utils::corrupt(&mut corrupted_associated_data);
                     assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &nonce, &corrupted_associated_data).is_err());
