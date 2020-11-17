@@ -21,6 +21,7 @@ ed25519 = [ "ed25519-zebra" ]
 random = ["getrandom"]
 aes = ["aes-gcm"]
 blake2b = ["blake2b_simd"]
+curl-p = [ "bee-ternary" ]
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }
@@ -43,6 +44,11 @@ default-features = false
 
 [dependencies.blake2b_simd]
 version = "0.5.11"
+optional = true
+default-features = false
+
+[dependencies.bee-ternary]
+version = "0.3.4-alpha"
 optional = true
 default-features = false
 
