@@ -56,7 +56,8 @@ impl PublicKey {
         ed25519_zebra::VerificationKey::try_from(bs)
             .map(Self)
             .map_err(|_| crate::Error::ConvertError {
-                from: "compressed bytes", to: "Ed25519 public key"
+                from: "compressed bytes",
+                to: "Ed25519 public key",
             })
     }
 }
@@ -136,7 +137,7 @@ mod tests {
 
             crate::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
-            assert!(! verify(&pk, &incorrect_sig, &msg));
+            assert!(!verify(&pk, &incorrect_sig, &msg));
         }
 
         Ok(())
@@ -156,7 +157,7 @@ mod tests {
         let mut sigb = sig.to_bytes();
         crate::test_utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
-        assert!(! verify(&sk.public_key(), &incorrect_sig, &msg));
+        assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
 
         Ok(())
     }

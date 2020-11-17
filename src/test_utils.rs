@@ -18,7 +18,9 @@ pub mod fresh {
     use super::*;
 
     pub fn bytestring() -> Vec<u8> {
-        let s = if rand::random::<u8>() % 4 == 0 { 0 } else {
+        let s = if rand::random::<u8>() % 4 == 0 {
+            0
+        } else {
             rand::random::<usize>() % 4096
         };
 
