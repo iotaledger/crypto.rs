@@ -15,6 +15,7 @@
 #![no_std]
 
 pub mod ciphers;
+pub mod hashes;
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
