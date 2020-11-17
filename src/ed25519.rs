@@ -54,9 +54,10 @@ impl PublicKey {
 
     pub fn from_compressed_bytes(bs: [u8; COMPRESSED_PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
         ed25519_zebra::VerificationKey::try_from(bs)
-            .map(|vk| Self(vk))
+            .map(Self)
             .map_err(|_| crate::Error::ConvertError {
-                from: "compressed bytes", to: "Ed25519 public key"
+                from: "compressed bytes",
+                to: "Ed25519 public key",
             })
     }
 }
@@ -74,10 +75,7 @@ impl Signature {
 }
 
 pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
-    match pk.0.verify(&sig.0, msg) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    pk.0.verify(&sig.0, msg).is_ok()
 }
 
 #[cfg(test)]
@@ -139,7 +137,7 @@ mod tests {
 
             crate::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
-            assert!(! verify(&pk, &incorrect_sig, &msg));
+            assert!(!verify(&pk, &incorrect_sig, &msg));
         }
 
         Ok(())
@@ -159,9 +157,8 @@ mod tests {
         let mut sigb = sig.to_bytes();
         crate::test_utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
-        assert!(! verify(&sk.public_key(), &incorrect_sig, &msg));
+        assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
 
         Ok(())
     }
 }
-

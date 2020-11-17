@@ -18,8 +18,10 @@ use crate::Error;
 
 pub mod AES_256_GCM {
     use super::*;
-    use aes_gcm::Aes256Gcm;
-    use aes_gcm::aead::{AeadMutInPlace, NewAead, generic_array::GenericArray};
+    use aes_gcm::{
+        aead::{generic_array::GenericArray, AeadMutInPlace, NewAead},
+        Aes256Gcm,
+    };
 
     pub const KEY_LENGTH: usize = 32;
     pub const IV_LENGTH: usize = 12;
@@ -34,17 +36,17 @@ pub mod AES_256_GCM {
         tag: &mut [u8; TAG_LENGTH],
     ) -> crate::Result<()> {
         if plaintext.len() > ciphertext.len() {
-            return Err(Error::BufferSize{ needs: plaintext.len(), has: ciphertext.len() });
+            return Err(Error::BufferSize {
+                needs: plaintext.len(),
+                has: ciphertext.len(),
+            });
         }
         ciphertext.copy_from_slice(plaintext);
 
         let t = Aes256Gcm::new(GenericArray::from_slice(key))
-            .encrypt_in_place_detached(
-                GenericArray::from_slice(iv),
-                associated_data,
-                ciphertext,
-            ).map_err(|_| {
-                Error::CipherError { alg: "AES_256_GCM::encrypt" }
+            .encrypt_in_place_detached(GenericArray::from_slice(iv), associated_data, ciphertext)
+            .map_err(|_| Error::CipherError {
+                alg: "AES_256_GCM::encrypt",
             })?;
 
         tag.copy_from_slice(t.as_slice());
@@ -60,7 +62,10 @@ pub mod AES_256_GCM {
         plaintext: &mut [u8],
     ) -> crate::Result<()> {
         if ciphertext.len() > plaintext.len() {
-            return Err(Error::BufferSize{ needs: ciphertext.len(), has: plaintext.len()});
+            return Err(Error::BufferSize {
+                needs: ciphertext.len(),
+                has: plaintext.len(),
+            });
         }
         plaintext.copy_from_slice(ciphertext);
 
@@ -70,7 +75,10 @@ pub mod AES_256_GCM {
                 associated_data,
                 plaintext,
                 GenericArray::from_slice(tag),
-            ).map_err(|_| Error::CipherError { alg: "AES_256_GCM::decrypt" } )
+            )
+            .map_err(|_| Error::CipherError {
+                alg: "AES_256_GCM::decrypt",
+            })
     }
 }
 

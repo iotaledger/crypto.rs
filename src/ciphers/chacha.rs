@@ -32,7 +32,10 @@ pub mod xchacha20poly1305 {
         associated_data: &[u8],
     ) -> crate::Result<()> {
         if plaintext.len() > ciphertext.len() {
-            return Err(Error::BufferSize{ needs: plaintext.len(), has: ciphertext.len() });
+            return Err(Error::BufferSize {
+                needs: plaintext.len(),
+                has: ciphertext.len(),
+            });
         }
         ciphertext.copy_from_slice(plaintext);
 
@@ -43,8 +46,10 @@ pub mod xchacha20poly1305 {
             Ok(t) => {
                 tag.copy_from_slice(t.as_slice());
                 Ok(())
-            },
-            Err(_) => Err(Error::CipherError { alg: "xchacha20poly1305::encrypt" })
+            }
+            Err(_) => Err(Error::CipherError {
+                alg: "xchacha20poly1305::encrypt",
+            }),
         }
     }
 
@@ -57,7 +62,10 @@ pub mod xchacha20poly1305 {
         associated_data: &[u8],
     ) -> crate::Result<()> {
         if ciphertext.len() > plaintext.len() {
-            return Err(Error::BufferSize{ needs: ciphertext.len(), has: plaintext.len()});
+            return Err(Error::BufferSize {
+                needs: ciphertext.len(),
+                has: plaintext.len(),
+            });
         }
         plaintext.copy_from_slice(ciphertext);
 
@@ -65,9 +73,10 @@ pub mod xchacha20poly1305 {
         let n = chacha20poly1305::XNonce::from_slice(nonce);
         let t = chacha20poly1305::Tag::from_slice(tag);
         let mut c = chacha20poly1305::XChaCha20Poly1305::new(k);
-        c.decrypt_in_place_detached(n, associated_data, plaintext, t).map_err(|_| {
-            Error::CipherError { alg: "xchacha20poly1305::decrypt" }
-        })
+        c.decrypt_in_place_detached(n, associated_data, plaintext, t)
+            .map_err(|_| Error::CipherError {
+                alg: "xchacha20poly1305::decrypt",
+            })
     }
 
     #[cfg(test)]
@@ -144,24 +153,71 @@ pub mod xchacha20poly1305 {
                 assert_eq!(expected_tag, tag);
 
                 let mut decrypted_plain_text = vec![0; ciphertext.len()];
-                decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &nonce, &associated_data)?;
+                decrypt(
+                    &mut decrypted_plain_text,
+                    &ciphertext,
+                    &key,
+                    &tag,
+                    &nonce,
+                    &associated_data,
+                )?;
                 assert_eq!(decrypted_plain_text, plaintext);
 
-                let mut corrupted_tag = tag.clone();
+                let mut corrupted_tag = tag;
                 crate::test_utils::corrupt(&mut corrupted_tag);
-                assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &corrupted_tag, &nonce, &associated_data).is_err());
+                assert!(decrypt(
+                    &mut decrypted_plain_text,
+                    &ciphertext,
+                    &key,
+                    &corrupted_tag,
+                    &nonce,
+                    &associated_data
+                )
+                .is_err());
 
-                let mut corrupted_nonce = nonce.clone();
+                let mut corrupted_nonce = nonce;
                 crate::test_utils::corrupt(&mut corrupted_nonce);
-                assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &corrupted_nonce, &associated_data).is_err());
+                assert!(decrypt(
+                    &mut decrypted_plain_text,
+                    &ciphertext,
+                    &key,
+                    &tag,
+                    &corrupted_nonce,
+                    &associated_data
+                )
+                .is_err());
 
-                if associated_data.len() > 0 {
+                if !associated_data.is_empty() {
                     let mut corrupted_associated_data = associated_data.clone();
                     crate::test_utils::corrupt(&mut corrupted_associated_data);
-                    assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &nonce, &corrupted_associated_data).is_err());
-                    assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &nonce, &crate::test_utils::fresh::bytestring()).is_err());
+                    assert!(decrypt(
+                        &mut decrypted_plain_text,
+                        &ciphertext,
+                        &key,
+                        &tag,
+                        &nonce,
+                        &corrupted_associated_data
+                    )
+                    .is_err());
+                    assert!(decrypt(
+                        &mut decrypted_plain_text,
+                        &ciphertext,
+                        &key,
+                        &tag,
+                        &nonce,
+                        &crate::test_utils::fresh::bytestring()
+                    )
+                    .is_err());
                 } else {
-                    assert!(decrypt(&mut decrypted_plain_text, &ciphertext, &key, &tag, &nonce, &crate::test_utils::fresh::non_empty_bytestring()).is_err());
+                    assert!(decrypt(
+                        &mut decrypted_plain_text,
+                        &ciphertext,
+                        &key,
+                        &tag,
+                        &nonce,
+                        &crate::test_utils::fresh::non_empty_bytestring()
+                    )
+                    .is_err());
                 }
             }
 
