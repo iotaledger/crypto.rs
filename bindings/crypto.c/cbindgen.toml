@@ -1,0 +1,7 @@
+language = "C"
+header = "/* Copyright 2020 IOTA Stiftung */\n/* SPDX-License-Identifier: Apache-2.0 */"
+cpp_compat = true
+
+[parse.expand]
+crates = []
+all_features = true

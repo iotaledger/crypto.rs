@@ -1,0 +1,20 @@
+[package]
+name = "crypto_c"
+version = "0.1.0"
+authors = ["Daniel Thompson-Yvetot <denjell@mailscript.com>"]
+edition = "2018"
+license = "Apache-2.0"
+description = "C bindings for crypto.rs"
+
+[lib]
+name = "crypto"
+crate-type = ["cdylib"]
+
+[dependencies]
+libc = "*"
+serde_derive = "1.0.117"
+serde = "1.0.117"
+iota-crypto = { path = "../../.", features = ["random", "ed25519"] }
+
+[build-dependencies]
+cbindgen = "0.15.0"
