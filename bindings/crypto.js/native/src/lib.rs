@@ -1,5 +1,7 @@
 #[allow(dead_code)]
-
+#[allow(non_snake_case)]
+use neon::prelude::*;
+use neon::register_module;
 #[macro_use]
 extern crate neon;
 #[macro_use]
@@ -9,37 +11,31 @@ extern crate serde_derive;
 
 use crypto;
 
-#[derive(Serialize, Deserialize, Debug)]
-struct Cmd {
-    feature: String,
-    function: String,
-    size: f64,
-    payload: String,
-    returns: String,
+fn sync_random(mut cx: FunctionContext) -> JsResult<JsArray> {
+    let mut buf = cx.argument::<JsNumber>(0)?.value().to_le_bytes();
+    // complains about result possibly being an error, which should be handled - but
+    // we want that to throw in JS land.
+    crypto::rand::fill(&mut buf).unwrap(); // .map_err(|e| cx.error(e.to_string()));
+
+    let js_array = JsArray::new(&mut cx, buf.len() as u32);
+
+    buf.iter().enumerate().for_each(|e| {
+        let (i, obj) = e;
+        let _number = JsNumber::new(&mut cx, *obj as f64);
+        let _ = js_array.set(&mut cx, i as u32, _number);
+    });
+    Ok(js_array)
 }
 
-export! {
-    fn sync(cmd: Cmd) -> String {
-        match &cmd.feature as &str {
-            "rand" => {
-                let mut buf = cmd.size.to_le_bytes();
-                crypto::rand::fill(&mut buf).map_err(|e| e.to_string());
-                format!("{:?}", buf)
-            },
-            "ed25519" => {
-                match &cmd.function as &str {
-                    "generate" => {
-                        let kk = crypto::ed25519::SecretKey::generate().unwrap();
-                        format!("{:?}", kk)
-                    },
-                    _ => {
-                        format!("4ed")
-                    },         
-                }       
-            },
-            _ => {
-                format!("4")
-            },
-        }
-    }    
+fn sync_ed25519_generate(mut cx: FunctionContext) -> JsResult<JsValue> {
+    let ed = crypto::ed25519::SecretKey::generate().unwrap();
+    let js_value = neon_serde::to_value(&mut cx, &ed)?;
+    Ok(js_value)
 }
+
+register_module!(mut m, {
+    m.export_function("random", sync_random)?;
+    m.export_function("ed25519Generate", sync_ed25519_generate)?;
+    Ok(())
+});
+

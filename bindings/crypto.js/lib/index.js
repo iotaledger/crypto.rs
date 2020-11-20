@@ -9,6 +9,20 @@ let commandTemplate = {
 }
 
 module.exports = {
+    random (size = 16) {
+        try {
+            return res = addon.random(size)
+        } catch (e) {
+            throw new Error(e)
+        }
+    },
+    ed25519Generate () {
+        try {
+            return res = addon.ed25519Generate()
+        } catch (e) {
+            throw new Error(e)
+        }
+    },
     sync: {
         /**
          * @param {Number} size 

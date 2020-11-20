@@ -29,7 +29,7 @@ mod test_utils;
 use core::fmt;
 
 /// Error type of crypto.rs
-#[derive(Debug)]
+#[derive(Serialize, Debug, Deserialize)]
 pub enum Error {
     /// Buffer Error
     BufferSize { needs: usize, has: usize },
