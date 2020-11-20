@@ -6,21 +6,19 @@
 #include <stdint.h>
 #include <stdlib.h>
 
-typedef struct String String;
-
-typedef struct {
-  String feature;
-  String function;
+typedef struct Cmd {
+  const char *feature;
+  const char *function;
   double size;
-  String payload;
-  String returns;
-} Cmd;
+  const char *payload;
+  const char *returns;
+} command;
 
 #ifdef __cplusplus
 extern "C" {
 #endif // __cplusplus
 
-const char *sync(Cmd cmd);
+const char *sync(command cmd);
 
 #ifdef __cplusplus
 } // extern "C"
