@@ -1,16 +1,5 @@
 // Copyright 2020 IOTA Stiftung
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with
-// the License. You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
 
@@ -56,9 +45,10 @@ impl PublicKey {
 
     pub fn from_compressed_bytes(bs: [u8; COMPRESSED_PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
         ed25519_zebra::VerificationKey::try_from(bs)
-            .map(|vk| Self(vk))
+            .map(Self)
             .map_err(|_| crate::Error::ConvertError {
-                from: "compressed bytes", to: "Ed25519 public key"
+                from: "compressed bytes",
+                to: "Ed25519 public key",
             })
     }
 }
@@ -77,10 +67,7 @@ impl Signature {
 }
 
 pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
-    match pk.0.verify(&sig.0, msg) {
-        Ok(_) => true,
-        Err(_) => false,
-    }
+    pk.0.verify(&sig.0, msg).is_ok()
 }
 
 #[cfg(test)]
@@ -142,7 +129,7 @@ mod tests {
 
             crate::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
-            assert!(! verify(&pk, &incorrect_sig, &msg));
+            assert!(!verify(&pk, &incorrect_sig, &msg));
         }
 
         Ok(())
@@ -162,9 +149,8 @@ mod tests {
         let mut sigb = sig.to_bytes();
         crate::test_utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
-        assert!(! verify(&sk.public_key(), &incorrect_sig, &msg));
+        assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
 
         Ok(())
     }
 }
-

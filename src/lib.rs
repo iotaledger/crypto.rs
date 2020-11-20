@@ -1,20 +1,10 @@
 // Copyright 2020 IOTA Stiftung
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with
-// the License. You may obtain a copy of the License at
-//
-//     http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// SPDX-License-Identifier: Apache-2.0
 
 #![no_std]
 
 pub mod ciphers;
+pub mod hashes;
 
 #[macro_use]
 extern crate serde_derive;
@@ -24,6 +14,9 @@ pub mod ed25519;
 
 #[cfg(feature = "random")]
 pub mod rand;
+
+#[cfg(feature = "blake2b")]
+pub mod blake2b;
 
 #[cfg(test)]
 #[macro_use]
@@ -46,22 +39,27 @@ pub enum Error {
     ConvertError { from: &'static str, to: &'static str },
     /// Private Key Error
     PrivateKeyError,
-    SystemError { call: &'static str, raw_os_error: Option<i32> },
+    SystemError {
+        call: &'static str,
+        raw_os_error: Option<i32>,
+    },
 }
 
 impl fmt::Display for Error {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Error::BufferSize { needs, has } =>
-                write!(f, "buffer needs {} bytes, but it only has {}", needs, has),
+            Error::BufferSize { needs, has } => write!(f, "buffer needs {} bytes, but it only has {}", needs, has),
             Error::CipherError { alg } => write!(f, "error in algorithm {}", alg),
-            Error::ConvertError { from, to } =>
-                write!(f, "failed to convert {} to {}", from, to),
+            Error::ConvertError { from, to } => write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
-            Error::SystemError { call, raw_os_error: None } =>
-                write!(f, "system error when calling {}", call),
-            Error::SystemError { call, raw_os_error: Some(errno) } =>
-                write!(f, "system error when calling {}: {}", call, errno),
+            Error::SystemError {
+                call,
+                raw_os_error: None,
+            } => write!(f, "system error when calling {}", call),
+            Error::SystemError {
+                call,
+                raw_os_error: Some(errno),
+            } => write!(f, "system error when calling {}: {}", call, errno),
         }
     }
 }
