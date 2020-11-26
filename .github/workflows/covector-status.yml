@@ -49,7 +49,7 @@ jobs:
           labels: "version updates"
           body: ${{ steps.covector.outputs.change }}
 
-            tangle:
+  tangle:
     runs-on: ubuntu-latest
     needs: version-or-publish
     if: needs.version-or-publish.outputs.successfulPublish == 'true'
