@@ -1,5 +1,5 @@
 {
-  "name": "crypto.js",
+  "name": "@iota/crypto.js",
   "version": "0.1.0",
   "description": "JS Bindings for Crypto.rs",
   "main": "lib/index.js",
