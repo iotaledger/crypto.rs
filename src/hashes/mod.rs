@@ -3,3 +3,6 @@
 
 #[cfg(feature = "curl-p")]
 pub mod curl_p;
+
+#[cfg(feature = "sha")]
+pub mod sha;
