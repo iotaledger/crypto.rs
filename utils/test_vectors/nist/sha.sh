@@ -21,4 +21,8 @@ if [ "$1" = "256" ]; then
     python "$SCRIPT_DIR/mangle_cavp.py" \
         "$WS/shabytetestvectors/SHA256ShortMsg.rsp" \
         "$WS/shabytetestvectors/SHA256LongMsg.rsp"
+elif [ "$1" = "512" ]; then
+    python "$SCRIPT_DIR/mangle_cavp.py" \
+        "$WS/shabytetestvectors/SHA512ShortMsg.rsp" \
+        "$WS/shabytetestvectors/SHA512LongMsg.rsp"
 fi
