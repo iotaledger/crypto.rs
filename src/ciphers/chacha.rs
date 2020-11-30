@@ -95,7 +95,7 @@ pub mod xchacha20poly1305 {
                     tag: "c0875924c1c7987947deafd8780acf49",
                 },
 
-                // generated using: utils/test_vectors/pynacl
+                // generated using: utils/test_vectors/py/main.py
                 TestVector {
                     plaintext: "90fe4f823a01ec0caa5a9f6199925440c209549c16193834f49f6a710b18eabbde04379e41afb4b9cec0d5f103ad9a2ecde7372bb10482b6871a57b994ab85bb3c3447eb11c5aa3fba2866cfc9d46e6e6a56e1b40f4db48180fbffd130d0b9dc84e5182bdd62a57a2e48002d984e",
                     associated_data: "",

@@ -81,7 +81,7 @@ mod tests {
     #[test]
     fn test_vectors() -> crate::Result<()> {
         let tvs = [
-            // generated using: utils/test_vectors/pynacl
+            // generated using: utils/test_vectors/py/main.py
             TestVector {
                 secret_key: "f22d2d57c1a188e362f38c6789948df333e37ea3276357a1169cff12a2b7d100",
                 public_key: "f24a3306ce8698c6bafb11f465f2be695f220fddbca69ca9cf133757c9c29378",
