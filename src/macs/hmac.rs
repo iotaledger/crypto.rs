@@ -3,14 +3,20 @@
 
 #![allow(non_snake_case)]
 
-#[cfg(feature = "sha" )]
-pub fn HMAC_SHA256(_data: &[u8], _key: &[u8], _mac: &mut [u8; 32]) {
-    todo!()
+#[cfg(feature = "sha")]
+pub fn HMAC_SHA256(data: &[u8], key: &[u8], mac: &mut [u8; 32]) {
+    use hmac_::{Mac, NewMac};
+    let mut m = hmac_::Hmac::<sha2::Sha256>::new_varkey(key).unwrap();
+    m.update(data);
+    mac.copy_from_slice(&m.finalize().into_bytes())
 }
 
-#[cfg(feature = "sha" )]
-pub fn HMAC_SHA512(_data: &[u8], _key: &[u8], _mac: &mut [u8; 64]) {
-    todo!()
+#[cfg(feature = "sha")]
+pub fn HMAC_SHA512(data: &[u8], key: &[u8], mac: &mut [u8; 64]) {
+    use hmac_::{Mac, NewMac};
+    let mut m = hmac_::Hmac::<sha2::Sha512>::new_varkey(key).unwrap();
+    m.update(data);
+    mac.copy_from_slice(&m.finalize().into_bytes())
 }
 
 #[cfg(test)]
@@ -24,7 +30,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "sha" )]
+    #[cfg(feature = "sha")]
     fn test_HMAC_SHA256() {
         let tvs = [
             // https://tools.ietf.org/html/rfc4231#section-4.2
@@ -75,7 +81,7 @@ mod tests {
     }
 
     #[test]
-    #[cfg(feature = "sha" )]
+    #[cfg(feature = "sha")]
     fn test_HMAC_SHA512() {
         let tvs = [
             // https://tools.ietf.org/html/rfc4231#section-4.2
