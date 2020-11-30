@@ -5,6 +5,7 @@ import random
 import secrets
 from base64 import b64encode
 import hashlib
+import hmac
 
 from nacl.signing import SigningKey
 from Crypto.Cipher import ChaCha20_Poly1305
@@ -68,5 +69,25 @@ def print_sha512_test_vector(n=None):
     print(f"    digest: \"{digest.hex()}\",")
     print("},")
 
+def print_hmac_sha256_test_vector():
+    data = fresh_bytes(bound=1024)
+    key = fresh_bytes(bound=1024)
+    mac = hmac.new(key=key, msg=data, digestmod="sha256").digest()
+    print("TestVector {")
+    print(f"    data: \"{data.hex()}\",")
+    print(f"    key: \"{key.hex()}\",")
+    print(f"    mac: \"{mac.hex()}\",")
+    print("},")
+
+def print_hmac_sha512_test_vector():
+    data = fresh_bytes(bound=1024)
+    key = fresh_bytes(bound=1024)
+    mac = hmac.new(key=key, msg=data, digestmod="sha512").digest()
+    print("TestVector {")
+    print(f"    data: \"{data.hex()}\",")
+    print(f"    key: \"{key.hex()}\",")
+    print(f"    mac: \"{mac.hex()}\",")
+    print("},")
+
 if __name__ == "__main__":
-    print_sha512_test_vector()
+    print_hmac_sha512_test_vector()
