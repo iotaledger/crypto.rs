@@ -5,6 +5,7 @@
 
 pub mod ciphers;
 pub mod hashes;
+pub mod macs;
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
@@ -17,6 +18,7 @@ pub mod blake2b;
 
 #[cfg(test)]
 #[macro_use]
+#[allow(unused_imports)]
 extern crate alloc;
 
 #[cfg(test)]
