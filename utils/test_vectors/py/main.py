@@ -4,6 +4,7 @@
 import random
 import secrets
 from base64 import b64encode
+import hashlib
 
 from nacl.signing import SigningKey
 from Crypto.Cipher import ChaCha20_Poly1305
@@ -51,5 +52,21 @@ def print_xchacha20poly1305_test_vector():
     print(f"    tag: \"{t.hex()}\",")
     print("},")
 
+def print_sha256_test_vector(n=None):
+    msg = fresh_bytes(n=n, bound=1024)
+    digest = hashlib.sha256(msg).digest()
+    print("TestVector {")
+    print(f"    msg: \"{msg.hex()}\",")
+    print(f"    digest: \"{digest.hex()}\",")
+    print("},")
+
+def print_sha512_test_vector(n=None):
+    msg = fresh_bytes(n=n, bound=1024)
+    digest = hashlib.sha512(msg).digest()
+    print("TestVector {")
+    print(f"    msg: \"{msg.hex()}\",")
+    print(f"    digest: \"{digest.hex()}\",")
+    print("},")
+
 if __name__ == "__main__":
-    print_xchacha20poly1305_test_vector()
+    print_sha512_test_vector()
