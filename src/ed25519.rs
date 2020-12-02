@@ -25,8 +25,8 @@ impl SecretKey {
         self.0.into()
     }
 
-    pub fn from_le_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> crate::Result<Self> {
-        Ok(SecretKey(ed25519_zebra::SigningKey::from(bs)))
+    pub fn from_le_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> Self {
+        SecretKey(ed25519_zebra::SigningKey::from(bs))
     }
 
     pub fn sign(&self, msg: &[u8]) -> Signature {
@@ -78,6 +78,19 @@ mod tests {
         signature: &'static str,
     }
 
+    #[cfg(feature = "random")]
+    pub fn fresh_key() -> SecretKey {
+        SecretKey::generate().unwrap()
+    }
+
+    #[cfg(not(feature = "random"))]
+    pub fn fresh_key() -> SecretKey {
+        let mut bs = [0u8; SECRET_KEY_LENGTH];
+        use rand::{rngs::OsRng, RngCore};
+        OsRng.fill_bytes(&mut bs);
+        SecretKey::from_le_bytes(bs)
+    }
+
     #[test]
     fn test_vectors() -> crate::Result<()> {
         let tvs = [
@@ -105,7 +118,7 @@ mod tests {
         for tv in tvs.iter() {
             let mut skb = [0; SECRET_KEY_LENGTH];
             hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
-            let sk = SecretKey::from_le_bytes(skb)?;
+            let sk = SecretKey::from_le_bytes(skb);
             assert_eq!(skb, sk.to_le_bytes());
 
             let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
@@ -122,7 +135,7 @@ mod tests {
             assert_eq!(sigb, sk.sign(&msg).to_bytes());
             let sig = Signature::from_bytes(sigb);
             assert!(verify(&pk, &sig, &msg));
-            assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+            assert!(!verify(&fresh_key().public_key(), &sig, &msg));
 
             crate::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
@@ -132,16 +145,15 @@ mod tests {
         Ok(())
     }
 
-    #[cfg(feature = "random")]
     #[test]
     fn test_generate() -> crate::Result<()> {
-        let sk = SecretKey::generate()?;
+        let sk = fresh_key();
         let msg = crate::test_utils::fresh::bytestring();
 
         let sig = sk.sign(&msg);
 
         assert!(verify(&sk.public_key(), &sig, &msg));
-        assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+        assert!(!verify(&fresh_key().public_key(), &sig, &msg));
 
         let mut sigb = sig.to_bytes();
         crate::test_utils::corrupt(&mut sigb);
