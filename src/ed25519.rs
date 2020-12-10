@@ -1,6 +1,8 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(non_snake_case)]
+
 use core::convert::TryFrom;
 
 pub const SECRET_KEY_LENGTH: usize = 32;
@@ -21,16 +23,12 @@ impl SecretKey {
         PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
     }
 
-    pub fn to_le_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
+    pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
         self.0.into()
     }
 
-    pub fn from_le_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> Self {
+    pub fn from_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> Self {
         SecretKey(ed25519_zebra::SigningKey::from(bs))
-    }
-
-    pub fn sign(&self, msg: &[u8]) -> Signature {
-        Signature(self.0.sign(msg))
     }
 }
 
@@ -63,7 +61,11 @@ impl Signature {
     }
 }
 
-pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
+pub fn sign_SHA512(sk: &SecretKey, msg: &[u8]) -> Signature {
+    Signature(sk.0.sign(msg))
+}
+
+pub fn verify_SHA512(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
     pk.0.verify(&sig.0, msg).is_ok()
 }
 
@@ -88,11 +90,11 @@ mod tests {
         let mut bs = [0u8; SECRET_KEY_LENGTH];
         use rand::{rngs::OsRng, RngCore};
         OsRng.fill_bytes(&mut bs);
-        SecretKey::from_le_bytes(bs)
+        SecretKey::from_bytes(bs)
     }
 
     #[test]
-    fn test_vectors() -> crate::Result<()> {
+    fn test_vectors_SHA512() -> crate::Result<()> {
         let tvs = [
             // generated using: utils/test_vectors/py/main.py
             TestVector {
@@ -118,8 +120,8 @@ mod tests {
         for tv in tvs.iter() {
             let mut skb = [0; SECRET_KEY_LENGTH];
             hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
-            let sk = SecretKey::from_le_bytes(skb);
-            assert_eq!(skb, sk.to_le_bytes());
+            let sk = SecretKey::from_bytes(skb);
+            assert_eq!(skb, sk.to_bytes());
 
             let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
             hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
@@ -132,14 +134,14 @@ mod tests {
 
             let mut sigb = [0; SIGNATURE_LENGTH];
             hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
-            assert_eq!(sigb, sk.sign(&msg).to_bytes());
+            assert_eq!(sigb, sign_SHA512(&sk, &msg).to_bytes());
             let sig = Signature::from_bytes(sigb);
-            assert!(verify(&pk, &sig, &msg));
-            assert!(!verify(&fresh_key().public_key(), &sig, &msg));
+            assert!(verify_SHA512(&pk, &sig, &msg));
+            assert!(!verify_SHA512(&fresh_key().public_key(), &sig, &msg));
 
             crate::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
-            assert!(!verify(&pk, &incorrect_sig, &msg));
+            assert!(!verify_SHA512(&pk, &incorrect_sig, &msg));
         }
 
         Ok(())
@@ -150,15 +152,15 @@ mod tests {
         let sk = fresh_key();
         let msg = crate::test_utils::fresh::bytestring();
 
-        let sig = sk.sign(&msg);
+        let sig = sign_SHA512(&sk, &msg);
 
-        assert!(verify(&sk.public_key(), &sig, &msg));
-        assert!(!verify(&fresh_key().public_key(), &sig, &msg));
+        assert!(verify_SHA512(&sk.public_key(), &sig, &msg));
+        assert!(!verify_SHA512(&fresh_key().public_key(), &sig, &msg));
 
         let mut sigb = sig.to_bytes();
         crate::test_utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
-        assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
+        assert!(!verify_SHA512(&sk.public_key(), &incorrect_sig, &msg));
 
         Ok(())
     }
