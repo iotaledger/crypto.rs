@@ -3,13 +3,11 @@
 
 #![allow(non_snake_case)]
 
-use core::convert::TryFrom;
-
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
-pub struct SecretKey(ed25519_zebra::SigningKey);
+pub struct SecretKey([u8; SECRET_KEY_LENGTH]);
 
 impl SecretKey {
     #[cfg(feature = "random")]
@@ -19,54 +17,73 @@ impl SecretKey {
         Ok(Self::from_bytes(bs))
     }
 
-    pub fn public_key(&self) -> PublicKey {
-        PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
-    }
-
     pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
-        self.0.into()
+        self.0
     }
 
     pub fn from_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> Self {
-        SecretKey(ed25519_zebra::SigningKey::from(bs))
+        SecretKey(bs)
     }
 }
 
-pub struct PublicKey(ed25519_zebra::VerificationKey);
+pub mod SHA512 {
+    use super::*;
+    use core::convert::TryFrom;
 
-impl PublicKey {
-    pub fn to_compressed_bytes(&self) -> [u8; COMPRESSED_PUBLIC_KEY_LENGTH] {
-        self.0.into()
+    // At the time of writing ed25519_zebra is implementing the Ed25519-SHA512 EdDSA scheme without
+    // explicitly stating that fact:
+    // https://github.com/ZcashFoundation/ed25519-zebra/blob/0e7a96a267a756e642e102a28a44dd79b9c7df69/src/signing_key.rs#L75
+
+    pub struct SigningKey(ed25519_zebra::SigningKey);
+
+    impl From<super::SecretKey> for SigningKey {
+        fn from(sk: super::SecretKey) -> Self {
+            Self(ed25519_zebra::SigningKey::from(sk.0))
+        }
     }
 
-    pub fn from_compressed_bytes(bs: [u8; COMPRESSED_PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
-        ed25519_zebra::VerificationKey::try_from(bs)
-            .map(Self)
-            .map_err(|_| crate::Error::ConvertError {
-                from: "compressed bytes",
-                to: "Ed25519 public key",
-            })
-    }
-}
+    pub struct PublicKey(ed25519_zebra::VerificationKey);
 
-pub struct Signature(ed25519_zebra::Signature);
-
-impl Signature {
-    pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
-        self.0.into()
+    impl SigningKey {
+        pub fn public_key(&self) -> PublicKey {
+            PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
+        }
     }
 
-    pub fn from_bytes(bs: [u8; SIGNATURE_LENGTH]) -> Self {
-        Self(ed25519_zebra::Signature::from(bs))
+    impl PublicKey {
+        pub fn to_compressed_bytes(&self) -> [u8; COMPRESSED_PUBLIC_KEY_LENGTH] {
+            self.0.into()
+        }
+
+        pub fn from_compressed_bytes(bs: [u8; COMPRESSED_PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
+            ed25519_zebra::VerificationKey::try_from(bs)
+                .map(Self)
+                .map_err(|_| crate::Error::ConvertError {
+                    from: "compressed bytes",
+                    to: "Ed25519 public key",
+                })
+        }
     }
-}
 
-pub fn sign_SHA512(sk: &SecretKey, msg: &[u8]) -> Signature {
-    Signature(sk.0.sign(msg))
-}
+    pub struct Signature(ed25519_zebra::Signature);
 
-pub fn verify_SHA512(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
-    pk.0.verify(&sig.0, msg).is_ok()
+    impl Signature {
+        pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
+            self.0.into()
+        }
+
+        pub fn from_bytes(bs: [u8; SIGNATURE_LENGTH]) -> Self {
+            Self(ed25519_zebra::Signature::from(bs))
+        }
+    }
+
+    pub fn sign(sk: &SigningKey, msg: &[u8]) -> Signature {
+        Signature(sk.0.sign(msg))
+    }
+
+    pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
+        pk.0.verify(&sig.0, msg).is_ok()
+    }
 }
 
 #[cfg(test)]
@@ -95,6 +112,8 @@ mod tests {
 
     #[test]
     fn test_vectors_SHA512() -> crate::Result<()> {
+        use SHA512::*;
+
         let tvs = [
             // generated using: utils/test_vectors/py/main.py
             TestVector {
@@ -122,6 +141,7 @@ mod tests {
             hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
             let sk = SecretKey::from_bytes(skb);
             assert_eq!(skb, sk.to_bytes());
+            let sk: SigningKey = sk.into();
 
             let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
             hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
@@ -134,14 +154,14 @@ mod tests {
 
             let mut sigb = [0; SIGNATURE_LENGTH];
             hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
-            assert_eq!(sigb, sign_SHA512(&sk, &msg).to_bytes());
+            assert_eq!(sigb, sign(&sk, &msg).to_bytes());
             let sig = Signature::from_bytes(sigb);
-            assert!(verify_SHA512(&pk, &sig, &msg));
-            assert!(!verify_SHA512(&fresh_key().public_key(), &sig, &msg));
+            assert!(verify(&pk, &sig, &msg));
+            assert!(!verify(&SigningKey::from(fresh_key()).public_key(), &sig, &msg));
 
             crate::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
-            assert!(!verify_SHA512(&pk, &incorrect_sig, &msg));
+            assert!(!verify(&pk, &incorrect_sig, &msg));
         }
 
         Ok(())
@@ -149,18 +169,20 @@ mod tests {
 
     #[test]
     fn test_generate() -> crate::Result<()> {
-        let sk = fresh_key();
+        use SHA512::*;
+
+        let sk: SigningKey = fresh_key().into();
         let msg = crate::test_utils::fresh::bytestring();
 
-        let sig = sign_SHA512(&sk, &msg);
+        let sig = sign(&sk, &msg);
 
-        assert!(verify_SHA512(&sk.public_key(), &sig, &msg));
-        assert!(!verify_SHA512(&fresh_key().public_key(), &sig, &msg));
+        assert!(verify(&sk.public_key(), &sig, &msg));
+        assert!(!verify(&SigningKey::from(fresh_key()).public_key(), &sig, &msg));
 
         let mut sigb = sig.to_bytes();
         crate::test_utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
-        assert!(!verify_SHA512(&sk.public_key(), &incorrect_sig, &msg));
+        assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
 
         Ok(())
     }
