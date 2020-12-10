@@ -24,6 +24,7 @@ blake2b = ["blake2b_simd"]
 curl-p = [ "bee-ternary" ]
 sha = [ "sha2" ]
 hmac = [ "hmac_" ]
+pbkdf = []
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }

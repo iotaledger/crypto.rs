@@ -6,6 +6,7 @@
 pub mod ciphers;
 pub mod hashes;
 pub mod macs;
+pub mod kdfs;
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
