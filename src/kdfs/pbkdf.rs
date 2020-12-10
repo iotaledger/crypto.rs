@@ -4,8 +4,17 @@
 #![allow(non_snake_case)]
 
 #[cfg(all(feature = "hmac", feature = "sha"))]
-pub fn PBKDF2_HMAC_SHA512() {
-    todo!()
+pub fn PBKDF2_HMAC_SHA512(password: &[u8], salt: &[u8], c: usize, dk: &mut [u8; 64]) -> crate::Result<()> {
+    if c == 0 {
+        return Err(crate::Error::InvalidArgumentError {
+            alg: "PBKDF2-HMAC-SHA512",
+            expected: "non-zero iteration count",
+        });
+    }
+
+    pbkdf2::pbkdf2::<hmac_::Hmac<sha2::Sha512>>(password, salt, c as u32, dk);
+
+    Ok(())
 }
 
 #[cfg(test)]
@@ -20,7 +29,8 @@ mod tests {
     }
 
     #[test]
-    fn test_PBKDF2_HMAC_SHA512() {
+    #[cfg(all(feature = "hmac", feature = "sha"))]
+    fn test_PBKDF2_HMAC_SHA512() -> crate::Result<()> {
         let tvs = [
             TestVector {
                 password: "",
@@ -69,8 +79,14 @@ mod tests {
         for tv in tvs.iter() {
             let password = hex::decode(tv.password).unwrap();
             let salt = hex::decode(tv.salt).unwrap();
+            let mut expected_dk = [0; 64];
+            hex::decode_to_slice(tv.dk, &mut expected_dk).unwrap();
+
             let mut dk = [0; 64];
-            hex::decode_to_slice(tv.dk, &mut dk).unwrap();
+            PBKDF2_HMAC_SHA512(&password, &salt, tv.c, &mut dk)?;
+            assert_eq!(dk, expected_dk);
         }
+
+        Ok(())
     }
 }

@@ -5,8 +5,8 @@
 
 pub mod ciphers;
 pub mod hashes;
-pub mod macs;
 pub mod kdfs;
+pub mod macs;
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
@@ -39,6 +39,9 @@ pub enum Error {
     ConvertError { from: &'static str, to: &'static str },
     /// Private Key Error
     PrivateKeyError,
+    /// InvalidArgumentError
+    InvalidArgumentError { alg: &'static str, expected: &'static str },
+    /// System Error
     SystemError {
         call: &'static str,
         raw_os_error: Option<i32>,
@@ -52,6 +55,7 @@ impl fmt::Display for Error {
             Error::CipherError { alg } => write!(f, "error in algorithm {}", alg),
             Error::ConvertError { from, to } => write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
+            Error::InvalidArgumentError { alg, expected } => write!(f, "{} expects {}", alg, expected),
             Error::SystemError {
                 call,
                 raw_os_error: None,
