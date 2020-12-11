@@ -9,8 +9,20 @@ type Mnemonic = str;
 type Passphrase = str;
 type Seed = [u8; 64];
 
-pub fn mnemonic_to_seed(_m: &Mnemonic, _p: &Passphrase, _s: &mut Seed) -> crate::Result<()> {
-    todo!()
+extern crate alloc;
+use alloc::string::String;
+
+use unicode_normalization::UnicodeNormalization;
+
+pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) -> crate::Result<()> {
+    let m = m.chars().nfkd().collect::<String>();
+
+    let mut salt = String::with_capacity("mnemonic".len() + p.len());
+    salt.push_str("mnemonic");
+    salt.push_str(p);
+    let salt = salt.nfkd().collect::<String>();
+
+    crate::kdfs::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), 2048, s)
 }
 
 #[cfg(test)]
@@ -272,6 +284,19 @@ mod tests {
                 seed: "01f5bced59dec48e362f2c45b5de68b9fd6c92c6634f44d6d40aab69056506f0e35524a518034ddc1192e1dacd32c1ed3eaa3c3b131c88ed8e7e54c49a5d0998",
             },
         ];
+
+        for tv in tvs.iter() {
+            let mnemonic = hex::decode(tv.mnemonic).unwrap();
+            let mnemonic = core::str::from_utf8(&mnemonic).unwrap();
+            let passphrase = hex::decode(tv.passphrase).unwrap();
+            let passphrase = core::str::from_utf8(&passphrase).unwrap();
+            let mut expected_seed = [0; 64];
+            hex::decode_to_slice(tv.seed, &mut expected_seed).unwrap();
+
+            let mut seed = [0; 64];
+            mnemonic_to_seed(mnemonic, passphrase, &mut seed)?;
+            assert_eq!(seed, expected_seed);
+        }
 
         Ok(())
     }

@@ -25,7 +25,7 @@ curl-p = [ "bee-ternary" ]
 sha = [ "sha2" ]
 hmac = [ "hmac_" ]
 pbkdf = [ "pbkdf2" ]
-bip39 = [ ]
+bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }
@@ -69,6 +69,11 @@ default-features = false
 
 [dependencies.pbkdf2]
 version = "0.6.0"
+optional = true
+default-features = false
+
+[dependencies.unicode-normalization]
+version = "0.1.16"
 optional = true
 default-features = false
 
