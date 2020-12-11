@@ -17,6 +17,9 @@ pub mod rand;
 #[cfg(feature = "blake2b")]
 pub mod blake2b;
 
+#[cfg(feature = "bip39")]
+pub mod bip39;
+
 #[cfg(test)]
 #[macro_use]
 #[allow(unused_imports)]
