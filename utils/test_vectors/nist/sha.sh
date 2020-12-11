@@ -4,7 +4,7 @@ set -o nounset -o pipefail -o errexit
 
 SCRIPT_DIR=$(readlink -f "$0" | xargs dirname)
 
-. "$SCRIPT_DIR/fetch.sh"
+. "$SCRIPT_DIR/../fetch.sh"
 
 WS=$(mktemp -d)
 trap 'rm -rf $WS' EXIT
