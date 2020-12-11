@@ -14,7 +14,7 @@ impl SecretKey {
     pub fn generate() -> crate::Result<Self> {
         let mut bs = [0u8; SECRET_KEY_LENGTH];
         crate::rand::fill(&mut bs)?;
-        Ok(Self::from_bytes(bs))
+        Ok(Self(bs))
     }
 
     pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
@@ -22,7 +22,13 @@ impl SecretKey {
     }
 
     pub fn from_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> Self {
-        SecretKey(bs)
+        Self(bs)
+    }
+}
+
+impl AsRef<SecretKey> for SecretKey {
+    fn as_ref(&self) -> &SecretKey {
+        &self
     }
 }
 
@@ -34,20 +40,18 @@ pub mod SHA512 {
     // explicitly stating that fact:
     // https://github.com/ZcashFoundation/ed25519-zebra/blob/0e7a96a267a756e642e102a28a44dd79b9c7df69/src/signing_key.rs#L75
 
-    pub struct SigningKey(ed25519_zebra::SigningKey);
+    pub struct IntermediateKey(ed25519_zebra::SigningKey);
 
-    impl From<super::SecretKey> for SigningKey {
-        fn from(sk: super::SecretKey) -> Self {
-            Self(ed25519_zebra::SigningKey::from(sk.0))
+    impl<T: AsRef<super::SecretKey>> From<T> for IntermediateKey {
+        fn from(t: T) -> Self {
+            Self(ed25519_zebra::SigningKey::from(t.as_ref().0))
         }
     }
 
     pub struct PublicKey(ed25519_zebra::VerificationKey);
 
-    impl SigningKey {
-        pub fn public_key(&self) -> PublicKey {
-            PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
-        }
+    pub fn public_key<K: Into<IntermediateKey>>(k: K) -> PublicKey {
+        PublicKey(ed25519_zebra::VerificationKey::from(&k.into().0))
     }
 
     impl PublicKey {
@@ -77,8 +81,8 @@ pub mod SHA512 {
         }
     }
 
-    pub fn sign(sk: &SigningKey, msg: &[u8]) -> Signature {
-        Signature(sk.0.sign(msg))
+    pub fn sign<K: Into<IntermediateKey>>(k: K, msg: &[u8]) -> Signature {
+        Signature(k.into().0.sign(msg))
     }
 
     pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
@@ -112,8 +116,6 @@ mod tests {
 
     #[test]
     fn test_vectors_SHA512() -> crate::Result<()> {
-        use SHA512::*;
-
         let tvs = [
             // generated using: utils/test_vectors/py/main.py
             TestVector {
@@ -141,12 +143,11 @@ mod tests {
             hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
             let sk = SecretKey::from_bytes(skb);
             assert_eq!(skb, sk.to_bytes());
-            let sk: SigningKey = sk.into();
 
             let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
             hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
-            assert_eq!(pkb, sk.public_key().to_compressed_bytes());
-            let pk = PublicKey::from_compressed_bytes(pkb)?;
+            assert_eq!(pkb, SHA512::public_key(&sk).to_compressed_bytes());
+            let pk = SHA512::PublicKey::from_compressed_bytes(pkb)?;
             assert_eq!(pkb, pk.to_compressed_bytes());
             // TODO: assert_eq!(pk, sk.public_key()); why no equality on ed25519_zebra::VerificationKey?
 
@@ -154,14 +155,14 @@ mod tests {
 
             let mut sigb = [0; SIGNATURE_LENGTH];
             hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
-            assert_eq!(sigb, sign(&sk, &msg).to_bytes());
-            let sig = Signature::from_bytes(sigb);
-            assert!(verify(&pk, &sig, &msg));
-            assert!(!verify(&SigningKey::from(fresh_key()).public_key(), &sig, &msg));
+            assert_eq!(sigb, SHA512::sign(&sk, &msg).to_bytes());
+            let sig = SHA512::Signature::from_bytes(sigb);
+            assert!(SHA512::verify(&pk, &sig, &msg));
+            assert!(!SHA512::verify(&SHA512::public_key(fresh_key()), &sig, &msg));
 
             crate::test_utils::corrupt(&mut sigb);
-            let incorrect_sig = Signature::from_bytes(sigb);
-            assert!(!verify(&pk, &incorrect_sig, &msg));
+            let incorrect_sig = SHA512::Signature::from_bytes(sigb);
+            assert!(!SHA512::verify(&pk, &incorrect_sig, &msg));
         }
 
         Ok(())
@@ -169,20 +170,18 @@ mod tests {
 
     #[test]
     fn test_generate() -> crate::Result<()> {
-        use SHA512::*;
-
-        let sk: SigningKey = fresh_key().into();
+        let sk = fresh_key();
         let msg = crate::test_utils::fresh::bytestring();
 
-        let sig = sign(&sk, &msg);
+        let sig = SHA512::sign(&sk, &msg);
 
-        assert!(verify(&sk.public_key(), &sig, &msg));
-        assert!(!verify(&SigningKey::from(fresh_key()).public_key(), &sig, &msg));
+        assert!(SHA512::verify(&SHA512::public_key(&sk), &sig, &msg));
+        assert!(!SHA512::verify(&SHA512::public_key(fresh_key()), &sig, &msg));
 
         let mut sigb = sig.to_bytes();
         crate::test_utils::corrupt(&mut sigb);
-        let incorrect_sig = Signature::from_bytes(sigb);
-        assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
+        let incorrect_sig = SHA512::Signature::from_bytes(sigb);
+        assert!(!SHA512::verify(&SHA512::public_key(sk), &incorrect_sig, &msg));
 
         Ok(())
     }
