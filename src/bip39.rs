@@ -10,7 +10,7 @@ type Passphrase = str;
 type Seed = [u8; 64];
 
 extern crate alloc;
-use alloc::string::String;
+use alloc::string::{String, ToString};
 
 use unicode_normalization::UnicodeNormalization;
 
@@ -36,8 +36,67 @@ pub mod wordlist {
     #[cfg(feature = "bip39-jp")]
     include!("bip39.jp.rs");
 
-    pub fn encode(data: &[u8], wordlist: Wordlist) -> crate::Result<String> {
-        todo!()
+    #[allow(non_snake_case)]
+    #[allow(clippy::many_single_char_names)]
+    pub fn encode(data: &[u8], wordlist: Wordlist) -> String {
+        let ENT = data.len() * 8;
+
+        let mut CS = [0; 32];
+        crate::hashes::sha::SHA256(data, &mut CS);
+
+        let mut ms = None;
+
+        let b = |i: usize| {
+            if i < data.len() {
+                Some(data[i] as usize)
+            } else if i - data.len() < CS.len() {
+                Some(CS[i - data.len()] as usize)
+            } else {
+                None
+            }
+        };
+
+        let mut i = 0;
+        loop {
+            if i >= ENT + ENT / 32 {
+                return ms.unwrap();
+            }
+
+            let k = i / 8;
+            let r = i % 8;
+            let idx = if 16 - r > 11 {
+                match (b(k), b(k + 1)) {
+                    (Some(b0), Some(b1)) => {
+                        let x = 11 - (8 - r);
+                        let mut y = (b0 & ((1 << (8 - r)) - 1)) << x;
+                        y |= b1 >> (8 - x);
+                        y
+                    }
+                    _ => return ms.unwrap(),
+                }
+            } else {
+                match (b(k), b(k + 1), b(k + 2)) {
+                    (Some(b0), Some(b1), Some(b2)) => {
+                        let x = 11 - 8 - (8 - r);
+                        let mut y = (b0 & ((1 << (8 - r)) - 1)) << (8 + x);
+                        y |= b1 << x;
+                        y |= b2 >> (8 - x);
+                        y
+                    }
+                    _ => return ms.unwrap(),
+                }
+            };
+
+            match ms {
+                None => ms = Some(wordlist[idx].to_string()),
+                Some(ref mut ms) => {
+                    ms.push(' ');
+                    ms.push_str(wordlist[idx]);
+                }
+            }
+
+            i += 11;
+        }
     }
 }
 
@@ -400,8 +459,15 @@ mod tests {
         ];
 
         for tv in tvs.iter() {
+            let entropy = hex::decode(tv.entropy).unwrap();
             let mnemonic = hex::decode(tv.mnemonic).unwrap();
             let mnemonic = core::str::from_utf8(&mnemonic).unwrap();
+
+            assert_eq!(
+                wordlist::encode(&entropy, tv.wordlist),
+                mnemonic.chars().nfkd().collect::<String>()
+            );
+
             let passphrase = hex::decode(tv.passphrase).unwrap();
             let passphrase = core::str::from_utf8(&passphrase).unwrap();
             let mut expected_seed = [0; 64];
