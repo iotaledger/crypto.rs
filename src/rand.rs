@@ -8,6 +8,12 @@ pub fn fill(bs: &mut [u8]) -> crate::Result<()> {
     })
 }
 
+pub unsafe fn gen<T>() -> crate::Result<T> {
+    let mut t = core::mem::MaybeUninit::uninit();
+    fill(core::slice::from_raw_parts_mut(t.as_mut_ptr() as *mut u8, core::mem::size_of::<T>()))?;
+    Ok(t.assume_init())
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
