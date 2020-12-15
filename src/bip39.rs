@@ -27,6 +27,7 @@ pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) -> crate::Re
 
 pub mod wordlist {
     use super::*;
+    use alloc::vec::Vec;
 
     pub type Wordlist<'a> = &'a [&'a str; 2048];
 
@@ -96,6 +97,43 @@ pub mod wordlist {
             }
 
             i += 11;
+        }
+    }
+
+    pub fn decode(ms: &str, wordlist: Wordlist) -> Option<Vec<u8>> {
+        let mut data = Vec::new();
+        let mut acc = 0u16;
+        let mut i = 0;
+        let ms = ms.chars().nfkd().collect::<String>();
+        let mut ws = ms.split_whitespace();
+        while let Some(ref w) = ws.next() {
+            match wordlist.iter().position(|v| v == w) {
+                None => return None,
+                Some(idx) => {
+                    let r = i % 8;
+                    if r + 11 < 16 {
+                        acc = acc << (8 - r);
+                        acc |= (idx >> 11 - (8 - r)) as u16;
+                        data.push(acc as u8);
+                        acc = (idx & ((1 << (11 - (8 - r))) - 1)) as u16;
+                    } else {
+                        acc = acc << (8 - r);
+                        acc |= (idx >> 11 - (8 - r)) as u16;
+                        data.push(acc as u8);
+                        acc = ((idx & ((1 << (11 - (8 - r))) - 1)) >> (11 - 8 - (8 - r))) as u16;
+                        data.push(acc as u8);
+                        acc = (idx & ((1 << (11 - 8 - (8 - r))) - 1)) as u16;
+                    }
+
+                    i += 11;
+                }
+            }
+        }
+
+        if i > 256 {
+            Some(data[..32].to_vec())
+        } else {
+            Some(data)
         }
     }
 }
@@ -465,7 +503,12 @@ mod tests {
 
             assert_eq!(
                 wordlist::encode(&entropy, tv.wordlist),
-                mnemonic.chars().nfkd().collect::<String>()
+                mnemonic.chars().nfkd().collect::<String>(),
+            );
+
+            assert_eq!(
+                wordlist::decode(mnemonic, tv.wordlist).unwrap(),
+                entropy,
             );
 
             let passphrase = hex::decode(tv.passphrase).unwrap();
