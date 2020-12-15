@@ -102,23 +102,22 @@ pub mod wordlist {
 
     pub fn decode(ms: &str, wordlist: Wordlist) -> Option<Vec<u8>> {
         let mut data = Vec::new();
-        let mut acc = 0u16;
+        let mut acc = 0;
         let mut i = 0;
         let ms = ms.chars().nfkd().collect::<String>();
-        let mut ws = ms.split_whitespace();
-        while let Some(ref w) = ws.next() {
+        for ref w in ms.split_whitespace() {
             match wordlist.iter().position(|v| v == w) {
                 None => return None,
                 Some(idx) => {
                     let r = i % 8;
                     if r + 11 < 16 {
-                        acc = acc << (8 - r);
-                        acc |= (idx >> 11 - (8 - r)) as u16;
+                        acc <<= 8 - r;
+                        acc |= (idx >> (11 - (8 - r))) as u16;
                         data.push(acc as u8);
                         acc = (idx & ((1 << (11 - (8 - r))) - 1)) as u16;
                     } else {
-                        acc = acc << (8 - r);
-                        acc |= (idx >> 11 - (8 - r)) as u16;
+                        acc <<= 8 - r;
+                        acc |= (idx >> (11 - (8 - r))) as u16;
                         data.push(acc as u8);
                         acc = ((idx & ((1 << (11 - (8 - r))) - 1)) >> (11 - 8 - (8 - r))) as u16;
                         data.push(acc as u8);
@@ -506,10 +505,7 @@ mod tests {
                 mnemonic.chars().nfkd().collect::<String>(),
             );
 
-            assert_eq!(
-                wordlist::decode(mnemonic, tv.wordlist).unwrap(),
-                entropy,
-            );
+            assert_eq!(wordlist::decode(mnemonic, tv.wordlist).unwrap(), entropy,);
 
             let passphrase = hex::decode(tv.passphrase).unwrap();
             let passphrase = core::str::from_utf8(&passphrase).unwrap();
