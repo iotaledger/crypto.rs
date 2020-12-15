@@ -14,7 +14,7 @@ use alloc::string::{String, ToString};
 
 use unicode_normalization::UnicodeNormalization;
 
-pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) -> crate::Result<()> {
+pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) {
     let m = m.chars().nfkd().collect::<String>();
 
     let mut salt = String::with_capacity("mnemonic".len() + p.len());
@@ -22,7 +22,9 @@ pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) -> crate::Re
     salt.push_str(p);
     let salt = salt.nfkd().collect::<String>();
 
-    crate::kdfs::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), 2048, s)
+    // unwrapping here is safe since PBKDF2_HMAC_SHA512 is only expected to fail when iteration
+    // count is zero
+    crate::kdfs::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), 2048, s).unwrap();
 }
 
 pub mod wordlist {
@@ -37,10 +39,25 @@ pub mod wordlist {
     #[cfg(feature = "bip39-jp")]
     include!("bip39.jp.rs");
 
+    #[derive(Debug, PartialEq)]
+    pub enum Error {
+        InvalidEntropyCount(usize),
+        NoSuchWord(String),
+        ChecksumMismatch,
+    }
+
+    const fn cs(ent: usize) -> usize {
+        ent / 32
+    }
+
     #[allow(non_snake_case)]
     #[allow(clippy::many_single_char_names)]
-    pub fn encode(data: &[u8], wordlist: Wordlist) -> String {
+    pub fn encode(data: &[u8], wordlist: Wordlist) -> Result<String, Error> {
         let ENT = data.len() * 8;
+
+        if ENT != 128 && ENT != 160 && ENT != 192 && ENT != 224 && ENT != 256 {
+            return Err(Error::InvalidEntropyCount(ENT));
+        }
 
         let mut CS = [0; 32];
         crate::hashes::sha::SHA256(data, &mut CS);
@@ -59,8 +76,8 @@ pub mod wordlist {
 
         let mut i = 0;
         loop {
-            if i >= ENT + ENT / 32 {
-                return ms.unwrap();
+            if i == ENT + cs(ENT) {
+                return Ok(ms.unwrap());
             }
 
             let k = i / 8;
@@ -73,7 +90,7 @@ pub mod wordlist {
                         y |= b1 >> (8 - x);
                         y
                     }
-                    _ => return ms.unwrap(),
+                    _ => return Ok(ms.unwrap()),
                 }
             } else {
                 match (b(k), b(k + 1), b(k + 2)) {
@@ -84,7 +101,7 @@ pub mod wordlist {
                         y |= b2 >> (8 - x);
                         y
                     }
-                    _ => return ms.unwrap(),
+                    _ => return Ok(ms.unwrap()),
                 }
             };
 
@@ -100,28 +117,29 @@ pub mod wordlist {
         }
     }
 
-    pub fn decode(ms: &str, wordlist: Wordlist) -> Option<Vec<u8>> {
+    #[allow(non_snake_case)]
+    pub fn decode(ms: &str, wordlist: Wordlist) -> Result<Vec<u8>, Error> {
         let mut data = Vec::new();
         let mut acc = 0;
         let mut i = 0;
         let ms = ms.chars().nfkd().collect::<String>();
         for ref w in ms.split_whitespace() {
             match wordlist.iter().position(|v| v == w) {
-                None => return None,
+                None => return Err(Error::NoSuchWord(w.to_string())),
                 Some(idx) => {
                     let r = i % 8;
                     if r + 11 < 16 {
                         acc <<= 8 - r;
-                        acc |= (idx >> (11 - (8 - r))) as u16;
+                        acc |= idx >> (11 - (8 - r));
                         data.push(acc as u8);
-                        acc = (idx & ((1 << (11 - (8 - r))) - 1)) as u16;
+                        acc = idx & ((1 << (11 - (8 - r))) - 1);
                     } else {
                         acc <<= 8 - r;
-                        acc |= (idx >> (11 - (8 - r))) as u16;
+                        acc |= idx >> (11 - (8 - r));
                         data.push(acc as u8);
-                        acc = ((idx & ((1 << (11 - (8 - r))) - 1)) >> (11 - 8 - (8 - r))) as u16;
+                        acc = (idx & ((1 << (11 - (8 - r))) - 1)) >> (11 - 8 - (8 - r));
                         data.push(acc as u8);
-                        acc = (idx & ((1 << (11 - 8 - (8 - r))) - 1)) as u16;
+                        acc = idx & ((1 << (11 - 8 - (8 - r))) - 1);
                     }
 
                     i += 11;
@@ -129,10 +147,49 @@ pub mod wordlist {
             }
         }
 
-        if i > 256 {
-            Some(data[..32].to_vec())
+        if i == 128 + cs(128) {
+            let mut CS = [0; 32];
+            crate::hashes::sha::SHA256(&data, &mut CS);
+            if (acc as u8) == CS[0] >> (8 - cs(128)) {
+                Ok(data)
+            } else {
+                Err(Error::ChecksumMismatch)
+            }
+        } else if i == 160 + cs(160) {
+            let mut CS = [0; 32];
+            crate::hashes::sha::SHA256(&data, &mut CS);
+            if (acc as u8) == CS[0] >> (8 - cs(160)) {
+                Ok(data)
+            } else {
+                Err(Error::ChecksumMismatch)
+            }
+        } else if i == 192 + cs(192) {
+            let mut CS = [0; 32];
+            crate::hashes::sha::SHA256(&data, &mut CS);
+            if (acc as u8) == CS[0] >> (8 - cs(192)) {
+                Ok(data)
+            } else {
+                Err(Error::ChecksumMismatch)
+            }
+        } else if i == 224 + cs(224) {
+            let mut CS = [0; 32];
+            crate::hashes::sha::SHA256(&data, &mut CS);
+            if (acc as u8) == CS[0] >> (8 - cs(224)) {
+                Ok(data)
+            } else {
+                Err(Error::ChecksumMismatch)
+            }
+        } else if i == 256 + cs(256) {
+            let mut CS = [0; 32];
+            crate::hashes::sha::SHA256(&data[..32], &mut CS);
+            if data[32] == CS[0] {
+                data.truncate(32);
+                Ok(data)
+            } else {
+                Err(Error::ChecksumMismatch)
+            }
         } else {
-            Some(data)
+            Err(Error::InvalidEntropyCount(i))
         }
     }
 }
@@ -140,6 +197,8 @@ pub mod wordlist {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use alloc::vec::Vec;
+    use rand::{rngs::OsRng, RngCore};
 
     struct TestVector {
         wordlist: wordlist::Wordlist<'static>,
@@ -150,7 +209,7 @@ mod tests {
     }
 
     #[test]
-    fn test_vectors() -> crate::Result<()> {
+    fn test_vectors() {
         let tvs = [
             // https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json
             // mangled using utils/test_vectors/bip39/bip32JP.sh
@@ -501,7 +560,7 @@ mod tests {
             let mnemonic = core::str::from_utf8(&mnemonic).unwrap();
 
             assert_eq!(
-                wordlist::encode(&entropy, tv.wordlist),
+                wordlist::encode(&entropy, tv.wordlist).unwrap(),
                 mnemonic.chars().nfkd().collect::<String>(),
             );
 
@@ -513,10 +572,69 @@ mod tests {
             hex::decode_to_slice(tv.seed, &mut expected_seed).unwrap();
 
             let mut seed = [0; 64];
-            mnemonic_to_seed(mnemonic, passphrase, &mut seed)?;
+            mnemonic_to_seed(mnemonic, passphrase, &mut seed);
             assert_eq!(seed, expected_seed);
         }
+    }
 
-        Ok(())
+    const ALL_WORDLISTS: &[wordlist::Wordlist<'static>] = &[wordlist::ENGLISH, wordlist::JAPANESE];
+    fn choose_wordlist() -> wordlist::Wordlist<'static> {
+        ALL_WORDLISTS[rand::random::<usize>() % ALL_WORDLISTS.len()]
+    }
+
+    #[test]
+    fn test_wordlist_codec() {
+        for _ in 0..100 {
+            let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
+            OsRng.fill_bytes(&mut data);
+
+            let ws = choose_wordlist();
+
+            let ms = wordlist::encode(&data, ws).unwrap();
+            assert_eq!(wordlist::decode(&ms, ws).unwrap(), data,);
+        }
+    }
+
+    #[test]
+    fn test_wordlist_codec_different_data_different_encodings() {
+        let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
+        OsRng.fill_bytes(&mut data);
+
+        let mut corrupted_data = data.clone();
+        crate::test_utils::corrupt(&mut corrupted_data);
+
+        let ws = choose_wordlist();
+        let ms = wordlist::encode(&data, ws).unwrap();
+
+        assert_ne!(ms, wordlist::encode(&corrupted_data, ws).unwrap());
+    }
+
+    #[test]
+    fn test_wordlist_codec_error_detection() {
+        let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
+        OsRng.fill_bytes(&mut data);
+
+        let ws = choose_wordlist();
+        let ms = wordlist::encode(&data, ws).unwrap();
+
+        let mut wrong_word = ms.clone();
+        while wrong_word == ms {
+            wrong_word = ms
+                .split_whitespace()
+                .map(|w| {
+                    if rand::random::<usize>() % 8 == 0 {
+                        ws[rand::random::<usize>() % 2048].to_string()
+                    } else {
+                        w.to_string()
+                    }
+                })
+                .collect::<Vec<String>>()
+                .join(" ");
+        }
+
+        assert_eq!(
+            wordlist::decode(&wrong_word, ws),
+            Err(wordlist::Error::ChecksumMismatch)
+        );
     }
 }
