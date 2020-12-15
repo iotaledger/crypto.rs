@@ -147,38 +147,24 @@ pub mod wordlist {
             }
         }
 
+        fn sub_whole_byte_case(acc: usize, data: Vec<u8>, ent: usize) -> Result<Vec<u8>, Error> {
+            let mut CS = [0; 32];
+            crate::hashes::sha::SHA256(&data, &mut CS);
+            if (acc as u8) == CS[0] >> (8 - cs(ent)) {
+                Ok(data)
+            } else {
+                Err(Error::ChecksumMismatch)
+            }
+        }
+
         if i == 128 + cs(128) {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data, &mut CS);
-            if (acc as u8) == CS[0] >> (8 - cs(128)) {
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
+            sub_whole_byte_case(acc, data, 128)
         } else if i == 160 + cs(160) {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data, &mut CS);
-            if (acc as u8) == CS[0] >> (8 - cs(160)) {
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
+            sub_whole_byte_case(acc, data, 160)
         } else if i == 192 + cs(192) {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data, &mut CS);
-            if (acc as u8) == CS[0] >> (8 - cs(192)) {
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
+            sub_whole_byte_case(acc, data, 192)
         } else if i == 224 + cs(224) {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data, &mut CS);
-            if (acc as u8) == CS[0] >> (8 - cs(224)) {
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
+            sub_whole_byte_case(acc, data, 224)
         } else if i == 256 + cs(256) {
             let mut CS = [0; 32];
             crate::hashes::sha::SHA256(&data[..32], &mut CS);
