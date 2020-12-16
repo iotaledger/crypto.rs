@@ -21,10 +21,10 @@ To be included in this list an implementation must:
 | hash | [`blake2b`](/src/hashes/blake2b.rs) |[rfc](https://tools.ietf.org/html/rfc7693) | `blake2b_simd` | [official](https://github.com/BLAKE2/BLAKE2/tree/master/testvectors) | ★★★★☆ |
 | mac | [`hmac`](/src/macs/hmac.rs) | [rfc](https://tools.ietf.org/html/rfc4231) | `hmac` | [official](https://tools.ietf.org/html/rfc4231#section-4.2) | ★★★★☆ | 
 | signature | [`ed25519`]() | [rfc (draft)](https://github.com/iotaledger/protocol-rfcs/pull/28) | `ed25519-zebra` | extended |  ★★★★☆ | `ed25519` |
-| derivation | [`pbkdf`]() | [rfc](https://tools.ietf.org/html/rfc6070) | `pbkdf2` | [official](https://tools.ietf.org/html/rfc6070#section-2) | ★★★★☆ |
+| derivation | [`pbkdf`]() | [rfc](https://tools.ietf.org/html/rfc6070) | `pbkdf2` | [official](https://tools.ietf.org/html/rfc6070#section-2) | ★★★★☆ |
 | derivation | [`bip39`]() | [rfc](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) |`crypto.rs` | [multilang](https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json) | ★★☆☆☆ |
-| derivation | [`slip10`]()*\* | [rfc](https://github.com/satoshilabs/slips/blob/master/slip-0010.md )| `stronghold.rs` | self | ★★☆☆☆ |
-| utility | [`rand`]() | [spec] | `getrandom` | math | ★★★★★ |
+| derivation | [`slip10`]()*\* | [rfc](https://github.com/satoshilabs/slips/blob/master/slip-0010.md )| `stronghold.rs` | self | ★★☆☆☆ |
+| utility | [`rand`]() | [spec] | `getrandom` | math | ★★★★★ |
 
 
 \* We have chosen a fully arbitrary rating for each algorithm based on how we generally feel about them. 
