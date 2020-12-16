@@ -178,6 +178,10 @@ pub mod wordlist {
             Err(Error::InvalidEntropyCount(i))
         }
     }
+
+    pub fn verify(ms: &str, wordlist: Wordlist) -> Result<(), Error> {
+        decode(ms, wordlist).map(|_| ())
+    }
 }
 
 #[cfg(test)]
@@ -550,7 +554,7 @@ mod tests {
                 mnemonic.chars().nfkd().collect::<String>(),
             );
 
-            assert_eq!(wordlist::decode(mnemonic, tv.wordlist).unwrap(), entropy,);
+            assert_eq!(wordlist::decode(mnemonic, tv.wordlist).unwrap(), entropy);
 
             let passphrase = hex::decode(tv.passphrase).unwrap();
             let passphrase = core::str::from_utf8(&passphrase).unwrap();
@@ -577,7 +581,8 @@ mod tests {
             let ws = choose_wordlist();
 
             let ms = wordlist::encode(&data, ws).unwrap();
-            assert_eq!(wordlist::decode(&ms, ws).unwrap(), data,);
+            assert_eq!(wordlist::decode(&ms, ws).unwrap(), data);
+            assert_eq!(wordlist::verify(&ms, ws), Ok(()));
         }
     }
 
@@ -620,6 +625,11 @@ mod tests {
 
         assert_eq!(
             wordlist::decode(&wrong_word, ws),
+            Err(wordlist::Error::ChecksumMismatch)
+        );
+
+        assert_eq!(
+            wordlist::verify(&wrong_word, ws),
             Err(wordlist::Error::ChecksumMismatch)
         );
     }
