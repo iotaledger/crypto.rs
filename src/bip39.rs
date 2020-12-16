@@ -31,7 +31,10 @@ pub mod wordlist {
     use super::*;
     use alloc::vec::Vec;
 
-    pub type Wordlist<'a> = &'a [&'a str; 2048];
+    pub struct Wordlist<'a> {
+        pub words: &'a [&'a str; 2048],
+        pub separator: &'a str,
+    }
 
     #[cfg(feature = "bip39-en")]
     include!("bip39.en.rs");
@@ -50,9 +53,15 @@ pub mod wordlist {
         ent / 32
     }
 
+    /// Encode the given bytestring as a mnemonic sentence using the specified wordlist.
+    /// Only bytestrings of length 128, 160, 192, 224 and 256 bits are accepted, and this is the
+    /// only expected error case.
+    ///
+    /// Currently the Japanese language is not supported, or at least the implementation is not
+    /// generating the expected sentences compared to our test vectors. Use at your own risk!
     #[allow(non_snake_case)]
     #[allow(clippy::many_single_char_names)]
-    pub fn encode(data: &[u8], wordlist: Wordlist) -> Result<String, Error> {
+    pub fn encode(data: &[u8], wordlist: &Wordlist) -> Result<String, Error> {
         let ENT = data.len() * 8;
 
         if ENT != 128 && ENT != 160 && ENT != 192 && ENT != 224 && ENT != 256 {
@@ -106,10 +115,10 @@ pub mod wordlist {
             };
 
             match ms {
-                None => ms = Some(wordlist[idx].to_string()),
+                None => ms = Some(wordlist.words[idx].to_string()),
                 Some(ref mut ms) => {
-                    ms.push(' ');
-                    ms.push_str(wordlist[idx]);
+                    ms.push_str(wordlist.separator);
+                    ms.push_str(wordlist.words[idx]);
                 }
             }
 
@@ -124,13 +133,13 @@ pub mod wordlist {
     /// checksum bits (CS := ENT / 32) the expected rate of false positives are one in 2^CS. For
     /// example given 128 bit entropy that's 1 in 16.
     #[allow(non_snake_case)]
-    pub fn decode(ms: &str, wordlist: Wordlist) -> Result<Vec<u8>, Error> {
+    pub fn decode(ms: &str, wordlist: &Wordlist) -> Result<Vec<u8>, Error> {
         let mut data = Vec::new();
         let mut acc = 0;
         let mut i = 0;
         let ms = ms.chars().nfkd().collect::<String>();
         for ref w in ms.split_whitespace() {
-            match wordlist.iter().position(|v| v == w) {
+            match wordlist.words.iter().position(|v| v == w) {
                 None => return Err(Error::NoSuchWord(w.to_string())),
                 Some(idx) => {
                     let r = i % 8;
@@ -185,7 +194,7 @@ pub mod wordlist {
         }
     }
 
-    pub fn verify(ms: &str, wordlist: Wordlist) -> Result<(), Error> {
+    pub fn verify(ms: &str, wordlist: &Wordlist) -> Result<(), Error> {
         decode(ms, wordlist).map(|_| ())
     }
 }
@@ -556,11 +565,14 @@ mod tests {
             let mnemonic = core::str::from_utf8(&mnemonic).unwrap();
 
             assert_eq!(
-                wordlist::encode(&entropy, tv.wordlist).unwrap(),
-                mnemonic.chars().nfkd().collect::<String>(),
+                wordlist::encode(&entropy, &tv.wordlist)
+                    .unwrap()
+                    .nfkd()
+                    .collect::<String>(),
+                mnemonic.nfkd().collect::<String>()
             );
 
-            assert_eq!(wordlist::decode(mnemonic, tv.wordlist).unwrap(), entropy);
+            assert_eq!(wordlist::decode(mnemonic, &tv.wordlist).unwrap(), entropy);
 
             let passphrase = hex::decode(tv.passphrase).unwrap();
             let passphrase = core::str::from_utf8(&passphrase).unwrap();
@@ -574,8 +586,8 @@ mod tests {
     }
 
     const ALL_WORDLISTS: &[wordlist::Wordlist<'static>] = &[wordlist::ENGLISH, wordlist::JAPANESE];
-    fn choose_wordlist() -> wordlist::Wordlist<'static> {
-        ALL_WORDLISTS[rand::random::<usize>() % ALL_WORDLISTS.len()]
+    fn choose_wordlist() -> &'static wordlist::Wordlist<'static> {
+        &ALL_WORDLISTS[rand::random::<usize>() % ALL_WORDLISTS.len()]
     }
 
     #[test]
@@ -626,16 +638,16 @@ mod tests {
                 let mut wrong_word = ms.clone();
                 while wrong_word == ms {
                     wrong_word = ms
-                        .split_whitespace()
+                        .split(ws.separator)
                         .map(|w| {
                             if rand::random::<usize>() % 8 == 0 {
-                                ws[rand::random::<usize>() % 2048].to_string()
+                                ws.words[rand::random::<usize>() % 2048].to_string()
                             } else {
                                 w.to_string()
                             }
                         })
                         .collect::<Vec<String>>()
-                        .join(" ");
+                        .join(ws.separator);
                 }
 
                 if wordlist::decode(&wrong_word, ws) != Err(wordlist::Error::ChecksumMismatch) {
