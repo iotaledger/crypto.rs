@@ -13,7 +13,7 @@ To be included in this list an implementation must:
 ## List of Algorithms
 
 | Type | Feature Flag | Spec/RFC | Rust Source | Tests | Rating* | 
-| - | - | - | - | - | - | - |
+| - | - | - | - | - | - | 
 | cipher | [`aes`](/src/ciphers/aes.rs) | [spec](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmvs.pdf) | `aes-gcm` | [nist](ttps://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS) | ★★★☆☆ |
 | cipher | [`chacha`](/src/ciphers/chacha.rs) | [rfc](https://tools.ietf.org/html/draft-arciszewski-xchacha-03) | `chacha20poly1305` | [official](https://tools.ietf.org/html/draft-arciszewski-xchacha-03#appendix-A.3) | ★★★★★ |
 | hash | [`sha`](/src/hashes/sha.rs) | [spec](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/shs/SHAVS.pdf) | `sha2` | [nist](https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/Secure-Hashing#shavs) | ★★★★★ | 
