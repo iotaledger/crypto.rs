@@ -31,7 +31,10 @@ pub mod wordlist {
     use super::*;
     use alloc::vec::Vec;
 
-    pub type Wordlist<'a> = &'a [&'a str; 2048];
+    pub struct Wordlist<'a> {
+        pub words: &'a [&'a str; 2048],
+        pub separator: &'a str,
+    }
 
     #[cfg(feature = "bip39-en")]
     include!("bip39.en.rs");
@@ -52,7 +55,7 @@ pub mod wordlist {
 
     #[allow(non_snake_case)]
     #[allow(clippy::many_single_char_names)]
-    pub fn encode(data: &[u8], wordlist: Wordlist) -> Result<String, Error> {
+    pub fn encode(data: &[u8], wordlist: &Wordlist) -> Result<String, Error> {
         let ENT = data.len() * 8;
 
         if ENT != 128 && ENT != 160 && ENT != 192 && ENT != 224 && ENT != 256 {
@@ -106,10 +109,10 @@ pub mod wordlist {
             };
 
             match ms {
-                None => ms = Some(wordlist[idx].to_string()),
+                None => ms = Some(wordlist.words[idx].to_string()),
                 Some(ref mut ms) => {
-                    ms.push(' ');
-                    ms.push_str(wordlist[idx]);
+                    ms.push_str(wordlist.separator);
+                    ms.push_str(wordlist.words[idx]);
                 }
             }
 
@@ -118,13 +121,13 @@ pub mod wordlist {
     }
 
     #[allow(non_snake_case)]
-    pub fn decode(ms: &str, wordlist: Wordlist) -> Result<Vec<u8>, Error> {
+    pub fn decode(ms: &str, wordlist: &Wordlist) -> Result<Vec<u8>, Error> {
         let mut data = Vec::new();
         let mut acc = 0;
         let mut i = 0;
         let ms = ms.chars().nfkd().collect::<String>();
         for ref w in ms.split_whitespace() {
-            match wordlist.iter().position(|v| v == w) {
+            match wordlist.words.iter().position(|v| v == w) {
                 None => return Err(Error::NoSuchWord(w.to_string())),
                 Some(idx) => {
                     let r = i % 8;
@@ -179,7 +182,7 @@ pub mod wordlist {
         }
     }
 
-    pub fn verify(ms: &str, wordlist: Wordlist) -> Result<(), Error> {
+    pub fn verify(ms: &str, wordlist: &Wordlist) -> Result<(), Error> {
         decode(ms, wordlist).map(|_| ())
     }
 }
@@ -550,11 +553,11 @@ mod tests {
             let mnemonic = core::str::from_utf8(&mnemonic).unwrap();
 
             assert_eq!(
-                wordlist::encode(&entropy, tv.wordlist).unwrap(),
-                mnemonic.chars().nfkd().collect::<String>(),
+                wordlist::encode(&entropy, &tv.wordlist).unwrap(),
+                mnemonic
             );
 
-            assert_eq!(wordlist::decode(mnemonic, tv.wordlist).unwrap(), entropy);
+            assert_eq!(wordlist::decode(mnemonic, &tv.wordlist).unwrap(), entropy);
 
             let passphrase = hex::decode(tv.passphrase).unwrap();
             let passphrase = core::str::from_utf8(&passphrase).unwrap();
@@ -568,8 +571,8 @@ mod tests {
     }
 
     const ALL_WORDLISTS: &[wordlist::Wordlist<'static>] = &[wordlist::ENGLISH, wordlist::JAPANESE];
-    fn choose_wordlist() -> wordlist::Wordlist<'static> {
-        ALL_WORDLISTS[rand::random::<usize>() % ALL_WORDLISTS.len()]
+    fn choose_wordlist() -> &'static wordlist::Wordlist<'static> {
+        &ALL_WORDLISTS[rand::random::<usize>() % ALL_WORDLISTS.len()]
     }
 
     #[test]
@@ -595,7 +598,7 @@ mod tests {
         crate::test_utils::corrupt(&mut corrupted_data);
 
         let ws = choose_wordlist();
-        let ms = wordlist::encode(&data, ws).unwrap();
+        let ms = wordlist::encode(&data, &ws).unwrap();
 
         assert_ne!(ms, wordlist::encode(&corrupted_data, ws).unwrap());
     }
@@ -614,7 +617,7 @@ mod tests {
                 .split_whitespace()
                 .map(|w| {
                     if rand::random::<usize>() % 8 == 0 {
-                        ws[rand::random::<usize>() % 2048].to_string()
+                        ws.words[rand::random::<usize>() % 2048].to_string()
                     } else {
                         w.to_string()
                     }
