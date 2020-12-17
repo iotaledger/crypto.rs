@@ -61,6 +61,14 @@ def print_sha256_test_vector(n=None):
     print(f"    digest: \"{digest.hex()}\",")
     print("},")
 
+def print_sha384_test_vector(n=None):
+    msg = fresh_bytes(n=n, bound=1024)
+    digest = hashlib.sha384(msg).digest()
+    print("TestVector {")
+    print(f"    msg: \"{msg.hex()}\",")
+    print(f"    digest: \"{digest.hex()}\",")
+    print("},")
+
 def print_sha512_test_vector(n=None):
     msg = fresh_bytes(n=n, bound=1024)
     digest = hashlib.sha512(msg).digest()
