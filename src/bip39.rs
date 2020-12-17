@@ -117,6 +117,12 @@ pub mod wordlist {
         }
     }
 
+    /// Decode and compare the checksum given a mnemonic sentence and the wordlist used in the
+    /// generation process.
+    ///
+    /// Be aware that the error detection has a noticable rate of false positives. Given CS
+    /// checksum bits (CS := ENT / 32) the expected rate of false positives are one in 2^CS. For
+    /// example given 128 bit entropy that's 1 in 16.
     #[allow(non_snake_case)]
     pub fn decode(ms: &str, wordlist: Wordlist) -> Result<Vec<u8>, Error> {
         let mut data = Vec::new();
@@ -574,7 +580,7 @@ mod tests {
 
     #[test]
     fn test_wordlist_codec() {
-        for _ in 0..100 {
+        for _ in 0..1000 {
             let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
             OsRng.fill_bytes(&mut data);
 
@@ -588,49 +594,56 @@ mod tests {
 
     #[test]
     fn test_wordlist_codec_different_data_different_encodings() {
-        let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
-        OsRng.fill_bytes(&mut data);
+        for _ in 0..1000 {
+            let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
+            OsRng.fill_bytes(&mut data);
 
-        let mut corrupted_data = data.clone();
-        crate::test_utils::corrupt(&mut corrupted_data);
+            let mut corrupted_data = data.clone();
+            crate::test_utils::corrupt(&mut corrupted_data);
 
-        let ws = choose_wordlist();
-        let ms = wordlist::encode(&data, ws).unwrap();
+            let ws = choose_wordlist();
+            let ms = wordlist::encode(&data, &ws).unwrap();
 
-        assert_ne!(ms, wordlist::encode(&corrupted_data, ws).unwrap());
+            assert_ne!(ms, wordlist::encode(&corrupted_data, ws).unwrap());
+        }
     }
 
     #[test]
+    #[allow(non_snake_case)]
     fn test_wordlist_codec_error_detection() {
-        let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
-        OsRng.fill_bytes(&mut data);
+        for ENT in &[128, 160, 192, 224, 256] {
+            let mut false_positives = 0;
+            let CS = ENT / 32;
+            let N = 1000;
+            let acceptable_false_positives = 2 * N / (1 << CS);
+            for _ in 0..N {
+                let mut data = vec![0; ENT / 8];
+                OsRng.fill_bytes(&mut data);
 
-        let ws = choose_wordlist();
-        let ms = wordlist::encode(&data, ws).unwrap();
+                let ws = choose_wordlist();
+                let ms = wordlist::encode(&data, ws).unwrap();
 
-        let mut wrong_word = ms.clone();
-        while wrong_word == ms {
-            wrong_word = ms
-                .split_whitespace()
-                .map(|w| {
-                    if rand::random::<usize>() % 8 == 0 {
-                        ws[rand::random::<usize>() % 2048].to_string()
-                    } else {
-                        w.to_string()
-                    }
-                })
-                .collect::<Vec<String>>()
-                .join(" ");
+                let mut wrong_word = ms.clone();
+                while wrong_word == ms {
+                    wrong_word = ms
+                        .split_whitespace()
+                        .map(|w| {
+                            if rand::random::<usize>() % 8 == 0 {
+                                ws[rand::random::<usize>() % 2048].to_string()
+                            } else {
+                                w.to_string()
+                            }
+                        })
+                        .collect::<Vec<String>>()
+                        .join(" ");
+                }
+
+                if wordlist::decode(&wrong_word, ws) != Err(wordlist::Error::ChecksumMismatch) {
+                    false_positives += 1;
+                }
+            }
+
+            assert!(false_positives <= acceptable_false_positives);
         }
-
-        assert_eq!(
-            wordlist::decode(&wrong_word, ws),
-            Err(wordlist::Error::ChecksumMismatch)
-        );
-
-        assert_eq!(
-            wordlist::verify(&wrong_word, ws),
-            Err(wordlist::Error::ChecksumMismatch)
-        );
     }
 }
