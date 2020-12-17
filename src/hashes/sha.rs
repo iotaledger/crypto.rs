@@ -5,15 +5,19 @@
 
 use sha2::{Digest, Sha256, Sha384, Sha512};
 
-pub fn SHA256(msg: &[u8], digest: &mut [u8; 32]) {
+pub const SHA256_LEN: usize = 32;
+pub const SHA384_LEN: usize = 48;
+pub const SHA512_LEN: usize = 64;
+
+pub fn SHA256(msg: &[u8], digest: &mut [u8; SHA256_LEN]) {
     digest.copy_from_slice(&Sha256::digest(msg))
 }
 
-pub fn SHA384(msg: &[u8], digest: &mut [u8; 48]) {
+pub fn SHA384(msg: &[u8], digest: &mut [u8; SHA384_LEN]) {
     digest.copy_from_slice(&Sha384::digest(msg))
 }
 
-pub fn SHA512(msg: &[u8], digest: &mut [u8; 64]) {
+pub fn SHA512(msg: &[u8], digest: &mut [u8; SHA512_LEN]) {
     digest.copy_from_slice(&Sha512::digest(msg))
 }
 
@@ -577,10 +581,10 @@ mod tests {
         for tv in tvs.iter() {
             let msg = hex::decode(tv.msg).unwrap();
 
-            let mut expected_digest = [0; 32];
+            let mut expected_digest = [0; SHA256_LEN];
             hex::decode_to_slice(tv.digest, &mut expected_digest as &mut [u8]).unwrap();
 
-            let mut digest = [0; 32];
+            let mut digest = [0; SHA256_LEN];
             SHA256(&msg, &mut digest);
 
             assert_eq!(&digest, &expected_digest);
@@ -1650,10 +1654,10 @@ mod tests {
         for tv in tvs.iter() {
             let msg = hex::decode(tv.msg).unwrap();
 
-            let mut expected_digest = [0; 48];
+            let mut expected_digest = [0; SHA384_LEN];
             hex::decode_to_slice(tv.digest, &mut expected_digest as &mut [u8]).unwrap();
 
-            let mut digest = [0; 48];
+            let mut digest = [0; SHA384_LEN];
             SHA384(&msg, &mut digest);
 
             assert_eq!(&digest, &expected_digest);
@@ -2722,10 +2726,10 @@ mod tests {
         for tv in tvs.iter() {
             let msg = hex::decode(tv.msg).unwrap();
 
-            let mut expected_digest = [0; 64];
+            let mut expected_digest = [0; SHA512_LEN];
             hex::decode_to_slice(tv.digest, &mut expected_digest as &mut [u8]).unwrap();
 
-            let mut digest = [0; 64];
+            let mut digest = [0; SHA512_LEN];
             SHA512(&msg, &mut digest);
 
             assert_eq!(&digest, &expected_digest);
