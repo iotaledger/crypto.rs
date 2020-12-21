@@ -21,6 +21,8 @@ with open("$WS/test_JP_BIP39.json", "r") as f:
     tvs = json.loads(f.read())
 for tv in tvs:
     print("TestVector {")
+    print(f"    wordlist: wordlist::JAPANESE,")
+    print(f"    entropy: \"{tv['entropy']}\",")
     print(f"    mnemonic: \"{bytes(tv['mnemonic'], 'utf-8').hex()}\",")
     print(f"    passphrase: \"{bytes(tv['passphrase'], 'utf-8').hex()}\",")
     print(f"    seed: \"{tv['seed']}\",")

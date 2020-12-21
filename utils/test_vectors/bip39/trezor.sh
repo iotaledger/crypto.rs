@@ -21,6 +21,8 @@ with open("$WS/vectors.json", "r") as f:
     tvs = json.loads(f.read())
 for tv in tvs["english"]:
     print("TestVector {")
+    print(f"    wordlist: wordlist::ENGLISH,")
+    print(f"    entropy: \"{tv[0]}\",")
     print(f"    mnemonic: \"{bytes(tv[1], 'utf-8').hex()}\",")
     print(f"    passphrase: \"{bytes('TREZOR', 'utf-8').hex()}\",")
     print(f"    seed: \"{tv[2]}\",")
