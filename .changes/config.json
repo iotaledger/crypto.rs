@@ -141,17 +141,6 @@
     }
   },
   "packages": {
-    "@iota/crypto.js": {
-      "path": "./bindings/crypto.js",
-      "manager": "javascript",
-      "dependencies": [],
-      "assets": [
-        {
-          "path": "./cli/crypto.js/crypto-${ pkgFile.version }.tgz",
-          "name": "crypto.js-${ pkgFile.version }.tgz"
-        }
-      ]
-    },
     "iota-crypto": {
       "path": "./",
       "manager": "rust"
