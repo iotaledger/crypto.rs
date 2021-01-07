@@ -79,6 +79,16 @@ def print_hmac_sha256_test_vector():
     print(f"    mac: \"{mac.hex()}\",")
     print("},")
 
+def print_hmac_sha384_test_vector():
+    data = fresh_bytes(bound=1024)
+    key = fresh_bytes(bound=1024)
+    mac = hmac.new(key=key, msg=data, digestmod="sha384").digest()
+    print("TestVector {")
+    print(f"    data: \"{data.hex()}\",")
+    print(f"    key: \"{key.hex()}\",")
+    print(f"    mac: \"{mac.hex()}\",")
+    print("},")
+
 def print_hmac_sha512_test_vector():
     data = fresh_bytes(bound=1024)
     key = fresh_bytes(bound=1024)
