@@ -3,7 +3,7 @@
 
 #![cfg(feature = "aes-kw")]
 
-use crypto::aes_kw::{Aes128, Aes192, Aes256, AesKeyWrap};
+use crypto::aes_kw::{Aes128Kw, Aes192Kw, Aes256Kw, BLOCK};
 
 static AES_128_TVS: &'static [TestVector] = &include!("fixtures/aes_128_kw.rs");
 static AES_192_TVS: &'static [TestVector] = &include!("fixtures/aes_192_kw.rs");
@@ -16,33 +16,35 @@ struct TestVector {
     ciphertext: &'static str,
 }
 
-fn test_aes_kw<T: AesKeyWrap>(tvs: &[TestVector]) {
-    for tv in tvs {
-        let kek: Vec<u8> = hex::decode(tv.encryption_key).unwrap();
-        let ptx: Vec<u8> = hex::decode(tv.plaintext).unwrap();
-        let ctx: Vec<u8> = hex::decode(tv.ciphertext).unwrap();
+macro_rules! test_aes_kw {
+    ($impl:ident, $tvs:expr) => {{
+        for tv in $tvs {
+            let kek: Vec<u8> = hex::decode(tv.encryption_key).unwrap();
+            let ptx: Vec<u8> = hex::decode(tv.plaintext).unwrap();
+            let ctx: Vec<u8> = hex::decode(tv.ciphertext).unwrap();
 
-        let mut ciphertext: Vec<u8> = vec![0; ptx.len() + T::block_length()];
-        T::wrap_key(&kek, &ptx, &mut ciphertext).unwrap();
-        assert_eq!(ciphertext, ctx);
+            let mut output: Vec<u8> = vec![0; ptx.len() + BLOCK];
+            $impl::new(&kek).wrap_key(&ptx, &mut output).unwrap();
+            assert_eq!(output, ctx);
 
-        let mut plaintext: Vec<u8> = vec![0; ctx.len() - T::block_length()];
-        T::unwrap_key(&kek, &ciphertext, &mut plaintext).unwrap();
-        assert_eq!(plaintext, ptx);
-    }
+            let mut output: Vec<u8> = vec![0; ctx.len() - BLOCK];
+            $impl::new(&kek).unwrap_key(&ctx, &mut output).unwrap();
+            assert_eq!(output, ptx);
+        }
+    }};
 }
 
 #[test]
 fn test_aes_128_kw() {
-    test_aes_kw::<Aes128>(AES_128_TVS);
+    test_aes_kw!(Aes128Kw, AES_128_TVS);
 }
 
 #[test]
 fn test_aes_192_kw() {
-    test_aes_kw::<Aes192>(AES_192_TVS);
+    test_aes_kw!(Aes192Kw, AES_192_TVS);
 }
 
 #[test]
 fn test_aes_256_kw() {
-    test_aes_kw::<Aes256>(AES_256_TVS);
+    test_aes_kw!(Aes256Kw, AES_256_TVS);
 }

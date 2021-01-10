@@ -3,15 +3,18 @@
 
 use aes_crate::{cipher::generic_array::typenum::Unsigned as _, BlockCipher, NewBlockCipher};
 pub use aes_crate::{Aes128, Aes192, Aes256};
-use core::{array, convert::TryInto as _, mem};
+use core::{convert::TryInto as _, marker::PhantomData, mem};
 
-use crate::Result;
+use crate::{Error, Result};
 
-impl AesKeyWrap for Aes128 {}
+/// AES Key Wrap using AES-128 block cipher.
+pub type Aes128Kw<'a> = AesKeyWrap<'a, Aes128>;
 
-impl AesKeyWrap for Aes192 {}
+/// AES Key Wrap using AES-192 block cipher.
+pub type Aes192Kw<'a> = AesKeyWrap<'a, Aes192>;
 
-impl AesKeyWrap for Aes256 {}
+/// AES Key Wrap using AES-256 block cipher.
+pub type Aes256Kw<'a> = AesKeyWrap<'a, Aes256>;
 
 /// AES Key Wrap operates on 64-bit block sizes
 pub const BLOCK: usize = mem::size_of::<u64>();
@@ -22,36 +25,54 @@ pub const BLOCK: usize = mem::size_of::<u64>();
 pub const DIV: u64 = 0xA6A6A6A6A6A6A6A6;
 
 /// The AES Key Wrap Algorithm as defined in [RFC3394](https://tools.ietf.org/html/rfc3394)
-pub trait AesKeyWrap: NewBlockCipher + BlockCipher {
-    fn block_length() -> usize {
-        BLOCK
-    }
+#[derive(Clone, Copy, Debug)]
+pub struct AesKeyWrap<'a, T> {
+    key: &'a [u8],
+    cipher: PhantomData<T>,
+}
 
-    fn key_length() -> usize {
-        <Self as NewBlockCipher>::KeySize::to_usize()
+impl<'a, T> AesKeyWrap<'a, T> {
+    pub fn new(key: &'a [u8]) -> Self {
+        Self {
+            key,
+            cipher: PhantomData,
+        }
     }
+}
 
+impl<'a, T> AesKeyWrap<'a, T>
+where
+    T: NewBlockCipher,
+{
+    pub fn key_length() -> usize {
+        <T as NewBlockCipher>::KeySize::to_usize()
+    }
+}
+
+impl<'a, T> AesKeyWrap<'a, T>
+where
+    T: BlockCipher + NewBlockCipher,
+{
     /// Wraps a key using the AES Key Wrap algorithm.
     ///
     /// See [RFC3394](https://tools.ietf.org/html/rfc3394).
     #[allow(non_snake_case)]
-    fn wrap_key(kek: &[u8], plaintext: &[u8], ciphertext: &mut [u8]) -> Result<()> {
-        if kek.len() != Self::key_length() {
-            todo!("Error: InvalidKeyLength")
-        }
-
+    pub fn wrap_key(&self, plaintext: &[u8], ciphertext: &mut [u8]) -> Result<()> {
         if ciphertext.len() < BLOCK + plaintext.len() {
-            todo!("Error: InvalidBufferLength")
+            return Err(Error::BufferSize {
+                needs: BLOCK + plaintext.len(),
+                has: ciphertext.len(),
+            });
         }
 
         if plaintext.len() % BLOCK != 0 {
-            todo!("Error: InvalidContentLength")
+            return Err(Error::CipherError { alg: "AES Key Wrap" });
         }
 
         // Inputs:  Plaintext, n 64-bit values {P1, P2, ..., Pn}, and Key, K (the KEK).
         // Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
 
-        let cipher: Self = Self::new(kek.into());
+        let cipher: T = T::new_varkey(self.key).unwrap();
         let N: usize = plaintext.len() / BLOCK;
         let R: &mut [u8] = &mut ciphertext[BLOCK..];
 
@@ -79,7 +100,7 @@ pub trait AesKeyWrap: NewBlockCipher + BlockCipher {
                 cipher.encrypt_block((&mut B[..]).into());
 
                 // A = MSB(64, B) ^ t where t = (n*j)+i
-                A = Self::__read_u64(&B[..BLOCK]).unwrap() ^ ((N * j) + i) as u64;
+                A = Self::__read_u64(&B[..BLOCK]) ^ ((N * j) + i) as u64;
 
                 // R[i] = LSB(64, B)
                 R[BLOCK * (i - 1)..BLOCK * i].copy_from_slice(&B[BLOCK..]);
@@ -104,30 +125,36 @@ pub trait AesKeyWrap: NewBlockCipher + BlockCipher {
     ///
     /// See [RFC3394](https://tools.ietf.org/html/rfc3394).
     #[allow(non_snake_case)]
-    fn unwrap_key(kek: &[u8], ciphertext: &[u8], plaintext: &mut [u8]) -> Result<()> {
-        if kek.len() != Self::key_length() {
-            todo!("Error: InvalidKeyLength")
+    pub fn unwrap_key(&self, ciphertext: &[u8], plaintext: &mut [u8]) -> Result<()> {
+        if ciphertext.len() < BLOCK {
+            return Err(Error::BufferSize {
+                needs: ciphertext.len(),
+                has: BLOCK,
+            });
         }
 
         if plaintext.len() < ciphertext.len() - BLOCK {
-            todo!("Error: InvalidBufferLength")
+            return Err(Error::BufferSize {
+                needs: ciphertext.len() - BLOCK,
+                has: plaintext.len(),
+            });
         }
 
         if ciphertext.len() % BLOCK != 0 {
-            todo!("Error: InvalidContentLength")
+            return Err(Error::CipherError { alg: "AES Key Wrap" });
         }
 
         // Inputs:  Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and Key, K (the KEK).
         // Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
 
-        let cipher: Self = Self::new(kek.into());
+        let cipher: T = T::new_varkey(self.key).unwrap();
         let N: usize = (ciphertext.len() / BLOCK) - 1;
         let R: &mut [u8] = plaintext;
 
         // 1) Initialize variables.
 
         // Set A = C[0]
-        let mut A: u64 = Self::__read_u64(&ciphertext[..BLOCK]).unwrap();
+        let mut A: u64 = Self::__read_u64(&ciphertext[..BLOCK]);
 
         // For i = 1 to n
         //   R[i] = C[i]
@@ -148,7 +175,7 @@ pub trait AesKeyWrap: NewBlockCipher + BlockCipher {
                 cipher.decrypt_block((&mut B[..]).into());
 
                 // A = MSB(64, B)
-                A = Self::__read_u64(&B[..BLOCK]).unwrap();
+                A = Self::__read_u64(&B[..BLOCK]);
 
                 // R[i] = LSB(64, B)
                 R[BLOCK * (i - 1)..BLOCK * i].copy_from_slice(&B[BLOCK..]);
@@ -166,12 +193,12 @@ pub trait AesKeyWrap: NewBlockCipher + BlockCipher {
         if A == DIV {
             Ok(())
         } else {
-            todo!("Error: FailedIntegrityCheck")
+            Err(Error::CipherError { alg: "AES Key Wrap" })
         }
     }
 
-    #[doc(hidden)]
-    fn __read_u64(slice: &[u8]) -> Result<u64, array::TryFromSliceError> {
-        slice.try_into().map(u64::from_be_bytes)
+    fn __read_u64(slice: &[u8]) -> u64 {
+        assert_eq!(slice.len(), BLOCK);
+        u64::from_be_bytes(slice.try_into().unwrap())
     }
 }
