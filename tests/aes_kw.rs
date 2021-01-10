@@ -5,10 +5,6 @@
 
 use crypto::aes_kw::{Aes128Kw, Aes192Kw, Aes256Kw, BLOCK};
 
-static AES_128_TVS: &'static [TestVector] = &include!("fixtures/aes_128_kw.rs");
-static AES_192_TVS: &'static [TestVector] = &include!("fixtures/aes_192_kw.rs");
-static AES_256_TVS: &'static [TestVector] = &include!("fixtures/aes_256_kw.rs");
-
 #[derive(Debug)]
 struct TestVector {
     encryption_key: &'static str,
@@ -36,15 +32,15 @@ macro_rules! test_aes_kw {
 
 #[test]
 fn test_aes_128_kw() {
-    test_aes_kw!(Aes128Kw, AES_128_TVS);
+    test_aes_kw!(Aes128Kw, &include!("fixtures/aes_128_kw.rs"));
 }
 
 #[test]
 fn test_aes_192_kw() {
-    test_aes_kw!(Aes192Kw, AES_192_TVS);
+    test_aes_kw!(Aes192Kw, &include!("fixtures/aes_192_kw.rs"));
 }
 
 #[test]
 fn test_aes_256_kw() {
-    test_aes_kw!(Aes256Kw, AES_256_TVS);
+    test_aes_kw!(Aes256Kw, &include!("fixtures/aes_256_kw.rs"));
 }
