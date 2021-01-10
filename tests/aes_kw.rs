@@ -3,7 +3,7 @@
 
 #![cfg(feature = "aes-kw")]
 
-use crypto::aes_kw::{Aes128, Aes192, Aes256, AesKeyWrap, BLOCK};
+use crypto::aes_kw::{Aes128, Aes192, Aes256, AesKeyWrap};
 
 static AES_128_TVS: &'static [TestVector] = &include!("fixtures/aes_128_kw.rs");
 static AES_192_TVS: &'static [TestVector] = &include!("fixtures/aes_192_kw.rs");
@@ -22,11 +22,11 @@ fn test_aes_kw<T: AesKeyWrap>(tvs: &[TestVector]) {
         let ptx: Vec<u8> = hex::decode(tv.plaintext).unwrap();
         let ctx: Vec<u8> = hex::decode(tv.ciphertext).unwrap();
 
-        let mut ciphertext: Vec<u8> = vec![0; BLOCK + ptx.len()];
+        let mut ciphertext: Vec<u8> = vec![0; ptx.len() + T::block_length()];
         T::wrap_key(&kek, &ptx, &mut ciphertext).unwrap();
         assert_eq!(ciphertext, ctx);
 
-        let mut plaintext: Vec<u8> = vec![0; ctx.len() - BLOCK];
+        let mut plaintext: Vec<u8> = vec![0; ctx.len() - T::block_length()];
         T::unwrap_key(&kek, &ciphertext, &mut plaintext).unwrap();
         assert_eq!(plaintext, ptx);
     }

@@ -23,12 +23,20 @@ pub const DIV: u64 = 0xA6A6A6A6A6A6A6A6;
 
 /// The AES Key Wrap Algorithm as defined in [RFC3394](https://tools.ietf.org/html/rfc3394)
 pub trait AesKeyWrap: NewBlockCipher + BlockCipher {
+    fn block_length() -> usize {
+        BLOCK
+    }
+
+    fn key_length() -> usize {
+        <Self as NewBlockCipher>::KeySize::to_usize()
+    }
+
     /// Wraps a key using the AES Key Wrap algorithm.
     ///
     /// See [RFC3394](https://tools.ietf.org/html/rfc3394).
     #[allow(non_snake_case)]
     fn wrap_key(kek: &[u8], plaintext: &[u8], ciphertext: &mut [u8]) -> Result<()> {
-        if kek.len() != <Self as NewBlockCipher>::KeySize::to_usize() {
+        if kek.len() != Self::key_length() {
             todo!("Error: InvalidKeyLength")
         }
 
@@ -97,7 +105,7 @@ pub trait AesKeyWrap: NewBlockCipher + BlockCipher {
     /// See [RFC3394](https://tools.ietf.org/html/rfc3394).
     #[allow(non_snake_case)]
     fn unwrap_key(kek: &[u8], ciphertext: &[u8], plaintext: &mut [u8]) -> Result<()> {
-        if kek.len() != <Self as NewBlockCipher>::KeySize::to_usize() {
+        if kek.len() != Self::key_length() {
             todo!("Error: InvalidKeyLength")
         }
 
