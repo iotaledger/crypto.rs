@@ -1,11 +1,14 @@
 [package]
 name = "iota-crypto"
-version = "0.1.0"
+version = "0.2.0"
 license = "Apache-2.0"
-authors = ["Gustav Behm <gustav.behm@iota.org>", "Daniel Thompson-Yvetot <daniel.yvetot@iota.org>"]
+authors = [
+  "Gustav Behm <gustav.behm@iota.org>",
+  "Daniel Thompson-Yvetot <daniel.yvetot@iota.org>"
+]
 edition = "2018"
 readme = "README.md"
-keywords = ["iota", "cryptography", "security"]
+keywords = [ "iota", "cryptography", "security" ]
 categories = [ "security" ]
 description = "The canonical source of cryptographic ground-truth for all IOTA Rust projects"
 homepage = "https://iota.org"
@@ -19,14 +22,16 @@ default = []
 aes-kw = [ "aes-crate" ]
 chacha = [ "chacha20poly1305" ]
 ed25519 = [ "ed25519-zebra" ]
-random = ["getrandom"]
-aes = ["aes-gcm"]
-blake2b = ["blake2b_simd"]
+random = [ "getrandom" ]
+aes = [ "aes-gcm" ]
+blake2b = [ "blake2b_simd" ]
 curl-p = [ "bee-ternary" ]
 sha = [ "sha2" ]
 hmac = [ "hmac_" ]
 pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
+bip39-en = [ "bip39" ]
+bip39-jp = [ "bip39" ]
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }
@@ -87,5 +92,5 @@ default-features = false
 [dev-dependencies]
 hex = "0.4.2"
 rand = "0.7.3"
-serde = {version = "1.0.117", features = ["derive"]}
+serde = { version = "1.0.117", features = [ "derive" ] }
 serde_json = "1.0.59"

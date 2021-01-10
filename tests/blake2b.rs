@@ -21,7 +21,7 @@ mod test {
     fn blake2b_simd_lib() {
         // uses blake2b testvectors from the official testvectors at https://github.com/BLAKE2/BLAKE2/tree/master/testvectors
         // out_256 was generated with b2sum on inputs without key
-        let test_vectors: Vec<TestVector> = serde_json::from_str(include_str!("blake2b.json")).unwrap();
+        let test_vectors: Vec<TestVector> = serde_json::from_str(include_str!("fixtures/blake2b.json")).unwrap();
         let mut test_num = 0u64;
         for vector in test_vectors.iter() {
             test_num += 1;
@@ -48,7 +48,7 @@ mod test {
 
     #[test]
     fn iota_cypto_blake2b_256() {
-        let test_vectors: Vec<TestVector> = serde_json::from_str(include_str!("blake2b.json")).unwrap();
+        let test_vectors: Vec<TestVector> = serde_json::from_str(include_str!("fixtures/blake2b.json")).unwrap();
         let mut test_num = 0u64;
         for vector in test_vectors.iter().filter(|v| v.key.is_empty() && v.out_256.is_some()) {
             test_num += 1;
