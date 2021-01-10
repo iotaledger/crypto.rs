@@ -18,7 +18,8 @@ repository = "https://github.com/iotaledger/crypto.rs"
 name = "crypto"
 
 [features]
-default = []
+default = [ ]
+alloc = [ ]
 aes-kw = [ "aes-crate" ]
 chacha = [ "chacha20poly1305" ]
 ed25519 = [ "ed25519-zebra" ]
