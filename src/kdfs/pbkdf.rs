@@ -3,16 +3,34 @@
 
 #![allow(non_snake_case)]
 
-#[cfg(all(feature = "hmac", feature = "sha"))]
-pub fn PBKDF2_HMAC_SHA512(password: &[u8], salt: &[u8], c: usize, dk: &mut [u8; 64]) -> crate::Result<()> {
-    if c == 0 {
-        return Err(crate::Error::InvalidArgumentError {
-            alg: "PBKDF2-HMAC-SHA512",
+fn assert_iteration_count(alg: &'static str, count: usize) -> crate::Result<()> {
+    if count == 0 {
+        Err(crate::Error::InvalidArgumentError {
+            alg,
             expected: "non-zero iteration count",
-        });
+        })
+    } else {
+        Ok(())
     }
+}
 
-    pbkdf2::pbkdf2::<hmac_::Hmac<sha2::Sha512>>(password, salt, c as u32, dk);
+#[cfg(all(feature = "hmac", feature = "sha"))]
+pub fn PBKDF2_HMAC_SHA256(password: &[u8], salt: &[u8], count: usize, buffer: &mut [u8]) -> crate::Result<()> {
+    assert_iteration_count("PBKDF2-HMAC-SHA256", count).map(|_| {
+        pbkdf2::pbkdf2::<hmac_::Hmac<sha2::Sha256>>(password, salt, count as u32, buffer);
+    })
+}
 
-    Ok(())
+#[cfg(all(feature = "hmac", feature = "sha"))]
+pub fn PBKDF2_HMAC_SHA384(password: &[u8], salt: &[u8], count: usize, buffer: &mut [u8]) -> crate::Result<()> {
+    assert_iteration_count("PBKDF2-HMAC-SHA384", count).map(|_| {
+        pbkdf2::pbkdf2::<hmac_::Hmac<sha2::Sha384>>(password, salt, count as u32, buffer);
+    })
+}
+
+#[cfg(all(feature = "hmac", feature = "sha"))]
+pub fn PBKDF2_HMAC_SHA512(password: &[u8], salt: &[u8], count: usize, buffer: &mut [u8]) -> crate::Result<()> {
+    assert_iteration_count("PBKDF2-HMAC-SHA512", count).map(|_| {
+        pbkdf2::pbkdf2::<hmac_::Hmac<sha2::Sha512>>(password, salt, count as u32, buffer);
+    })
 }

@@ -14,7 +14,7 @@ struct TestVector {
 
 #[test]
 #[cfg(all(feature = "hmac", feature = "sha"))]
-fn test_PBKDF2_HMAC_SHA512() {
+fn test_pbkdf2_hmac_sha512() {
     let tvs = include!("fixtures/pbkdf2_hmac_sha512.rs");
 
     for tv in tvs.iter() {
