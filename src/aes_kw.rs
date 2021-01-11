@@ -1,8 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use aes_crate::{cipher::generic_array::typenum::Unsigned as _, BlockCipher, NewBlockCipher};
-pub use aes_crate::{Aes128, Aes192, Aes256};
+use aes_crate::{cipher::generic_array::typenum::Unsigned as _, Aes128, Aes192, Aes256, BlockCipher, NewBlockCipher};
 use core::{convert::TryInto as _, marker::PhantomData, mem};
 
 use crate::{Error, Result};
@@ -32,6 +31,8 @@ pub struct AesKeyWrap<'a, T> {
 }
 
 impl<'a, T> AesKeyWrap<'a, T> {
+    pub const BLOCK: usize = BLOCK;
+
     pub fn new(key: &'a [u8]) -> Self {
         Self {
             key,
@@ -44,9 +45,7 @@ impl<'a, T> AesKeyWrap<'a, T>
 where
     T: NewBlockCipher,
 {
-    pub fn key_length() -> usize {
-        <T as NewBlockCipher>::KeySize::to_usize()
-    }
+    pub const KEY_LENGTH: usize = <T as NewBlockCipher>::KeySize::USIZE;
 }
 
 impl<'a, T> AesKeyWrap<'a, T>
