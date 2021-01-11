@@ -3,6 +3,9 @@
 
 #![no_std]
 
+#[macro_use]
+mod macros;
+
 pub mod ciphers;
 pub mod hashes;
 pub mod kdfs;
