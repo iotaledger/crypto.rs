@@ -57,12 +57,7 @@ where
     /// See [RFC3394](https://tools.ietf.org/html/rfc3394).
     #[allow(non_snake_case)]
     pub fn wrap_key(&self, plaintext: &[u8], ciphertext: &mut [u8]) -> Result<()> {
-        if ciphertext.len() < BLOCK + plaintext.len() {
-            return Err(Error::BufferSize {
-                needs: BLOCK + plaintext.len(),
-                has: ciphertext.len(),
-            });
-        }
+        assert_buffer_gte!(ciphertext.len(), plaintext.len() + BLOCK);
 
         if plaintext.len() % BLOCK != 0 {
             return Err(Error::CipherError { alg: "AES Key Wrap" });
@@ -125,19 +120,8 @@ where
     /// See [RFC3394](https://tools.ietf.org/html/rfc3394).
     #[allow(non_snake_case)]
     pub fn unwrap_key(&self, ciphertext: &[u8], plaintext: &mut [u8]) -> Result<()> {
-        if ciphertext.len() < BLOCK {
-            return Err(Error::BufferSize {
-                needs: ciphertext.len(),
-                has: BLOCK,
-            });
-        }
-
-        if plaintext.len() < ciphertext.len() - BLOCK {
-            return Err(Error::BufferSize {
-                needs: ciphertext.len() - BLOCK,
-                has: plaintext.len(),
-            });
-        }
+        assert_buffer_gte!(ciphertext.len(), BLOCK);
+        assert_buffer_gte!(plaintext.len(), ciphertext.len() - BLOCK);
 
         if ciphertext.len() % BLOCK != 0 {
             return Err(Error::CipherError { alg: "AES Key Wrap" });
