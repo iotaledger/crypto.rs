@@ -3,8 +3,6 @@
 
 use aes_crate::{cipher::generic_array::typenum::Unsigned as _, BlockCipher, NewBlockCipher};
 pub use aes_crate::{Aes128, Aes192, Aes256};
-#[cfg(feature = "alloc")]
-use alloc::vec::Vec;
 use core::{convert::TryInto as _, marker::PhantomData, mem};
 
 use crate::{Error, Result};
@@ -197,31 +195,6 @@ where
         } else {
             Err(Error::CipherError { alg: "AES Key Wrap" })
         }
-    }
-
-    #[cfg(feature = "alloc")]
-    pub fn wrap_key_vec(&self, plaintext: &[u8]) -> Result<Vec<u8>> {
-        let mut ciphertext: Vec<u8> = vec![0; plaintext.len() + BLOCK];
-
-        self.wrap_key(plaintext, &mut ciphertext[..])?;
-
-        Ok(ciphertext)
-    }
-
-    #[cfg(feature = "alloc")]
-    pub fn unwrap_key_vec(&self, ciphertext: &[u8]) -> Result<Vec<u8>> {
-        if ciphertext.len() < BLOCK {
-            return Err(Error::BufferSize {
-                needs: ciphertext.len(),
-                has: BLOCK,
-            });
-        }
-
-        let mut plaintext: Vec<u8> = vec![0; ciphertext.len() - BLOCK];
-
-        self.wrap_key(ciphertext, &mut plaintext[..])?;
-
-        Ok(plaintext)
     }
 
     fn __read_u64(slice: &[u8]) -> u64 {
