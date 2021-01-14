@@ -12,20 +12,23 @@ To be included in this list an implementation must:
 
 ## List of Algorithms
 
-| Type | Feature Flag | Spec/RFC | Rust Source | Tests | Rating* |
-| - | - | - | - | - | - |
-| cipher | [`aes`](/src/ciphers/aes.rs) | [spec](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmvs.pdf) | `aes-gcm` | [nist](ttps://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS) | ★★★☆☆ |
-| cipher | [`chacha`](/src/ciphers/chacha.rs) | [rfc](https://tools.ietf.org/html/draft-arciszewski-xchacha-03) | `chacha20poly1305` | [official](https://tools.ietf.org/html/draft-arciszewski-xchacha-03#appendix-A.3) | ★★★★★ |
-| hash | [`sha`](/src/hashes/sha.rs) | [spec](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/shs/SHAVS.pdf) | `sha2` | [nist](https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/Secure-Hashing#shavs) | ★★★★★ |
-| hash | [`curl-p`](/src/hashes/curl_p.rs) | [rfc](https://github.com/iotaledger/bee-rfcs/blob/master/text/0034-ternary-hash.md) | `bee-ternary` | official | ★★☆☆☆ |
-| hash | [`blake2b`](/src/hashes/blake2b.rs) |[rfc](https://tools.ietf.org/html/rfc7693) | `blake2b_simd` | [official](https://github.com/BLAKE2/BLAKE2/tree/master/testvectors) | ★★★★☆ |
-| mac | [`hmac`](/src/macs/hmac.rs) | [rfc](https://tools.ietf.org/html/rfc4231) | `hmac` | [official](https://tools.ietf.org/html/rfc4231#section-4.2) | ★★★★☆ |
-| signature | [`ed25519`]() | [rfc (draft)](https://github.com/iotaledger/protocol-rfcs/pull/28) | `ed25519-zebra` | extended |  ★★★★☆ | `ed25519` |
-| derivation | [`pbkdf`]() | [rfc](https://tools.ietf.org/html/rfc6070) | `pbkdf2` | [official](https://tools.ietf.org/html/rfc6070#section-2) | ★★★★☆ |
-| derivation | [`bip39`]() | [rfc](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) |`crypto.rs` | [multilang](https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json) | ★★☆☆☆ |
-| derivation | [`slip10`]()*\* | [rfc](https://github.com/satoshilabs/slips/blob/master/slip-0010.md )| `stronghold.rs` | self | ★★☆☆☆ |
-| utility | [`rand`]() | [spec] | `getrandom` | math | ★★★★★ |
-
+| Type | Name | Feature | Spec/RFC | Rust Source | Test Source | Rating* |
+| - | - | - | - | - | - | - |
+| cipher     | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
+| cipher     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
+| hash       | SHA2-256           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| hash       | SHA2-384           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| hash       | SHA2-512           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| hash       | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
+| hash       | BLAKE2b            | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2b_simd`     | [official][BLAKE2B-TEST] | ★★★★☆ |
+| mac        | HMAC-SHA2-256      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| mac        | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| mac        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| signature  | Ed25519            | [`ed25519`](/src/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
+| derivation | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/kdfs/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| derivation | BIP-39             | [`bip39`](/src/bip39.rs)            | [rfc][BIP39-RFC]           | `crypto.rs`        | [multilang][BIP39-TEST]  | ★★☆☆☆ |
+| derivation | SLIP-10            | [`slip10`]()\*\*                    | [rfc][SLIP10-RFC]          | `stronghold.rs`    | self                     | ★★☆☆☆ |
+| utility    |                    | [`rand`](/src/rand.rs)              |                            | `getrandom`        | math                     | ★★★★★ |
 
 \* We have chosen a fully arbitrary rating for each algorithm based on how we generally feel about them.
 \*\* slip10 is currently in stronghold.rs, will be ported soon.
@@ -81,3 +84,31 @@ cargo test --lib --all-features
 
 ## License
 Apache 2.0
+
+[//]: # (sources)
+
+[AES-GCM-SPEC]: https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmvs.pdf
+[AES-GCM-TEST]: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS
+
+[XCHACHA-RFC]: https://tools.ietf.org/html/draft-arciszewski-xchacha-03
+[XCHACHA-TEST]: https://tools.ietf.org/html/draft-arciszewski-xchacha-03#appendix-A.3
+
+[SHA2-SPEC]: https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/shs/SHAVS.pdf
+[SHA2-TEST]: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/Secure-Hashing#shavs
+
+[CURL-RFC]: https://github.com/iotaledger/bee-rfcs/blob/master/text/0034-ternary-hash.md
+
+[BLAKE2B-RFC]: https://tools.ietf.org/html/rfc7693
+[BLAKE2B-TEST]: https://github.com/BLAKE2/BLAKE2/tree/master/testvectors
+
+[HMAC-RFC]: https://tools.ietf.org/html/rfc4231
+[HMAC-TEST]: https://tools.ietf.org/html/rfc4231#section-4.2
+
+[ED25519-RFC]: https://github.com/iotaledger/protocol-rfcs/pull/28
+
+[PBKDF-RFC]: https://tools.ietf.org/html/rfc2898
+
+[BIP39-RFC]: https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki
+[BIP39-TEST]: https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json
+
+[SLIP10-RFC]: https://github.com/satoshilabs/slips/blob/master/slip-0010.md
