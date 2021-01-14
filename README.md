@@ -12,14 +12,14 @@ To be included in this list an implementation must:
 
 ## List of Algorithms
 
-| Type | Feature Flag | Spec/RFC | Rust Source | Tests | Rating* | 
-| - | - | - | - | - | - | 
+| Type | Feature Flag | Spec/RFC | Rust Source | Tests | Rating* |
+| - | - | - | - | - | - |
 | cipher | [`aes`](/src/ciphers/aes.rs) | [spec](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmvs.pdf) | `aes-gcm` | [nist](ttps://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS) | ★★★☆☆ |
 | cipher | [`chacha`](/src/ciphers/chacha.rs) | [rfc](https://tools.ietf.org/html/draft-arciszewski-xchacha-03) | `chacha20poly1305` | [official](https://tools.ietf.org/html/draft-arciszewski-xchacha-03#appendix-A.3) | ★★★★★ |
-| hash | [`sha`](/src/hashes/sha.rs) | [spec](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/shs/SHAVS.pdf) | `sha2` | [nist](https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/Secure-Hashing#shavs) | ★★★★★ | 
-| hash | [`curl-p`](/src/hashes/curl_p.rs) | [rfc](https://github.com/iotaledger/bee-rfcs/blob/master/text/0034-ternary-hash.md) | `bee-ternary` | official | ★★☆☆☆ | 
+| hash | [`sha`](/src/hashes/sha.rs) | [spec](https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/shs/SHAVS.pdf) | `sha2` | [nist](https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/Secure-Hashing#shavs) | ★★★★★ |
+| hash | [`curl-p`](/src/hashes/curl_p.rs) | [rfc](https://github.com/iotaledger/bee-rfcs/blob/master/text/0034-ternary-hash.md) | `bee-ternary` | official | ★★☆☆☆ |
 | hash | [`blake2b`](/src/hashes/blake2b.rs) |[rfc](https://tools.ietf.org/html/rfc7693) | `blake2b_simd` | [official](https://github.com/BLAKE2/BLAKE2/tree/master/testvectors) | ★★★★☆ |
-| mac | [`hmac`](/src/macs/hmac.rs) | [rfc](https://tools.ietf.org/html/rfc4231) | `hmac` | [official](https://tools.ietf.org/html/rfc4231#section-4.2) | ★★★★☆ | 
+| mac | [`hmac`](/src/macs/hmac.rs) | [rfc](https://tools.ietf.org/html/rfc4231) | `hmac` | [official](https://tools.ietf.org/html/rfc4231#section-4.2) | ★★★★☆ |
 | signature | [`ed25519`]() | [rfc (draft)](https://github.com/iotaledger/protocol-rfcs/pull/28) | `ed25519-zebra` | extended |  ★★★★☆ | `ed25519` |
 | derivation | [`pbkdf`]() | [rfc](https://tools.ietf.org/html/rfc6070) | `pbkdf2` | [official](https://tools.ietf.org/html/rfc6070#section-2) | ★★★★☆ |
 | derivation | [`bip39`]() | [rfc](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) |`crypto.rs` | [multilang](https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json) | ★★☆☆☆ |
@@ -27,7 +27,7 @@ To be included in this list an implementation must:
 | utility | [`rand`]() | [spec] | `getrandom` | math | ★★★★★ |
 
 
-\* We have chosen a fully arbitrary rating for each algorithm based on how we generally feel about them. 
+\* We have chosen a fully arbitrary rating for each algorithm based on how we generally feel about them.
 \*\* slip10 is currently in stronghold.rs, will be ported soon.
 
 ## API
@@ -65,7 +65,7 @@ If you have questions about how to use this library, or why certain decisions we
 
 ## Tests
 ### Doctest
-We aim to supply at least one docstest for every interface, so to see real world usage consult the rustdocs. 
+We aim to supply at least one docstest for every interface, so to see real world usage consult the rustdocs.
 
 ## FAQ
 - todo
