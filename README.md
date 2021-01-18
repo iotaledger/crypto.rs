@@ -25,7 +25,7 @@ To be included in this list an implementation must:
 | derivation | [`bip39`]() | [rfc](https://github.com/bitcoin/bips/blob/master/bip-0039.mediawiki) |`crypto.rs` | [multilang](https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json) | ★★☆☆☆ |
 | derivation | [`slip10`]()*\* | [rfc](https://github.com/satoshilabs/slips/blob/master/slip-0010.md )| `stronghold.rs` | self | ★★☆☆☆ |
 | utility | [`rand`]() | [spec] | `getrandom` | math | ★★★★★ |
-
+| key exchange | [`x25519`](/src/x25519.rs) | [RFC7748](https://tools.ietf.org/html/rfc7748) | [x25519-dalek](https://github.com/dalek-cryptography/x25519-dalek) | official | ★★★★★ |
 
 \* We have chosen a fully arbitrary rating for each algorithm based on how we generally feel about them. 
 \*\* slip10 is currently in stronghold.rs, will be ported soon.
