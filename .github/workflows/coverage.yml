@@ -46,6 +46,7 @@ jobs:
             --branch
             --ignore-not-existing
             --ignore "/*"
+            --ignore "tests/*"
             -o ./target/lcov.info
             ./target/debug/
     
