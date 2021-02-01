@@ -3,10 +3,16 @@
 
 #![no_std]
 
+#[macro_use]
+mod macros;
+
 pub mod ciphers;
 pub mod hashes;
 pub mod kdfs;
 pub mod macs;
+
+#[cfg(feature = "aes-kw")]
+pub mod aes_kw;
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
@@ -71,4 +77,4 @@ impl fmt::Display for Error {
     }
 }
 
-pub type Result<T> = core::result::Result<T, Error>;
+pub type Result<T, E = Error> = core::result::Result<T, E>;
