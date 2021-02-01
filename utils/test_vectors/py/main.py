@@ -107,6 +107,31 @@ def print_hmac_sha512_test_vector():
     print(f"    mac: \"{mac.hex()}\",")
     print("},")
 
+
+def print_pbkdf2_hmac_sha256_test_vector():
+    password = fresh_bytes(bound=1024)
+    salt = fresh_bytes(bound=1024)
+    c = random.randint(1, 100000)
+    dk = hashlib.pbkdf2_hmac('sha256', password, salt, c)
+    print("TestVector {")
+    print(f"    password: \"{password.hex()}\",")
+    print(f"    salt: \"{salt.hex()}\",")
+    print(f"    c: {c},")
+    print(f"    dk: \"{dk.hex()}\",")
+    print("},")
+
+def print_pbkdf2_hmac_sha384_test_vector():
+    password = fresh_bytes(bound=1024)
+    salt = fresh_bytes(bound=1024)
+    c = random.randint(1, 100000)
+    dk = hashlib.pbkdf2_hmac('sha384', password, salt, c)
+    print("TestVector {")
+    print(f"    password: \"{password.hex()}\",")
+    print(f"    salt: \"{salt.hex()}\",")
+    print(f"    c: {c},")
+    print(f"    dk: \"{dk.hex()}\",")
+    print("},")
+
 def print_pbkdf2_hmac_sha512_test_vector():
     password = fresh_bytes(bound=1024)
     salt = fresh_bytes(bound=1024)
