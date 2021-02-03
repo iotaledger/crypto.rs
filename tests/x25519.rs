@@ -3,7 +3,7 @@
 
 #![cfg(feature = "x25519")]
 
-use crypto::x25519::{PUBLIC_KEY_LENGTH, SECRET_KEY_LENGTH, X25519};
+use crypto::x25519::{PublicKey, SecretKey};
 
 struct TestVector {
     secret_a: &'static str,
@@ -18,36 +18,43 @@ fn test_x25519_rfc7748() -> crypto::Result<()> {
     let tvs = include!("fixtures/x25519.rs");
 
     for tv in tvs.iter() {
-        let mut sa = [0; SECRET_KEY_LENGTH];
-        hex::decode_to_slice(tv.secret_a, &mut sa as &mut [u8]).unwrap();
-
-        let pa = if let Some(s) = tv.public_a {
-            let mut pa = [0; PUBLIC_KEY_LENGTH];
-            hex::decode_to_slice(s, &mut pa as &mut [u8]).unwrap();
-            assert_eq!(X25519(&sa, None), pa);
-            pa
-        } else {
-            X25519(&sa, None)
+        let secret_a: SecretKey = {
+            let bytes = hex::decode(tv.secret_a).unwrap();
+            SecretKey::from_bytes(&bytes).unwrap()
         };
 
-        let mut pb = [0; PUBLIC_KEY_LENGTH];
-        hex::decode_to_slice(tv.public_b, &mut pb as &mut [u8]).unwrap();
-
-        let sb = if let Some(s) = tv.secret_b {
-            let mut sb = [0; PUBLIC_KEY_LENGTH];
-            hex::decode_to_slice(s, &mut sb as &mut [u8]).unwrap();
-            assert_eq!(X25519(&sb, None), pb);
-            Some(sb)
-        } else {
-            None
+        let public_a: Option<PublicKey> = {
+            let bytes = tv.public_a.map(hex::decode).transpose().unwrap();
+            bytes.map(|bytes| PublicKey::from_bytes(&bytes)).transpose().unwrap()
         };
 
-        let mut expected_shared = [0; PUBLIC_KEY_LENGTH];
-        hex::decode_to_slice(tv.shared, &mut expected_shared as &mut [u8]).unwrap();
+        let secret_b: Option<SecretKey> = {
+            let bytes = tv.secret_b.map(hex::decode).transpose().unwrap();
+            bytes.map(|bytes| SecretKey::from_bytes(&bytes)).transpose().unwrap()
+        };
 
-        assert_eq!(X25519(&sa, Some(&pb)), expected_shared);
-        if let Some(ref sb) = sb {
-            assert_eq!(X25519(sb, Some(&pa)), expected_shared);
+        let public_b: PublicKey = {
+            let bytes = hex::decode(tv.public_b).unwrap();
+            PublicKey::from_bytes(&bytes).unwrap()
+        };
+
+        let expected: Vec<u8> = hex::decode(tv.shared).unwrap();
+
+        if let Some(public_a) = public_a {
+            assert_eq!(secret_a.public_key().to_bytes(), public_a.to_bytes());
+        }
+
+        if let Some(ref secret_b) = secret_b {
+            assert_eq!(secret_b.public_key().to_bytes(), public_b.to_bytes());
+        }
+
+        assert_eq!(secret_a.diffie_hellman(&public_b).to_bytes(), &expected[..],);
+
+        if let Some(ref secret_b) = secret_b {
+            assert_eq!(
+                secret_b.diffie_hellman(&secret_a.public_key()).to_bytes(),
+                &expected[..],
+            );
         }
     }
 
