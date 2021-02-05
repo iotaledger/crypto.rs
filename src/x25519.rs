@@ -23,7 +23,7 @@ pub type SharedSecret = x25519_dalek::SharedSecret;
 pub struct PublicKey(x25519_dalek::PublicKey);
 
 impl PublicKey {
-    /// Create a new [`PublicKey`] from bytes.
+    /// Load a [`PublicKey`] from a slice of bytes.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         let array: [u8; PUBLIC_KEY_LEN] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
             from: "bytes",
