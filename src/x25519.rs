@@ -56,7 +56,7 @@ impl SecretKey {
         Self::from_bytes(&bytes[..])
     }
 
-    /// Create a new [`SecretKey`] from bytes.
+    /// Load a [`SecretKey`] from a slice of bytes.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         let array: [u8; SECRET_KEY_LEN] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
             from: "bytes",
