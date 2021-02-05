@@ -15,6 +15,8 @@ pub const PUBLIC_KEY_LEN: usize = 32;
 pub const SECRET_KEY_LEN: usize = 32;
 
 /// An X25519 Shared Secret - the result of a Diffie-Hellman key exchange.
+///
+/// Each party computes this from an (ephemeral) [`SecretKey`] and their counterparty's [`PublicKey`].
 pub type SharedSecret = x25519_dalek::SharedSecret;
 
 /// An X25519 Public Key
