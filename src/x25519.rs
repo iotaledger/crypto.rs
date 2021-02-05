@@ -76,7 +76,7 @@ impl SecretKey {
         PublicKey((&self.0).into())
     }
 
-    /// Computes a Diffie-Hellman [`SharedSecret`] with the given [`PublicKey`].
+    /// Computes the Diffie-Hellman [`SharedSecret`] from the [`SecretKey`] and the given [`PublicKey`].
     pub fn diffie_hellman(&self, public: &PublicKey) -> SharedSecret {
         self.0.diffie_hellman(&public.0)
     }
