@@ -17,6 +17,9 @@ pub mod aes_kw;
 #[cfg(feature = "ed25519")]
 pub mod ed25519;
 
+#[cfg(feature = "x25519")]
+pub mod x25519;
+
 #[cfg(feature = "random")]
 pub mod rand;
 
@@ -38,7 +41,7 @@ mod test_utils;
 use core::fmt;
 
 /// Error type of crypto.rs
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub enum Error {
     /// Buffer Error
     BufferSize { needs: usize, has: usize },
