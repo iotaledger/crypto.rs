@@ -29,6 +29,9 @@ pub mod blake2b;
 #[cfg(feature = "bip39")]
 pub mod bip39;
 
+#[cfg(feature = "slip10")]
+pub mod slip10;
+
 #[cfg(test)]
 #[macro_use]
 #[allow(unused_imports)]
