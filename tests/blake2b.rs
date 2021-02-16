@@ -3,7 +3,9 @@
 
 #[cfg(feature = "blake2b")]
 mod test {
-    use crypto::blake2b;
+    use blake2::VarBlake2b;
+    use crypto::hashes::blake2b;
+    use digest::{Update, VariableOutput};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize)]
@@ -17,8 +19,20 @@ mod test {
         out_256: Option<String>,
     }
 
+    fn variable_blake2b(input: &[u8], key: &str, size: usize) -> Vec<u8> {
+        let mut digest: VarBlake2b = if key.is_empty() {
+            VarBlake2b::new_keyed(&[], size)
+        } else {
+            VarBlake2b::new_keyed(&hex::decode(key).unwrap(), size)
+        };
+        let mut output: Vec<u8> = vec![0; size];
+        digest.update(input);
+        digest.finalize_variable(|bytes| output.copy_from_slice(bytes));
+        output
+    }
+
     #[test]
-    fn blake2b_simd_lib() {
+    fn blake2b_lib() {
         // uses blake2b testvectors from the official testvectors at https://github.com/BLAKE2/BLAKE2/tree/master/testvectors
         // out_256 was generated with b2sum on inputs without key
         let test_vectors: Vec<TestVector> = serde_json::from_str(include_str!("fixtures/blake2b.json")).unwrap();
@@ -26,20 +40,14 @@ mod test {
         for vector in test_vectors.iter() {
             test_num += 1;
             let input = hex::decode(&vector.input).unwrap();
-            let mut params = blake2b_simd::Params::new();
-
-            if !vector.key.is_empty() {
-                params.key(&hex::decode(&vector.key).unwrap());
-            }
-
-            let hash = params.hash(&input);
-            assert_eq!(hex::decode(vector.out.clone()).unwrap(), hash.as_bytes());
-
+            assert_eq!(
+                hex::decode(vector.out.clone()).unwrap(),
+                variable_blake2b(&input, &vector.key, 64),
+            );
             if vector.key.is_empty() && vector.out_256.is_some() {
-                let hash_256 = params.hash_length(32).hash(&input);
                 assert_eq!(
                     hex::decode(vector.out_256.as_ref().unwrap()).unwrap(),
-                    hash_256.as_bytes()
+                    variable_blake2b(&input, &vector.key, 32),
                 );
             }
         }
