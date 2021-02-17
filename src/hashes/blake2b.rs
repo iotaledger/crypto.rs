@@ -10,16 +10,6 @@ use digest::{
     FixedOutput, Reset, Update, VariableOutput,
 };
 
-pub fn hash(data: &[u8], output_buffer: &mut [u8]) {
-    let digest = VarBlake2b::new(output_buffer.len())
-        .unwrap_or_else(|_| panic!("Bad hash length: {}", output_buffer.len()))
-        .chain(data);
-
-    digest.finalize_variable(|hash_bytes| {
-        output_buffer[..hash_bytes.len()].clone_from_slice(hash_bytes);
-    });
-}
-
 /// Blake2b instance with a 256-bit output.
 #[derive(Clone)]
 pub struct Blake2b256(VarBlake2b);

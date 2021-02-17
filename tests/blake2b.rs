@@ -5,7 +5,7 @@
 mod test {
     use blake2::VarBlake2b;
     use crypto::hashes::blake2b;
-    use digest::{Update, VariableOutput};
+    use digest::{Digest, Update, VariableOutput};
     use serde::{Deserialize, Serialize};
 
     #[derive(Serialize, Deserialize)]
@@ -61,9 +61,10 @@ mod test {
         for vector in test_vectors.iter().filter(|v| v.key.is_empty() && v.out_256.is_some()) {
             test_num += 1;
             let input = hex::decode(&vector.input).unwrap();
-            let mut output_256: [u8; 32] = [0; 32];
-            blake2b::hash(&input, &mut output_256);
-            assert_eq!(hex::decode(vector.out_256.as_ref().unwrap()).unwrap(), output_256);
+            assert_eq!(
+                hex::decode(vector.out_256.as_ref().unwrap()).unwrap(),
+                blake2b::Blake2b256::digest(&input).to_vec(),
+            );
         }
         assert_eq!(256, test_num);
     }
