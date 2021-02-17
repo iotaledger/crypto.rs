@@ -12,8 +12,4 @@ pub mod sha;
 
 #[cfg(feature = "digest")]
 #[doc(inline)]
-pub use digest::Digest;
-
-#[cfg(feature = "digest")]
-#[doc(inline)]
-pub use digest::Output;
+pub use digest::{Digest, Output};
