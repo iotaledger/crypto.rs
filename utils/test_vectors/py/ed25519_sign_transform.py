@@ -1,11 +1,12 @@
 import sys
 import binascii
 
-#generates ed25519_sign.rs by using python3 ed25519_sign_transform.py < sign.input > ed25519_sign.rs
+# generates ed25519_sign.rs by using python3 ed25519_sign_transform.py < sign.input > ed25519_sign.rs
 print("[")
 while 1:
     line = sys.stdin.readline()
-    if not line: break
+    if not line:
+        break
     x = line.split(':')
 
     # 64-byte secret key - it consists of 32-byte seed and 32 additional bytes which
