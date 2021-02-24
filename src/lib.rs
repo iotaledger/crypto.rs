@@ -23,9 +23,6 @@ pub mod x25519;
 #[cfg(feature = "random")]
 pub mod rand;
 
-#[cfg(feature = "blake2b")]
-pub mod blake2b;
-
 #[cfg(feature = "bip39")]
 pub mod bip39;
 

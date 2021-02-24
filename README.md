@@ -20,11 +20,13 @@ To be included in this list an implementation must:
 | hash       | SHA2-384           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
 | hash       | SHA2-512           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
 | hash       | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
-| hash       | BLAKE2b            | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2b_simd`     | [official][BLAKE2B-TEST] | ★★★★☆ |
+| hash       | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
 | mac        | HMAC-SHA2-256      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | mac        | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | mac        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | signature  | Ed25519            | [`ed25519`](/src/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
+| derivation | PBKDF2-HMAC-SHA256 | [`pbkdf`](/src/kdfs/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| derivation | PBKDF2-HMAC-SHA384 | [`pbkdf`](/src/kdfs/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
 | derivation | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/kdfs/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
 | derivation | BIP-39             | [`bip39`](/src/bip39.rs)            | [rfc][BIP39-RFC]           | `crypto.rs`        | [multilang][BIP39-TEST]  | ★★☆☆☆ |
 | derivation | SLIP-10            | [`slip10`]()\*\*                    | [rfc][SLIP10-RFC]          | `stronghold.rs`    | self                     | ★★☆☆☆ |
