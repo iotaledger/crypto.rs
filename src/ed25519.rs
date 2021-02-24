@@ -113,7 +113,6 @@ mod tests {
             assert_eq!(pkb, sk.public_key().to_compressed_bytes());
             let pk = PublicKey::from_compressed_bytes(pkb)?;
             assert_eq!(pkb, pk.to_compressed_bytes());
-            // TODO: assert_eq!(pk, sk.public_key()); why no equality on ed25519_zebra::VerificationKey?
 
             let msg = hex::decode(tv.message).unwrap();
 
