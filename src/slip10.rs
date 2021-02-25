@@ -13,6 +13,7 @@ use alloc::vec::Vec;
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
 
+#[derive(Clone, Copy, Debug)]
 pub enum Curve {
     Ed25519,
     Secp256k1,
