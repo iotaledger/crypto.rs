@@ -13,6 +13,21 @@ use alloc::vec::Vec;
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
 
+pub enum Curve {
+    Ed25519,
+    Secp256k1,
+    Nist256P1,
+}
+
+impl Curve {
+    fn seedkey(&self) -> &[u8] {
+        match self {
+            Curve::Ed25519 => b"ed25519 seed",
+            Curve::Secp256k1 => b"Bitcoin seed",
+            Curve::Nist256P1 => b"Nist256p1 seed",
+        }
+    }
+}
 /// A seed is an arbitrary bytestring used to create the root of the tree.
 ///
 /// Several standards generate and/or restricts the size of the seed:
@@ -29,14 +44,14 @@ impl Seed {
         Self(bs.to_vec())
     }
 
-    pub fn to_master_key(&self, h_key: &[u8]) -> Key {
+    pub fn to_master_key(&self, curve: Curve) -> Key {
         let mut i = [0; 64];
-        HMAC_SHA512(&self.0, h_key, &mut i);
+        HMAC_SHA512(&self.0, curve.seedkey(), &mut i);
         Key(i)
     }
 
-    pub fn derive(&self, h_key: &[u8], chain: &Chain) -> crate::Result<Key> {
-        self.to_master_key(h_key).derive(chain)
+    pub fn derive(&self, curve: Curve, chain: &Chain) -> crate::Result<Key> {
+        self.to_master_key(curve).derive(chain)
     }
 }
 
