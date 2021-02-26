@@ -2,4 +2,4 @@
 "iota-crypto": minor
 ---
 
-Add Slip10 supported curves.
+Add explicit Slip10 support for Ed25519 curve.
