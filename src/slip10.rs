@@ -16,16 +16,12 @@ use alloc::vec::Vec;
 #[derive(Clone, Copy, Debug)]
 pub enum Curve {
     Ed25519,
-    Secp256k1,
-    Nist256P1,
 }
 
 impl Curve {
     fn seedkey(&self) -> &[u8] {
         match self {
             Curve::Ed25519 => b"ed25519 seed",
-            Curve::Secp256k1 => b"Bitcoin seed",
-            Curve::Nist256P1 => b"Nist256p1 seed",
         }
     }
 }
