@@ -33,7 +33,7 @@ pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
-slip10 = ["hmac", "sha", "ed25519", "random" ]
+slip10 = ["hmac", "sha", "ed25519", "random", "serde" ]
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }
@@ -101,6 +101,11 @@ chacha20poly1305 = { version = "0.7.1", optional = true }
   version = "0.9.0"
   optional = true
   default-features = false
+
+  [dependencies.serde]
+  version = "1.0.123"
+  optional = true
+  features = ["derive"]
 
 [dev-dependencies]
 hex = "0.4.2"
