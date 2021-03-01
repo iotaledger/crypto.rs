@@ -7,6 +7,8 @@ use crate::{ed25519::SecretKey, macs::hmac::HMAC_SHA512};
 
 use core::{convert::TryFrom, default::Default};
 
+use serde::{Deserialize, Serialize};
+
 use alloc::vec::Vec;
 
 // https://github.com/satoshilabs/slips/blob/master/slip-0010.md
@@ -115,7 +117,7 @@ impl TryFrom<&[u8]> for Key {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Segment {
     hardened: bool,
     bs: [u8; 4],
@@ -132,7 +134,7 @@ impl Segment {
     pub const HARDEN_MASK: u32 = 1 << 31;
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Chain(Vec<Segment>);
 
 impl Chain {
