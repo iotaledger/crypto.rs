@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::convert::TryFrom;
+use core::{cmp::Ordering, convert::TryFrom};
 
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
@@ -51,6 +51,32 @@ impl PublicKey {
     }
 }
 
+impl AsRef<[u8]> for PublicKey {
+    fn as_ref(&self) -> &[u8] {
+        &self.0.as_ref()
+    }
+}
+
+impl PartialEq for PublicKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_ref() == other.as_ref()
+    }
+}
+
+impl Eq for PublicKey {}
+
+impl PartialOrd for PublicKey {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        self.as_ref().partial_cmp(&other.as_ref())
+    }
+}
+
+impl Ord for PublicKey {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.as_ref().cmp(&other.as_ref())
+    }
+}
+
 pub struct Signature(ed25519_zebra::Signature);
 
 impl Signature {
@@ -76,6 +102,31 @@ mod tests {
         public_key: &'static str,
         message: &'static str,
         signature: &'static str,
+    }
+
+    #[test]
+    fn test_eq_ord() -> crate::Result<()> {
+        let public_key = "f24a3306ce8698c6bafb11f465f2be695f220fddbca69ca9cf133757c9c29378";
+        let public_key_different = "82eeba00688da228b83bbe32d6c2e2d548550ab3c6e30752d9fe2617e89f554d";
+
+        let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+        hex::decode_to_slice(public_key, &mut pkb as &mut [u8]).unwrap();
+        let pk = PublicKey::from_compressed_bytes(pkb)?;
+
+        let mut pkb_eq = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+        hex::decode_to_slice(public_key, &mut pkb_eq as &mut [u8]).unwrap();
+        let pk_eq = PublicKey::from_compressed_bytes(pkb_eq)?;
+
+        let mut pkb_diff = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+        hex::decode_to_slice(public_key_different, &mut pkb_diff as &mut [u8]).unwrap();
+        let pk_diff = PublicKey::from_compressed_bytes(pkb_diff)?;
+
+        assert!(pk == pk_eq);
+        assert!(pk != pk_diff);
+        assert!(pk > pk_diff);
+        assert!(!(pk > pk_eq));
+
+        Ok(())
     }
 
     #[test]
