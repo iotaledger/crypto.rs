@@ -1,8 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use core::cmp::Ordering;
-use core::convert::TryFrom;
+use core::{cmp::Ordering, convert::TryFrom};
 
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;

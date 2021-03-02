@@ -2,4 +2,4 @@
 "iota-crypto": minor
 ---
 
-Add ed25519 PublicKey Eq and Ord traits.
+Add ed25519 PublicKey Eq, Ord and AsRef traits.
