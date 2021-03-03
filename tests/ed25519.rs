@@ -7,7 +7,7 @@ pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
-use crypto::signatures::ed25519::{verify, PublicKey, SecretKey, Signature};
+use crypto::signatures::ed25519::{PublicKey, SecretKey, Signature};
 
 #[test]
 fn test_zip215() -> crypto::Result<()> {
@@ -28,7 +28,7 @@ fn test_zip215() -> crypto::Result<()> {
         hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
         let sig = Signature::from_bytes(sigb);
 
-        assert!(verify(&pk, &sig, &ms));
+        assert!(PublicKey::verify(&pk, &sig, &ms));
     }
 
     Ok(())
@@ -55,7 +55,7 @@ fn test_malleability() -> crypto::Result<()> {
     ];
     let pk = PublicKey::from_compressed_bytes(pkb)?;
 
-    assert!(!verify(&pk, &sig, &ms));
+    assert!(!PublicKey::verify(&pk, &sig, &ms));
 
     Ok(())
 }
@@ -87,8 +87,8 @@ fn test_golden() -> crypto::Result<()> {
         hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
         assert_eq!(sigb, sk.sign(&msg).to_bytes());
         let sig = Signature::from_bytes(sigb);
-        assert!(verify(&pk, &sig, &msg));
-        assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+        assert!(PublicKey::verify(&pk, &sig, &msg));
+        assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
     }
 
     Ok(())
