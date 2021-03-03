@@ -13,7 +13,7 @@ impl SecretKey {
     #[cfg(feature = "random")]
     pub fn generate() -> crate::Result<Self> {
         let mut bs = [0u8; SECRET_KEY_LENGTH];
-        crate::rand::fill(&mut bs)?;
+        crate::utils::rand::fill(&mut bs)?;
         Self::from_le_bytes(bs)
     }
 
@@ -174,7 +174,7 @@ mod tests {
             assert!(verify(&pk, &sig, &msg));
             assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
 
-            crate::test_utils::corrupt(&mut sigb);
+            crate::utils::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
             assert!(!verify(&pk, &incorrect_sig, &msg));
         }
@@ -186,7 +186,7 @@ mod tests {
     #[test]
     fn test_generate() -> crate::Result<()> {
         let sk = SecretKey::generate()?;
-        let msg = crate::test_utils::fresh::bytestring();
+        let msg = crate::utils::test_utils::fresh::bytestring();
 
         let sig = sk.sign(&msg);
 
@@ -194,7 +194,7 @@ mod tests {
         assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
 
         let mut sigb = sig.to_bytes();
-        crate::test_utils::corrupt(&mut sigb);
+        crate::utils::test_utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
         assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
 

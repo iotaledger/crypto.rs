@@ -7,7 +7,7 @@ pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
-use crypto::ed25519::{verify, PublicKey, SecretKey, Signature};
+use crypto::signatures::ed25519::{verify, PublicKey, SecretKey, Signature};
 
 #[test]
 fn test_zip215() -> crypto::Result<()> {

@@ -153,7 +153,7 @@ pub mod xchacha20poly1305 {
                 assert_eq!(decrypted_plain_text, plaintext);
 
                 let mut corrupted_tag = tag;
-                crate::test_utils::corrupt(&mut corrupted_tag);
+                crate::utils::test_utils::corrupt(&mut corrupted_tag);
                 assert!(decrypt(
                     &mut decrypted_plain_text,
                     &ciphertext,
@@ -165,7 +165,7 @@ pub mod xchacha20poly1305 {
                 .is_err());
 
                 let mut corrupted_nonce = nonce;
-                crate::test_utils::corrupt(&mut corrupted_nonce);
+                crate::utils::test_utils::corrupt(&mut corrupted_nonce);
                 assert!(decrypt(
                     &mut decrypted_plain_text,
                     &ciphertext,
@@ -178,7 +178,7 @@ pub mod xchacha20poly1305 {
 
                 if !associated_data.is_empty() {
                     let mut corrupted_associated_data = associated_data.clone();
-                    crate::test_utils::corrupt(&mut corrupted_associated_data);
+                    crate::utils::test_utils::corrupt(&mut corrupted_associated_data);
                     assert!(decrypt(
                         &mut decrypted_plain_text,
                         &ciphertext,
@@ -194,7 +194,7 @@ pub mod xchacha20poly1305 {
                         &key,
                         &tag,
                         &nonce,
-                        &crate::test_utils::fresh::bytestring()
+                        &crate::utils::test_utils::fresh::bytestring()
                     )
                     .is_err());
                 } else {
@@ -204,7 +204,7 @@ pub mod xchacha20poly1305 {
                         &key,
                         &tag,
                         &nonce,
-                        &crate::test_utils::fresh::non_empty_bytestring()
+                        &crate::utils::test_utils::fresh::non_empty_bytestring()
                     )
                     .is_err());
                 }

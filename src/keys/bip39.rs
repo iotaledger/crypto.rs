@@ -24,7 +24,7 @@ pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) {
 
     // unwrapping here is safe since PBKDF2_HMAC_SHA512 is only expected to fail when iteration
     // count is zero
-    crate::kdfs::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), 2048, s).unwrap();
+    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), 2048, s).unwrap();
 }
 
 pub mod wordlist {
@@ -611,7 +611,7 @@ mod tests {
             OsRng.fill_bytes(&mut data);
 
             let mut corrupted_data = data.clone();
-            crate::test_utils::corrupt(&mut corrupted_data);
+            crate::utils::test_utils::corrupt(&mut corrupted_data);
 
             let ws = choose_wordlist();
             let ms = wordlist::encode(&data, &ws).unwrap();

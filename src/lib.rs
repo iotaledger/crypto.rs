@@ -8,35 +8,15 @@ mod macros;
 
 pub mod ciphers;
 pub mod hashes;
-pub mod kdfs;
+pub mod keys;
 pub mod macs;
-
-#[cfg(feature = "aes-kw")]
-pub mod aes_kw;
-
-#[cfg(feature = "ed25519")]
-pub mod ed25519;
-
-#[cfg(feature = "x25519")]
-pub mod x25519;
-
-#[cfg(feature = "random")]
-pub mod rand;
-
-#[cfg(feature = "bip39")]
-pub mod bip39;
-
-#[cfg(feature = "slip10")]
-pub mod slip10;
+pub mod signatures;
+pub mod utils;
 
 #[cfg(test)]
 #[macro_use]
 #[allow(unused_imports)]
 extern crate alloc;
-
-#[cfg(test)]
-#[allow(dead_code)]
-mod test_utils;
 
 use core::fmt;
 
