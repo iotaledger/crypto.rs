@@ -3,7 +3,7 @@
 
 #![cfg(feature = "pbkdf")]
 
-use crypto::kdfs::pbkdf::{PBKDF2_HMAC_SHA256, PBKDF2_HMAC_SHA384, PBKDF2_HMAC_SHA512};
+use crypto::keys::pbkdf::{PBKDF2_HMAC_SHA256, PBKDF2_HMAC_SHA384, PBKDF2_HMAC_SHA512};
 
 struct TestVector {
     password: &'static str,

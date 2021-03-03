@@ -4,7 +4,7 @@
 #[cfg(feature = "slip10")]
 mod test {
     use crypto::{
-        slip10::{Chain, Curve, Seed},
+        keys::slip10::{Chain, Curve, Seed},
         Result,
     };
 

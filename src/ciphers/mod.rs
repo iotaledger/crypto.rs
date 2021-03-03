@@ -6,3 +6,6 @@ pub mod chacha;
 
 #[cfg(feature = "aes")]
 pub mod aes;
+
+#[cfg(feature = "aes-kw")]
+pub mod aes_kw;

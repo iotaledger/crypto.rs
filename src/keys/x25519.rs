@@ -53,7 +53,7 @@ impl SecretKey {
     pub fn generate() -> crate::Result<Self> {
         let mut bytes: [u8; SECRET_KEY_LEN] = [0; SECRET_KEY_LEN];
 
-        crate::rand::fill(&mut bytes[..])?;
+        crate::utils::rand::fill(&mut bytes[..])?;
 
         Self::from_bytes(&bytes[..])
     }

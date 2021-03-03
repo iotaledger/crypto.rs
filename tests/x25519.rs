@@ -3,7 +3,7 @@
 
 #![cfg(feature = "x25519")]
 
-use crypto::x25519::{PublicKey, SecretKey};
+use crypto::keys::x25519::{PublicKey, SecretKey};
 
 struct TestVector {
     secret_a: &'static str,

@@ -3,7 +3,7 @@
 
 extern crate alloc;
 
-use crate::{ed25519::SecretKey, macs::hmac::HMAC_SHA512};
+use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
 use core::{convert::TryFrom, default::Default};
 

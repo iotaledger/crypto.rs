@@ -8,38 +8,61 @@ To be included in this list an implementation must:
 * use explicit memory allocation whenever possible and prefer `no_std`
 * be proven by: mathematical proofs, audits, reviews by security experts, mass adoption
 * be tested using independently generated test vectors from well-established reference implementations as well as available test vectors in relevant specifications
-* We trust primary research after it has been validated, RFC's must be proven...
 
 ## List of Algorithms
 
 | Type | Name | Feature | Spec/RFC | Rust Source | Test Source | Rating* |
 | - | - | - | - | - | - | - |
-| cipher     | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
-| cipher     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
-| hash       | SHA2-256           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
-| hash       | SHA2-384           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
-| hash       | SHA2-512           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
-| hash       | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
-| hash       | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
-| mac        | HMAC-SHA2-256      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
-| mac        | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
-| mac        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
-| signature  | Ed25519            | [`ed25519`](/src/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
-| derivation | PBKDF2-HMAC-SHA256 | [`pbkdf`](/src/kdfs/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
-| derivation | PBKDF2-HMAC-SHA384 | [`pbkdf`](/src/kdfs/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
-| derivation | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/kdfs/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
-| derivation | BIP-39             | [`bip39`](/src/bip39.rs)            | [rfc][BIP39-RFC]           | `crypto.rs`        | [multilang][BIP39-TEST]  | ★★☆☆☆ |
-| derivation | SLIP-10            | [`slip10`]()\*\*                    | [rfc][SLIP10-RFC]          | `stronghold.rs`    | self                     | ★★☆☆☆ |
-| utility    |                    | [`rand`](/src/rand.rs)              |                            | `getrandom`        | math                     | ★★★★★ |
-| key exchange | [`x25519`](/src/x25519.rs) | [RFC7748](https://tools.ietf.org/html/rfc7748) | [x25519-dalek](https://github.com/dalek-cryptography/x25519-dalek) | official | ★★★★★ |
+| ciphers     | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
+| ciphers     | AES-KW        | [`aes-kw`](/src/ciphers/aes_kw.rs)        | [spec][AES-GCM-SPEC]       | `aes-crate`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
+| ciphers     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
+| hashes       | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
+| hashes       | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
+| hashes       | SHA2-256           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| hashes       | SHA2-384           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| hashes       | SHA2-512           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| keys | X25519 | [`x25519`](/src/x25519.rs) | [RFC7748](https://tools.ietf.org/html/rfc7748) | [x25519-dalek](https://github.com/dalek-cryptography/x25519-dalek) | official | ★★★★★ |
+| keys | PBKDF2-HMAC-SHA256 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| keys | PBKDF2-HMAC-SHA384 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| keys | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| keys | BIP-39             | [`bip39`](/src/keys/bip39.rs)            | [rfc][BIP39-RFC]           | `crypto.rs`        | [multilang][BIP39-TEST]  | ★★☆☆☆ |
+| keys | SLIP-10            | [`slip10`]()                    | [rfc][SLIP10-RFC]          | `crypto.rs`    | self                     | ★★☆☆☆ |
+| macs        | HMAC-SHA2-256      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| macs        | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| macs        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| signatures  | Ed25519            | [`ed25519`](/src/signatures/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
+| utility    |  RANDOM                  | [`random`](/src/utils/rand.rs)              |                            | `getrandom`        | math                     | ★★★★★ |
+
 
 \* We have chosen a fully arbitrary rating for each algorithm based on how we generally feel about them.
-\*\* slip10 is currently in stronghold.rs, will be ported soon.
 
-## API
-Here is a basic description of the API.
+### Usage
+`Cargo.toml`
+```
 
-- todo
+[dependencies.iota-crypto]
+git = "https://github.com/iotaledger/crypto.rs"
+# be sure to grab the latest github commit revision hash!!!
+rev = "09ff1a94d6a87838589ccf1b874cfa3283a00f26"
+features = [ "random", "ed25519", "sha", "hmac", "bip39-en" ]
+version = "*"
+
+[features]
+default = [ "crypto" ]
+crypto = [ "iota-crypto" ]
+```
+
+
+```
+use crypto::{
+    ciphers::{aes, aes-kw}
+    hashes::{blake2b, curl-p, sha}
+    keys::{bip39, pbkdf, slip10, x25519}
+    macs::hmac
+    signatures::ed25519
+    utils::random
+}
+```
 
 ### Reference
 ```
@@ -77,8 +100,7 @@ We aim to supply at least one docstest for every interface, so to see real world
 - todo
 
 ## Bindings
-- todo
-
+Generally speaking, consuming libraries of this crate are responsible for providing their own bindings and may, if they chose, decide to expose this crates functionality.
 
 ## Running Tests
 ```

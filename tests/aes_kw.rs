@@ -3,7 +3,7 @@
 
 #![cfg(feature = "aes-kw")]
 
-use crypto::aes_kw::{Aes128Kw, Aes192Kw, Aes256Kw, BLOCK};
+use crypto::ciphers::aes_kw::{Aes128Kw, Aes192Kw, Aes256Kw, BLOCK};
 
 #[derive(Debug)]
 struct TestVector {
