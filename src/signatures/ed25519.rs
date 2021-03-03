@@ -37,6 +37,10 @@ impl SecretKey {
 pub struct PublicKey(ed25519_zebra::VerificationKey);
 
 impl PublicKey {
+    pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
+        pk.0.verify(&sig.0, msg).is_ok()
+    }
+
     pub fn to_compressed_bytes(&self) -> [u8; COMPRESSED_PUBLIC_KEY_LENGTH] {
         self.0.into()
     }
@@ -87,10 +91,6 @@ impl Signature {
     pub fn from_bytes(bs: [u8; SIGNATURE_LENGTH]) -> Self {
         Self(ed25519_zebra::Signature::from(bs))
     }
-}
-
-pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
-    pk.0.verify(&sig.0, msg).is_ok()
 }
 
 #[cfg(test)]
@@ -171,12 +171,12 @@ mod tests {
             hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
             assert_eq!(sigb, sk.sign(&msg).to_bytes());
             let sig = Signature::from_bytes(sigb);
-            assert!(verify(&pk, &sig, &msg));
-            assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+            assert!(PublicKey::verify(&pk, &sig, &msg));
+            assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
 
             crate::utils::test_utils::corrupt(&mut sigb);
             let incorrect_sig = Signature::from_bytes(sigb);
-            assert!(!verify(&pk, &incorrect_sig, &msg));
+            assert!(!PublicKey::verify(&pk, &incorrect_sig, &msg));
         }
 
         Ok(())
@@ -190,13 +190,13 @@ mod tests {
 
         let sig = sk.sign(&msg);
 
-        assert!(verify(&sk.public_key(), &sig, &msg));
-        assert!(!verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+        assert!(PublicKey::verify(&sk.public_key(), &sig, &msg));
+        assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
 
         let mut sigb = sig.to_bytes();
         crate::utils::test_utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
-        assert!(!verify(&sk.public_key(), &incorrect_sig, &msg));
+        assert!(!PublicKey::verify(&sk.public_key(), &incorrect_sig, &msg));
 
         Ok(())
     }
