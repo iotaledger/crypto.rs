@@ -37,8 +37,8 @@ impl SecretKey {
 pub struct PublicKey(ed25519_zebra::VerificationKey);
 
 impl PublicKey {
-    pub fn verify(pk: &PublicKey, sig: &Signature, msg: &[u8]) -> bool {
-        pk.0.verify(&sig.0, msg).is_ok()
+    pub fn verify(&self, sig: &Signature, msg: &[u8]) -> bool {
+        self.0.verify(&sig.0, msg).is_ok()
     }
 
     pub fn to_compressed_bytes(&self) -> [u8; COMPRESSED_PUBLIC_KEY_LENGTH] {
