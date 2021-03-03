@@ -1,5 +1,12 @@
 # crypto.rs
 
+[![](https://img.shields.io/crates/v/iota-crypto?style=flat-square)](https://crates.io/crates/iota-crypto)
+[![](https://img.shields.io/docsrs/iota-crypto?style=flat-square)](https://docs.rs/iota-crypto/)
+![](https://img.shields.io/crates/l/iota-crypto?style=flat-square)
+
+[![tests](https://github.com/iotaledger/crypto.rs/actions/workflows/tests.yml/badge.svg)](https://github.com/iotaledger/crypto.rs/actions/workflows/tests.yml)
+[![dependency status](https://deps.rs/repo/github/iotaledger/crypto.rs/status.svg)](https://deps.rs/repo/github/iotaledger/crypto.rs)
+
 A boundary crate of selected implementations of crypto primitives that are considered to be safe to use within the IOTA Foundation.
 
 To be included in this list an implementation must:
@@ -52,7 +59,7 @@ default = [ "crypto" ]
 crypto = [ "iota-crypto" ]
 ```
 
-
+`src/main.rs`
 ```
 use crypto::{
     ciphers::{aes, aes-kw}
@@ -93,19 +100,17 @@ If you have questions about how to use this library, or why certain decisions we
 
 
 ## Tests
+
+```
+cargo test --lib --all-features
+```
 ### Doctest
 We aim to supply at least one docstest for every interface, so to see real world usage consult the rustdocs.
 
-## FAQ
-- todo
 
 ## Bindings
 Generally speaking, consuming libraries of this crate are responsible for providing their own bindings and may, if they chose, decide to expose this crates functionality.
 
-## Running Tests
-```
-cargo test --lib --all-features
-```
 
 ## License
 Apache 2.0
