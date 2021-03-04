@@ -3,6 +3,8 @@
 
 #![cfg(feature = "ed25519")]
 
+mod utils;
+
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
@@ -171,7 +173,7 @@ fn test_vectors() -> crypto::Result<()> {
         assert!(PublicKey::verify(&pk, &sig, &msg));
         assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
 
-        crate::utils::test_utils::corrupt(&mut sigb);
+        utils::corrupt(&mut sigb);
         let incorrect_sig = Signature::from_bytes(sigb);
         assert!(!PublicKey::verify(&pk, &incorrect_sig, &msg));
     }
@@ -183,7 +185,7 @@ fn test_vectors() -> crypto::Result<()> {
 #[test]
 fn test_generate() -> crypto::Result<()> {
     let sk = SecretKey::generate()?;
-    let msg = crate::utils::test_utils::fresh::bytestring();
+    let msg = utils::fresh::bytestring();
 
     let sig = sk.sign(&msg);
 
@@ -191,7 +193,7 @@ fn test_generate() -> crypto::Result<()> {
     assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
 
     let mut sigb = sig.to_bytes();
-    crate::utils::test_utils::corrupt(&mut sigb);
+    utils::corrupt(&mut sigb);
     let incorrect_sig = Signature::from_bytes(sigb);
     assert!(!PublicKey::verify(&sk.public_key(), &incorrect_sig, &msg));
 

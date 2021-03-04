@@ -3,6 +3,8 @@
 
 #![cfg(feature = "chacha")]
 
+mod utils;
+
 use crypto::ciphers::chacha::xchacha20poly1305::*;
 
 struct TestVector {
@@ -86,7 +88,7 @@ fn test_vectors() -> crypto::Result<()> {
         assert_eq!(decrypted_plain_text, plaintext);
 
         let mut corrupted_tag = tag;
-        crate::utils::test_utils::corrupt(&mut corrupted_tag);
+        utils::corrupt(&mut corrupted_tag);
         assert!(decrypt(
             &mut decrypted_plain_text,
             &ciphertext,
@@ -98,7 +100,7 @@ fn test_vectors() -> crypto::Result<()> {
         .is_err());
 
         let mut corrupted_nonce = nonce;
-        crate::utils::test_utils::corrupt(&mut corrupted_nonce);
+        utils::corrupt(&mut corrupted_nonce);
         assert!(decrypt(
             &mut decrypted_plain_text,
             &ciphertext,
@@ -111,7 +113,7 @@ fn test_vectors() -> crypto::Result<()> {
 
         if !associated_data.is_empty() {
             let mut corrupted_associated_data = associated_data.clone();
-            crate::utils::test_utils::corrupt(&mut corrupted_associated_data);
+            utils::corrupt(&mut corrupted_associated_data);
             assert!(decrypt(
                 &mut decrypted_plain_text,
                 &ciphertext,
@@ -127,7 +129,7 @@ fn test_vectors() -> crypto::Result<()> {
                 &key,
                 &tag,
                 &nonce,
-                &crate::utils::test_utils::fresh::bytestring()
+                &utils::fresh::bytestring()
             )
             .is_err());
         } else {
@@ -137,7 +139,7 @@ fn test_vectors() -> crypto::Result<()> {
                 &key,
                 &tag,
                 &nonce,
-                &crate::utils::test_utils::fresh::non_empty_bytestring()
+                &utils::fresh::non_empty_bytestring()
             )
             .is_err());
         }

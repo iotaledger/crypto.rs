@@ -3,6 +3,8 @@
 
 #![cfg(feature = "bip39")]
 
+mod utils;
+
 extern crate alloc;
 
 use alloc::vec::Vec;
@@ -417,7 +419,7 @@ fn test_wordlist_codec_different_data_different_encodings() {
         OsRng.fill_bytes(&mut data);
 
         let mut corrupted_data = data.clone();
-        crate::utils::test_utils::corrupt(&mut corrupted_data);
+        utils::corrupt(&mut corrupted_data);
 
         let ws = choose_wordlist();
         let ms = wordlist::encode(&data, &ws).unwrap();
