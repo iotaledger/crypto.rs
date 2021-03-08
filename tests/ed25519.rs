@@ -3,6 +3,8 @@
 
 #![cfg(feature = "ed25519")]
 
+mod utils;
+
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
@@ -90,6 +92,90 @@ fn test_golden() -> crypto::Result<()> {
         assert!(PublicKey::verify(&pk, &sig, &msg));
         assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
     }
+
+    Ok(())
+}
+
+struct TestVector {
+    secret_key: &'static str,
+    public_key: &'static str,
+    message: &'static str,
+    signature: &'static str,
+}
+
+#[test]
+fn test_eq_ord() -> crypto::Result<()> {
+    let public_key = "f24a3306ce8698c6bafb11f465f2be695f220fddbca69ca9cf133757c9c29378";
+    let public_key_different = "82eeba00688da228b83bbe32d6c2e2d548550ab3c6e30752d9fe2617e89f554d";
+
+    let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+    hex::decode_to_slice(public_key, &mut pkb as &mut [u8]).unwrap();
+    let pk = PublicKey::from_compressed_bytes(pkb)?;
+
+    let mut pkb_eq = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+    hex::decode_to_slice(public_key, &mut pkb_eq as &mut [u8]).unwrap();
+    let pk_eq = PublicKey::from_compressed_bytes(pkb_eq)?;
+
+    let mut pkb_diff = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+    hex::decode_to_slice(public_key_different, &mut pkb_diff as &mut [u8]).unwrap();
+    let pk_diff = PublicKey::from_compressed_bytes(pkb_diff)?;
+
+    assert!(pk == pk_eq);
+    assert!(pk != pk_diff);
+    assert!(pk > pk_diff);
+    assert!(!(pk > pk_eq));
+
+    Ok(())
+}
+
+#[test]
+fn test_vectors() -> crypto::Result<()> {
+    let tvs = include!("fixtures/ed25519.rs");
+
+    for tv in tvs.iter() {
+        let mut skb = [0; SECRET_KEY_LENGTH];
+        hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
+        let sk = SecretKey::from_le_bytes(skb)?;
+        assert_eq!(skb, sk.to_le_bytes());
+
+        let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+        hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
+        assert_eq!(pkb, sk.public_key().to_compressed_bytes());
+        let pk = PublicKey::from_compressed_bytes(pkb)?;
+        assert_eq!(pkb, pk.to_compressed_bytes());
+
+        let msg = hex::decode(tv.message).unwrap();
+
+        let mut sigb = [0; SIGNATURE_LENGTH];
+        hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
+        assert_eq!(sigb, sk.sign(&msg).to_bytes());
+        let sig = Signature::from_bytes(sigb);
+        assert!(PublicKey::verify(&pk, &sig, &msg));
+        assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+
+        utils::corrupt(&mut sigb);
+        let incorrect_sig = Signature::from_bytes(sigb);
+        assert!(!PublicKey::verify(&pk, &incorrect_sig, &msg));
+    }
+
+    Ok(())
+}
+
+#[cfg(feature = "random")]
+#[test]
+fn test_generate() -> crypto::Result<()> {
+    let sk = SecretKey::generate()?;
+    let msg = utils::fresh::bytestring();
+
+    let sig = sk.sign(&msg);
+
+    assert!(PublicKey::verify(&sk.public_key(), &sig, &msg));
+    assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
+
+    let mut sigb = sig.to_bytes();
+    utils::corrupt(&mut sigb);
+    let incorrect_sig = Signature::from_bytes(sigb);
+    assert!(!PublicKey::verify(&sk.public_key(), &incorrect_sig, &msg));
 
     Ok(())
 }
