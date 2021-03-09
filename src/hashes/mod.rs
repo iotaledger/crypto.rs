@@ -13,7 +13,7 @@ pub mod curl_p;
 #[cfg_attr(docsrs, doc(cfg(feature = "sha")))]
 pub mod sha;
 
-#[cfg(feature = "digest")]
-#[cfg_attr(docsrs, doc(cfg(feature = "digest")))]
+#[cfg(any(feature = "blake2b", feature = "sha"))]
+#[cfg_attr(docsrs, doc(cfg(any(feature = "blake2b", feature = "sha"))))]
 #[doc(inline)]
 pub use digest::{Digest, Output};
