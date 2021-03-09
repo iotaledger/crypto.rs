@@ -17,6 +17,12 @@ repository = "https://github.com/iotaledger/crypto.rs"
 [lib]
 name = "crypto"
 
+[package.metadata.docs.rs]
+# To build locally:
+# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --open
+all-features = true
+rustdoc-args = ["--cfg", "docsrs"]
+
 [features]
 default = [ ]
 aes-kw = [ "aes-crate" ]

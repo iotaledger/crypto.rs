@@ -11,6 +11,7 @@ pub struct SecretKey(ed25519_zebra::SigningKey);
 
 impl SecretKey {
     #[cfg(feature = "random")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
     pub fn generate() -> crate::Result<Self> {
         let mut bs = [0u8; SECRET_KEY_LENGTH];
         crate::utils::rand::fill(&mut bs)?;
