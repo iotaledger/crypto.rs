@@ -50,6 +50,7 @@ pub struct SecretKey(x25519_dalek::StaticSecret);
 impl SecretKey {
     /// Generate a new random [`SecretKey`].
     #[cfg(feature = "random")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
     pub fn generate() -> crate::Result<Self> {
         let mut bytes: [u8; SECRET_KEY_LEN] = [0; SECRET_KEY_LEN];
 
