@@ -37,9 +37,11 @@ pub mod wordlist {
     }
 
     #[cfg(feature = "bip39-en")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bip39-en")))]
     include!("bip39.en.rs");
 
     #[cfg(feature = "bip39-jp")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bip39-jp")))]
     include!("bip39.jp.rs");
 
     #[derive(Debug, PartialEq)]
