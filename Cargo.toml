@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.3.0"
+version = "0.4.0"
 license = "Apache-2.0"
 authors = [
   "Gustav Behm <gustav.behm@iota.org>",
@@ -14,14 +14,12 @@ description = "The canonical source of cryptographic ground-truth for all IOTA R
 homepage = "https://iota.org"
 repository = "https://github.com/iotaledger/crypto.rs"
 
+[package.metadata.docs.rs]
+all-features = true
+rustdoc-args = [ "--cfg", "docsrs" ]
+
 [lib]
 name = "crypto"
-
-[package.metadata.docs.rs]
-# To build locally:
-# RUSTDOCFLAGS="--cfg docsrs" cargo +nightly doc --all-features --no-deps --open
-all-features = true
-rustdoc-args = ["--cfg", "docsrs"]
 
 [features]
 default = [ ]
@@ -40,7 +38,7 @@ pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
-slip10 = ["hmac", "sha", "ed25519", "random", "serde" ]
+slip10 = [ "hmac", "sha", "ed25519", "random", "serde" ]
 cipher = [ "aead", "generic-array" ]
 
 [dependencies]
@@ -123,7 +121,7 @@ chacha20poly1305 = { version = "0.7.1", optional = true }
   [dependencies.serde]
   version = "1.0.123"
   optional = true
-  features = ["derive"]
+  features = [ "derive" ]
 
 [dev-dependencies]
 hex = "0.4.2"
