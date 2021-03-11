@@ -32,6 +32,7 @@ done
 echo "Generating lcov file..."
 cargo +nightly cov -- export ${BINARIES} \
   --instr-profile=crypto-rs.profdata \
+  --ignore-filename-regex="/.cargo|rustc|target|tests|/.rustup" \
   --format=lcov --Xdemangler=rustfilt \
   >> coverage/coverage.info
 
