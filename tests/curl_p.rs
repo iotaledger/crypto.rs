@@ -8,7 +8,7 @@ use crypto::hashes::curl_p::CurlP;
 use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
 
 fn digest(input: &str, output: &str) {
-    let mut curl = CurlP::default();
+    let mut curl = CurlP::new();
 
     let input_trit_buf = TryteBuf::try_from_str(input).unwrap().as_trits().encode::<T1B1Buf>();
     let expected_hash = TryteBuf::try_from_str(output).unwrap();
@@ -18,7 +18,7 @@ fn digest(input: &str, output: &str) {
 }
 
 fn digest_into(input: &str, output: &str) {
-    let mut curl = CurlP::default();
+    let mut curl = CurlP::new();
 
     let input_trit_buf = TryteBuf::try_from_str(input).unwrap().as_trits().encode::<T1B1Buf>();
     let expected_hash = TryteBuf::try_from_str(output).unwrap();
