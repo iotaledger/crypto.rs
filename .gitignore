@@ -19,3 +19,6 @@ package-lock.json
 .vscode/settings.json
 */.vscode/
 TODO.md
+
+# Coverage data
+coverage/
