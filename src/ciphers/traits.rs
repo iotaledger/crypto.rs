@@ -37,7 +37,7 @@ pub type Tag<T> = GenericArray<u8, <T as Aead>::TagLength>;
 ///
 /// let tag: Tag<Aes256Gcm> = Aes256Gcm::try_encrypt(&key, &nonce, associated_data, plaintext, &mut encrypted)?;
 ///
-/// Aes256Gcm::try_decrypt(&key, &nonce, associated_data, &tag, &encrypted, &mut decrypted)?;
+/// Aes256Gcm::try_decrypt(&key, &nonce, associated_data, &mut decrypted, &encrypted, &tag)?;
 ///
 /// assert_eq!(decrypted, plaintext);
 ///
