@@ -106,6 +106,7 @@ impl TryFrom<&[u8]> for Key {
     fn try_from(bs: &[u8]) -> Result<Self, Self::Error> {
         if bs.len() != 64 {
             return Err(crate::Error::BufferSize {
+                name: "key",
                 has: bs.len(),
                 needs: 64,
             });

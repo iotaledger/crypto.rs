@@ -9,7 +9,11 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 #[derive(Debug, PartialEq)]
 pub enum Error {
     /// Buffer Error
-    BufferSize { needs: usize, has: usize },
+    BufferSize {
+        name: &'static str,
+        needs: usize,
+        has: usize,
+    },
     ///  Cipher Error
     CipherError { alg: &'static str },
     /// Convertion Error
@@ -28,7 +32,9 @@ pub enum Error {
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
-            Error::BufferSize { needs, has } => write!(f, "buffer needs {} bytes, but it only has {}", needs, has),
+            Error::BufferSize { name, needs, has } => {
+                write!(f, "{} buffer needs {} bytes, but it only has {}", name, needs, has)
+            }
             Error::CipherError { alg } => write!(f, "error in algorithm {}", alg),
             Error::ConvertError { from, to } => write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),

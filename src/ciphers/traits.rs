@@ -84,9 +84,9 @@ pub trait Aead {
         key: &Key<Self>,
         nonce: &Nonce<Self>,
         associated_data: &[u8],
-        tag: &Tag<Self>,
-        ciphertext: &[u8],
         plaintext: &mut [u8],
+        ciphertext: &[u8],
+        tag: &Tag<Self>,
     ) -> crate::Result<usize>;
 
     /// Encrypt the given `plaintext` using `key`, returning the tag.
@@ -101,8 +101,9 @@ pub trait Aead {
         plaintext: &[u8],
         ciphertext: &mut [u8],
     ) -> crate::Result<Tag<Self>> {
-        let key: &Key<Self> = try_generic_array(key)?;
-        let nonce: &Nonce<Self> = try_generic_array(nonce)?;
+        let key: &Key<Self> = try_generic_array(key, "key")?;
+        let nonce: &Nonce<Self> = try_generic_array(nonce, "nonce")?;
+
         let mut tag: Tag<Self> = Default::default();
 
         Self::encrypt(key, nonce, associated_data, plaintext, ciphertext, &mut tag)?;
@@ -119,15 +120,15 @@ pub trait Aead {
         key: &[u8],
         nonce: &[u8],
         associated_data: &[u8],
-        tag: &[u8],
-        ciphertext: &[u8],
         plaintext: &mut [u8],
+        ciphertext: &[u8],
+        tag: &[u8],
     ) -> crate::Result<usize> {
-        let key: &Key<Self> = try_generic_array(key)?;
-        let nonce: &Nonce<Self> = try_generic_array(nonce)?;
-        let tag: &Tag<Self> = try_generic_array(tag)?;
+        let key: &Key<Self> = try_generic_array(key, "key")?;
+        let nonce: &Nonce<Self> = try_generic_array(nonce, "nonce")?;
+        let tag: &Tag<Self> = try_generic_array(tag, "tag")?;
 
-        Self::decrypt(key, nonce, associated_data, tag, ciphertext, plaintext)
+        Self::decrypt(key, nonce, associated_data, plaintext, ciphertext, tag)
     }
 
     /// Generates a random nonce with the correct size for this algorithm.
@@ -149,7 +150,7 @@ pub trait Aead {
 }
 
 #[inline(always)]
-fn try_generic_array<T>(slice: &[u8]) -> crate::Result<&GenericArray<u8, T>>
+fn try_generic_array<'a, T>(slice: &'a [u8], name: &'static str) -> crate::Result<&'a GenericArray<u8, T>>
 where
     T: ArrayLength<u8>,
 {
@@ -157,6 +158,7 @@ where
         Ok(slice.into())
     } else {
         Err(crate::Error::BufferSize {
+            name,
             needs: T::USIZE,
             has: slice.len(),
         })

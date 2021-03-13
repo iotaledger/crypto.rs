@@ -32,33 +32,33 @@ fn test_aead_one<A: Aead>(tv: &TestVector) -> crypto::Result<()> {
     assert_eq!(&tag[..], &expected_tag[..]);
 
     let mut out = vec![0; ctx.len()];
-    let len = A::try_decrypt(&key, &nonce, &aad, &tag, &ctx, &mut out)?;
+    let len = A::try_decrypt(&key, &nonce, &aad, &mut out, &ctx, &tag)?;
 
     assert_eq!(&out[..len], &ptx[..]);
 
     let mut corrupted_tag = tag.clone();
     utils::corrupt(&mut corrupted_tag);
-    assert!(A::try_decrypt(&key, &nonce, &aad, &corrupted_tag, &ctx, &mut out).is_err());
+    assert!(A::try_decrypt(&key, &nonce, &aad, &mut out, &ctx, &corrupted_tag).is_err());
 
     let mut corrupted_nonce = nonce.clone();
     utils::corrupt(&mut corrupted_nonce);
-    assert!(A::try_decrypt(&key, &corrupted_nonce, &aad, &tag, &ctx, &mut out).is_err());
+    assert!(A::try_decrypt(&key, &corrupted_nonce, &aad, &mut out, &ctx, &tag).is_err());
 
     if aad.is_empty() {
         assert!(A::try_decrypt(
             &key,
             &nonce,
             &utils::fresh::non_empty_bytestring(),
-            &tag,
+            &mut out,
             &ctx,
-            &mut out
+            &tag,
         )
         .is_err());
     } else {
         let mut corrupted_associated_data = aad;
         utils::corrupt(&mut corrupted_associated_data);
-        assert!(A::try_decrypt(&key, &nonce, &corrupted_associated_data, &tag, &ctx, &mut out).is_err());
-        assert!(A::try_decrypt(&key, &nonce, &utils::fresh::bytestring(), &tag, &ctx, &mut out).is_err());
+        assert!(A::try_decrypt(&key, &nonce, &corrupted_associated_data, &mut out, &ctx, &tag).is_err());
+        assert!(A::try_decrypt(&key, &nonce, &utils::fresh::bytestring(), &mut out, &ctx, &tag).is_err());
     }
 
     Ok(())

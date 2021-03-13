@@ -24,6 +24,7 @@ macro_rules! impl_aead {
 
                 if plaintext.len() > ciphertext.len() {
                     return Err($crate::Error::BufferSize {
+                        name: "ciphertext",
                         needs: plaintext.len(),
                         has: ciphertext.len(),
                     });
@@ -31,8 +32,25 @@ macro_rules! impl_aead {
 
                 if tag.len() != Self::TAG_LENGTH {
                     return Err($crate::Error::BufferSize {
+                        name: "tag",
                         needs: Self::TAG_LENGTH,
                         has: tag.len(),
+                    });
+                }
+
+                if key.len() != Self::KEY_LENGTH {
+                    return Err($crate::Error::BufferSize {
+                        name: "key",
+                        needs: Self::KEY_LENGTH,
+                        has: key.len(),
+                    });
+                }
+
+                if nonce.len() != Self::NONCE_LENGTH {
+                    return Err($crate::Error::BufferSize {
+                        name: "nonce",
+                        needs: Self::NONCE_LENGTH,
+                        has: nonce.len(),
                     });
                 }
 
@@ -51,16 +69,41 @@ macro_rules! impl_aead {
                 key: &$crate::ciphers::traits::Key<Self>,
                 nonce: &$crate::ciphers::traits::Nonce<Self>,
                 associated_data: &[u8],
-                tag: &$crate::ciphers::traits::Tag<Self>,
-                ciphertext: &[u8],
                 plaintext: &mut [u8],
+                ciphertext: &[u8],
+                tag: &$crate::ciphers::traits::Tag<Self>,
             ) -> crate::Result<usize> {
                 use aead::{AeadInPlace, NewAead};
 
                 if ciphertext.len() > plaintext.len() {
                     return Err($crate::Error::BufferSize {
+                        name: "plaintext",
                         needs: ciphertext.len(),
                         has: plaintext.len(),
+                    });
+                }
+
+                if tag.len() != Self::TAG_LENGTH {
+                    return Err($crate::Error::BufferSize {
+                        name: "tag",
+                        needs: Self::TAG_LENGTH,
+                        has: tag.len(),
+                    });
+                }
+
+                if key.len() != Self::KEY_LENGTH {
+                    return Err($crate::Error::BufferSize {
+                        name: "key",
+                        needs: Self::KEY_LENGTH,
+                        has: key.len(),
+                    });
+                }
+
+                if nonce.len() != Self::NONCE_LENGTH {
+                    return Err($crate::Error::BufferSize {
+                        name: "nonce",
+                        needs: Self::NONCE_LENGTH,
+                        has: nonce.len(),
                     });
                 }
 
