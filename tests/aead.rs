@@ -21,12 +21,13 @@ fn test_aead_one<A: Aead>(tv: &TestVector) -> crypto::Result<()> {
     let nonce = hex::decode(tv.nonce).unwrap();
     let aad = hex::decode(tv.associated_data).unwrap();
     let ptx = hex::decode(tv.plaintext).unwrap();
+    let mut tag = vec![0u8; A::TAG_LENGTH];
 
     let expected_ctx = hex::decode(tv.ciphertext).unwrap();
     let expected_tag = hex::decode(tv.tag).unwrap();
 
     let mut ctx = vec![0; ptx.len()];
-    let tag = A::try_encrypt(&key, &nonce, &aad, &ptx, &mut ctx)?;
+    A::try_encrypt(&key, &nonce, &aad, &ptx, &mut ctx, &mut tag)?;
 
     assert_eq!(&ctx[..], &expected_ctx[..]);
     assert_eq!(&tag[..], &expected_tag[..]);
