@@ -23,13 +23,13 @@ decrypt(
     tag
 );
 
-/// Returns the tag associated with the encryption.
 try_encrypt(
     key,
     nonce,
     associated_data,
     plaintext,
-    ciphertext
+    ciphertext,
+    tag
 );
 
 try_decrypt(
