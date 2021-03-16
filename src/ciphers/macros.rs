@@ -30,30 +30,6 @@ macro_rules! impl_aead {
                     });
                 }
 
-                if tag.len() != Self::TAG_LENGTH {
-                    return Err($crate::Error::BufferSize {
-                        name: "tag",
-                        needs: Self::TAG_LENGTH,
-                        has: tag.len(),
-                    });
-                }
-
-                if key.len() != Self::KEY_LENGTH {
-                    return Err($crate::Error::BufferSize {
-                        name: "key",
-                        needs: Self::KEY_LENGTH,
-                        has: key.len(),
-                    });
-                }
-
-                if nonce.len() != Self::NONCE_LENGTH {
-                    return Err($crate::Error::BufferSize {
-                        name: "nonce",
-                        needs: Self::NONCE_LENGTH,
-                        has: nonce.len(),
-                    });
-                }
-
                 ciphertext[..plaintext.len()].copy_from_slice(plaintext);
 
                 let out: $crate::ciphers::traits::Tag<Self> = Self::new(key)
@@ -80,30 +56,6 @@ macro_rules! impl_aead {
                         name: "plaintext",
                         needs: ciphertext.len(),
                         has: plaintext.len(),
-                    });
-                }
-
-                if tag.len() != Self::TAG_LENGTH {
-                    return Err($crate::Error::BufferSize {
-                        name: "tag",
-                        needs: Self::TAG_LENGTH,
-                        has: tag.len(),
-                    });
-                }
-
-                if key.len() != Self::KEY_LENGTH {
-                    return Err($crate::Error::BufferSize {
-                        name: "key",
-                        needs: Self::KEY_LENGTH,
-                        has: key.len(),
-                    });
-                }
-
-                if nonce.len() != Self::NONCE_LENGTH {
-                    return Err($crate::Error::BufferSize {
-                        name: "nonce",
-                        needs: Self::NONCE_LENGTH,
-                        has: nonce.len(),
                     });
                 }
 
