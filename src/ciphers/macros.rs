@@ -12,6 +12,8 @@ macro_rules! impl_aead {
 
             const NAME: &'static str = $name;
 
+            /// Warning: type conversions on the tag type can be tricky. instead of `&mut tag.try_into().unwrap()` use
+            /// `(&mut tag).try_into().unwrap()`
             fn encrypt(
                 key: &$crate::ciphers::traits::Key<Self>,
                 nonce: &$crate::ciphers::traits::Nonce<Self>,
