@@ -12,6 +12,8 @@ macro_rules! impl_aead {
 
             const NAME: &'static str = $name;
 
+            /// Warning: type conversions on the tag type can be tricky. instead of `&mut tag.try_into().unwrap()` use
+            /// `(&mut tag).try_into().unwrap()`
             fn encrypt(
                 key: &$crate::ciphers::traits::Key<Self>,
                 nonce: &$crate::ciphers::traits::Nonce<Self>,
@@ -24,15 +26,9 @@ macro_rules! impl_aead {
 
                 if plaintext.len() > ciphertext.len() {
                     return Err($crate::Error::BufferSize {
+                        name: "ciphertext",
                         needs: plaintext.len(),
                         has: ciphertext.len(),
-                    });
-                }
-
-                if tag.len() != Self::TAG_LENGTH {
-                    return Err($crate::Error::BufferSize {
-                        needs: Self::TAG_LENGTH,
-                        has: tag.len(),
                     });
                 }
 
@@ -51,14 +47,15 @@ macro_rules! impl_aead {
                 key: &$crate::ciphers::traits::Key<Self>,
                 nonce: &$crate::ciphers::traits::Nonce<Self>,
                 associated_data: &[u8],
-                tag: &$crate::ciphers::traits::Tag<Self>,
-                ciphertext: &[u8],
                 plaintext: &mut [u8],
+                ciphertext: &[u8],
+                tag: &$crate::ciphers::traits::Tag<Self>,
             ) -> crate::Result<usize> {
                 use aead::{AeadInPlace, NewAead};
 
                 if ciphertext.len() > plaintext.len() {
                     return Err($crate::Error::BufferSize {
+                        name: "plaintext",
                         needs: ciphertext.len(),
                         has: plaintext.len(),
                     });

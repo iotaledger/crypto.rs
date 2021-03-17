@@ -31,13 +31,14 @@ pub type Tag<T> = GenericArray<u8, <T as Aead>::TagLength>;
 /// let associated_data: &[u8] = b"stronghodl";
 /// let mut encrypted: Vec<u8> = vec![0; plaintext.len()];
 /// let mut decrypted: Vec<u8> = vec![0; encrypted.len()];
+/// let mut tag: Vec<u8> = vec![0; Aes256Gcm::TAG_LENGTH];
 ///
 /// let key: Key<Aes256Gcm> = Default::default();
 /// let nonce: Nonce<Aes256Gcm> = Aes256Gcm::random_nonce()?;
 ///
-/// let tag: Tag<Aes256Gcm> = Aes256Gcm::try_encrypt(&key, &nonce, associated_data, plaintext, &mut encrypted)?;
+/// Aes256Gcm::try_encrypt(&key, &nonce, associated_data, plaintext, &mut encrypted, &mut tag)?;
 ///
-/// Aes256Gcm::try_decrypt(&key, &nonce, associated_data, &tag, &encrypted, &mut decrypted)?;
+/// Aes256Gcm::try_decrypt(&key, &nonce, associated_data, &mut decrypted, &encrypted, &tag)?;
 ///
 /// assert_eq!(decrypted, plaintext);
 ///
@@ -84,12 +85,12 @@ pub trait Aead {
         key: &Key<Self>,
         nonce: &Nonce<Self>,
         associated_data: &[u8],
-        tag: &Tag<Self>,
-        ciphertext: &[u8],
         plaintext: &mut [u8],
+        ciphertext: &[u8],
+        tag: &Tag<Self>,
     ) -> crate::Result<usize>;
 
-    /// Encrypt the given `plaintext` using `key`, returning the tag.
+    /// Encrypt the given `plaintext` using `key`.
     ///
     /// The output is written to `ciphertext`.
     ///
@@ -100,14 +101,14 @@ pub trait Aead {
         associated_data: &[u8],
         plaintext: &[u8],
         ciphertext: &mut [u8],
-    ) -> crate::Result<Tag<Self>> {
-        let key: &Key<Self> = try_generic_array(key)?;
-        let nonce: &Nonce<Self> = try_generic_array(nonce)?;
-        let mut tag: Tag<Self> = Default::default();
+        tag: &mut [u8],
+    ) -> crate::Result<()> {
+        let key: &Key<Self> = try_generic_array(key, "key")?;
+        let nonce: &Nonce<Self> = try_generic_array(nonce, "nonce")?;
 
-        Self::encrypt(key, nonce, associated_data, plaintext, ciphertext, &mut tag)?;
+        let tag: &mut Tag<Self> = try_generic_array_mut(tag, "tag")?;
 
-        Ok(tag)
+        Self::encrypt(key, nonce, associated_data, plaintext, ciphertext, tag)
     }
 
     /// Decrypt the given `ciphertext` using `key` and `tag`.
@@ -119,15 +120,15 @@ pub trait Aead {
         key: &[u8],
         nonce: &[u8],
         associated_data: &[u8],
-        tag: &[u8],
-        ciphertext: &[u8],
         plaintext: &mut [u8],
+        ciphertext: &[u8],
+        tag: &[u8],
     ) -> crate::Result<usize> {
-        let key: &Key<Self> = try_generic_array(key)?;
-        let nonce: &Nonce<Self> = try_generic_array(nonce)?;
-        let tag: &Tag<Self> = try_generic_array(tag)?;
+        let key: &Key<Self> = try_generic_array(key, "key")?;
+        let nonce: &Nonce<Self> = try_generic_array(nonce, "nonce")?;
+        let tag: &Tag<Self> = try_generic_array(tag, "tag")?;
 
-        Self::decrypt(key, nonce, associated_data, tag, ciphertext, plaintext)
+        Self::decrypt(key, nonce, associated_data, plaintext, ciphertext, tag)
     }
 
     /// Generates a random nonce with the correct size for this algorithm.
@@ -149,7 +150,7 @@ pub trait Aead {
 }
 
 #[inline(always)]
-fn try_generic_array<T>(slice: &[u8]) -> crate::Result<&GenericArray<u8, T>>
+fn try_generic_array<'a, T>(slice: &'a [u8], name: &'static str) -> crate::Result<&'a GenericArray<u8, T>>
 where
     T: ArrayLength<u8>,
 {
@@ -157,6 +158,23 @@ where
         Ok(slice.into())
     } else {
         Err(crate::Error::BufferSize {
+            name,
+            needs: T::USIZE,
+            has: slice.len(),
+        })
+    }
+}
+
+#[inline(always)]
+fn try_generic_array_mut<'a, T>(slice: &'a mut [u8], name: &'static str) -> crate::Result<&'a mut GenericArray<u8, T>>
+where
+    T: ArrayLength<u8>,
+{
+    if slice.len() == T::USIZE {
+        Ok(slice.into())
+    } else {
+        Err(crate::Error::BufferSize {
+            name,
             needs: T::USIZE,
             has: slice.len(),
         })
