@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.4.1]
+
+-   Patch to fix publish workflow.
+    -   [f161741](https://www.github.com/iotaledger/crypto.rs/commit/f161741b56b491331d202385268500c6328da7af) fix(covector) on 2021-03-18
+
 ## [0.4.0]
 
 -   Add a `Aead` trait and expose a common API through the `Aes256Gcm` and `XChaCha20Poly1305` types.
