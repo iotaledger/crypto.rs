@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.4.1"
+version = "0.4.2"
 license = "Apache-2.0"
 authors = [
   "Gustav Behm <gustav.behm@iota.org>",
