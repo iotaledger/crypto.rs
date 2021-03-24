@@ -21,25 +21,26 @@ To be included in this list an implementation must:
 
 | Type | Name | Feature | Spec/RFC | Rust Source | Test Source | Rating* |
 | - | - | - | - | - | - | - |
-| ciphers     | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
-| ciphers     | AES-KW        | [`aes-kw`](/src/ciphers/aes_kw.rs)        | [spec][AES-GCM-SPEC]       | `aes-crate`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
-| ciphers     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
-| hashes       | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
-| hashes       | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
-| hashes       | SHA2-256           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
-| hashes       | SHA2-384           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
-| hashes       | SHA2-512           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
-| keys | X25519 | [`x25519`](/src/x25519.rs) | [RFC7748](https://tools.ietf.org/html/rfc7748) | [x25519-dalek](https://github.com/dalek-cryptography/x25519-dalek) | official | ★★★★★ |
-| keys | PBKDF2-HMAC-SHA256 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
-| keys | PBKDF2-HMAC-SHA384 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
-| keys | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
-| keys | BIP-39             | [`bip39`](/src/keys/bip39.rs)            | [rfc][BIP39-RFC]           | `crypto.rs`        | [multilang][BIP39-TEST]  | ★★☆☆☆ |
-| keys | SLIP-10            | [`slip10`]()                    | [rfc][SLIP10-RFC]          | `crypto.rs`    | self                     | ★★☆☆☆ |
-| macs        | HMAC-SHA2-256      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
-| macs        | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
-| macs        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
-| signatures  | Ed25519            | [`ed25519`](/src/signatures/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
-| utility    |  RANDOM                  | [`random`](/src/utils/rand.rs)              |                            | `getrandom`        | math                     | ★★★★★ |
+| ciphers    | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)            | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
+| ciphers    | AES-KW             | [`aes-kw`](/src/ciphers/aes_kw.rs)      | [spec][AES-GCM-SPEC]       | `aes-crate`        | [nist][AES-GCM-TEST]     | ★★★☆☆ |
+| ciphers    | CHACHA20-POLY1305  | [`chacha`](/src/ciphers/chacha.rs)      | [rfc][CHACHA-RFC]          | `chacha20poly1305` | [official][CHACHA-TEST] | ★★★★★ |
+| ciphers    | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)      | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
+| hashes     | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs)     | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
+| hashes     | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)       | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
+| hashes     | SHA2-256           | [`sha`](/src/hashes/sha.rs)             | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| hashes     | SHA2-384           | [`sha`](/src/hashes/sha.rs)             | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| hashes     | SHA2-512           | [`sha`](/src/hashes/sha.rs)             | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
+| keys       | X25519             | [`x25519`](/src/x25519.rs)              | [RFC7748][X25519-RFC]      | `x25519-dalek`     | [official][X25519-TEST]  | ★★★★★ |
+| keys       | PBKDF2-HMAC-SHA256 | [`pbkdf`](/src/keys/pbkdf.rs)           | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| keys       | PBKDF2-HMAC-SHA384 | [`pbkdf`](/src/keys/pbkdf.rs)           | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| keys       | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/keys/pbkdf.rs)           | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
+| keys       | BIP-39             | [`bip39`](/src/keys/bip39.rs)           | [rfc][BIP39-RFC]           | `crypto.rs`        | [multilang][BIP39-TEST]  | ★★☆☆☆ |
+| keys       | SLIP-10            | [`slip10`](/src/keys/slip10.rs)         | [rfc][SLIP10-RFC]          | `crypto.rs`        | self                     | ★★☆☆☆ |
+| macs       | HMAC-SHA2-256      | [`hmac`](/src/macs/hmac.rs)             | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| macs       | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)             | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| macs       | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)             | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
+| signatures | Ed25519            | [`ed25519`](/src/signatures/ed25519.rs) | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
+| utility    | RANDOM             | [`random`](/src/utils/rand.rs)          |                            | `getrandom`        | math                     | ★★★★★ |
 
 
 \* We have chosen a fully arbitrary rating for each algorithm based on how we generally feel about them.
@@ -121,6 +122,9 @@ Apache 2.0
 [AES-GCM-SPEC]: https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmvs.pdf
 [AES-GCM-TEST]: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS
 
+[CHACHA-RFC]: https://tools.ietf.org/html/rfc8439
+[CHACHA-TEST]: https://tools.ietf.org/html/rfc8439#section-2.8.2
+
 [XCHACHA-RFC]: https://tools.ietf.org/html/draft-arciszewski-xchacha-03
 [XCHACHA-TEST]: https://tools.ietf.org/html/draft-arciszewski-xchacha-03#appendix-A.3
 
@@ -143,3 +147,6 @@ Apache 2.0
 [BIP39-TEST]: https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json
 
 [SLIP10-RFC]: https://github.com/satoshilabs/slips/blob/master/slip-0010.md
+
+[X25519-RFC]: https://tools.ietf.org/html/rfc7748
+[X25519-TEST]: https://github.com/dalek-cryptography/x25519-dalek
