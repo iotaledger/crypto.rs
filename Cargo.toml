@@ -28,6 +28,7 @@ aes-kw = [ "aes-crate" ]
 chacha = [ "chacha20poly1305", "cipher" ]
 ed25519 = [ "ed25519-zebra" ]
 x25519 = [ "x25519-dalek" ]
+x448 = [ "x448-crate" ]
 random = [ "getrandom" ]
 aes = [ "aes-gcm", "cipher" ]
 blake2b = [ "blake2", "digest" ]
@@ -54,6 +55,12 @@ chacha20poly1305 = { version = "0.7.1", optional = true }
   optional = true
   default-features = false
   features = [ "u64_backend" ]
+
+  [dependencies.x448-crate]
+  version = "0.6"
+  package = "x448"
+  optional = true
+  default-features = false
 
   [dependencies.getrandom]
   version = "0.2.0"
