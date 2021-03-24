@@ -79,6 +79,7 @@ age = [
   "dep:sha2",
   "zeroize"
 ]
+secp256k1 = [ "k256", "signature" ]
 
 [dependencies]
 aead = { version = "0.5", optional = true, default-features = false }
@@ -117,6 +118,17 @@ cpufeatures = { version = "0.2", optional = true, default-features = false }
 
 [build-dependencies]
 autocfg = { version = "1.1", default-features = false }
+
+  [dependencies.k256]
+  version = "0.7"
+  optional = true
+  default-features = false
+  features = ["ecdh", "ecdsa", "sha256"]
+
+  [dependencies.signature]
+  version = "1.2"
+  optional = true
+  default-features = false
 
 [dev-dependencies]
 hex = { version = "0.4", default-features = false, features = [ "alloc", "std" ] }
