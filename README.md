@@ -21,6 +21,8 @@ To be included in this list an implementation must:
 
 | Type | Name | Feature | Spec/RFC | Rust Source | Test Source | Rating* |
 | - | - | - | - | - | - | - |
+| ciphers     | AES-128-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
+| ciphers     | AES-192-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
 | ciphers     | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
 | ciphers     | AES-KW        | [`aes-kw`](/src/ciphers/aes_kw.rs)        | [spec][AES-GCM-SPEC]       | `aes-crate`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
 | ciphers     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
