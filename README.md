@@ -29,8 +29,8 @@ To be included in this list an implementation must:
 | hashes       | SHA2-256           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
 | hashes       | SHA2-384           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
 | hashes       | SHA2-512           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
-| keys         | X25519             | [`x25519`](/src/keys/x25519.rs)     | [RFC][X25519-RFC]          | `x25519-dalek`     | [official][X25519-TEST]  | ★★★★★ |
-| keys         | X448               | [`x448`](/src/keys/x448.rs)         | [RFC][X448-RFC]            | `x448`             | [official][X448-TEST]    | ☆☆☆☆☆ |
+| keys         | X25519             | [`x25519`](/src/keys/x25519.rs)     | [rfc][X25519-RFC]          | `x25519-dalek`     | [official][X25519-TEST]  | ★★★★★ |
+| keys         | X448               | [`x448`](/src/keys/x448.rs)         | [rfc][X448-RFC]            | `x448`             | [official][X448-TEST]    | ☆☆☆☆☆ |
 | keys | PBKDF2-HMAC-SHA256 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
 | keys | PBKDF2-HMAC-SHA384 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
 | keys | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
