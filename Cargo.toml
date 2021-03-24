@@ -24,6 +24,7 @@ name = "crypto"
 [features]
 default = [ ]
 std = [ ]
+aes-cbc = [ "aes-crate", "block-modes", "cipher", "hmac", "sha", "subtle" ]
 aes-kw = [ "aes-crate" ]
 chacha = [ "chacha20poly1305", "cipher" ]
 ed25519 = [ "ed25519-zebra" ]
@@ -43,6 +44,11 @@ cipher = [ "aead", "generic-array" ]
 
 [dependencies]
 chacha20poly1305 = { version = "0.7.1", optional = true }
+
+  [dependencies.block-modes]
+  version = "0.7"
+  default-features = false
+  optional = true
 
   [dependencies.ed25519-zebra]
   version = "2.2.0"
@@ -122,6 +128,11 @@ chacha20poly1305 = { version = "0.7.1", optional = true }
   version = "1.0.123"
   optional = true
   features = [ "derive" ]
+
+  [dependencies.subtle]
+  version = "2.4"
+  default-features = false
+  optional = true
 
 [dev-dependencies]
 hex = "0.4.2"

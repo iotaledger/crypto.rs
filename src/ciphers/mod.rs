@@ -13,6 +13,10 @@ pub mod chacha;
 #[cfg_attr(docsrs, doc(cfg(feature = "aes")))]
 pub mod aes;
 
+#[cfg(feature = "aes-cbc")]
+#[cfg_attr(docsrs, doc(cfg(feature = "aes-cbc")))]
+pub mod aes_cbc;
+
 #[cfg(feature = "aes-kw")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aes-kw")))]
 pub mod aes_kw;
