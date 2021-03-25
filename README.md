@@ -25,6 +25,7 @@ To be included in this list an implementation must:
 | ciphers     | AES-192-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
 | ciphers     | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
 | ciphers     | AES-KW        | [`aes-kw`](/src/ciphers/aes_kw.rs)        | [spec][AES-GCM-SPEC]       | `aes-crate`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
+| ciphers     | CHACHA20-POLY1305  | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][CHACHA-RFC]          | `chacha20poly1305` | [official][CHACHA-TEST]  | ★★★★★ |
 | ciphers     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
 | hashes       | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
 | hashes       | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
@@ -122,6 +123,9 @@ Apache 2.0
 
 [AES-GCM-SPEC]: https://csrc.nist.gov/CSRC/media/Projects/Cryptographic-Algorithm-Validation-Program/documents/mac/gcmvs.pdf
 [AES-GCM-TEST]: https://csrc.nist.gov/Projects/Cryptographic-Algorithm-Validation-Program/CAVP-TESTING-BLOCK-CIPHER-MODES#GCMVS
+
+[CHACHA-RFC]: https://tools.ietf.org/html/rfc8439
+[CHACHA-TEST]: https://tools.ietf.org/html/rfc8439#section-2.8.2
 
 [XCHACHA-RFC]: https://tools.ietf.org/html/draft-arciszewski-xchacha-03
 [XCHACHA-TEST]: https://tools.ietf.org/html/draft-arciszewski-xchacha-03#appendix-A.3

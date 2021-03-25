@@ -97,7 +97,12 @@ mod aes {
 #[cfg(feature = "chacha")]
 mod chacha {
     use super::{test_aead_all, TestVector};
-    use crypto::ciphers::chacha::XChaCha20Poly1305;
+    use crypto::ciphers::chacha::{ChaCha20Poly1305, XChaCha20Poly1305};
+
+    #[test]
+    fn test_vectors_chacha20_poly1305() {
+        test_aead_all::<ChaCha20Poly1305>(&include!("fixtures/chacha20_poly1305.rs")).unwrap();
+    }
 
     #[test]
     fn test_vectors_xchacha20_poly1305() {
