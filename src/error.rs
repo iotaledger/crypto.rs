@@ -14,9 +14,11 @@ pub enum Error {
         needs: usize,
         has: usize,
     },
-    ///  Cipher Error
+    /// Cipher Error
     CipherError { alg: &'static str },
-    /// Convertion Error
+    /// Signature Error
+    SignatureError { alg: &'static str },
+    /// Conversion Error
     ConvertError { from: &'static str, to: &'static str },
     /// Private Key Error
     PrivateKeyError,
@@ -36,6 +38,7 @@ impl Display for Error {
                 write!(f, "{} buffer needs {} bytes, but it only has {}", name, needs, has)
             }
             Error::CipherError { alg } => write!(f, "error in algorithm {}", alg),
+            Error::SignatureError { alg } => write!(f, "error in signature algorithm {}", alg),
             Error::ConvertError { from, to } => write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
             Error::InvalidArgumentError { alg, expected } => write!(f, "{} expects {}", alg, expected),
