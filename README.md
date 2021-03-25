@@ -45,6 +45,7 @@ To be included in this list an implementation must:
 | macs        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | signatures  | Ed25519            | [`ed25519`](/src/signatures/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
 | signatures  | Secp256k1          | [`secp256k1`](/src/signatures/secp256k1rs)     | [spec][SECP256K1-SPEC]     | `k256`             | extended                 | ☆☆☆☆☆ |
+| signatures  | P-256              | [`p256`](/src/signatures/p256.rs)              | [rfc][P256-RFC]            | `p256`             | [official][P256-TEST]    | ☆☆☆☆☆ |
 | utility    |  RANDOM                  | [`random`](/src/utils/rand.rs)              |                            | `getrandom`        | math                     | ★★★★★ |
 
 
@@ -160,3 +161,6 @@ Apache 2.0
 [X448-TEST]: https://tools.ietf.org/html/rfc7748#section-5.2
 
 [SECP256K1-SPEC]: https://www.secg.org/sec2-v2.pdf
+
+[P256-RFC]: https://tools.ietf.org/html/rfc6979
+[P256-TEST]: https://tools.ietf.org/html/rfc6979#appendix-A.2.5
