@@ -38,6 +38,7 @@ pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
+p256 = [ "p256-crate", "signature" ]
 slip10 = [ "hmac", "sha", "ed25519", "random", "serde" ]
 cipher = [ "aead", "generic-array" ]
 
@@ -122,6 +123,18 @@ chacha20poly1305 = { version = "0.7.1", optional = true }
   version = "1.0.123"
   optional = true
   features = [ "derive" ]
+
+  [dependencies.p256-crate]
+  version = "0.7"
+  package = "p256"
+  optional = true
+  default-features = false
+  features = ["ecdh", "ecdsa"]
+
+  [dependencies.signature]
+  version = "1.2"
+  optional = true
+  default-features = false
 
 [dev-dependencies]
 hex = "0.4.2"

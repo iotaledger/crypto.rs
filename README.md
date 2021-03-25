@@ -39,6 +39,7 @@ To be included in this list an implementation must:
 | macs        | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | macs        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | signatures  | Ed25519            | [`ed25519`](/src/signatures/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
+| signatures  | P-256              | [`p256`](/src/signatures/p256.rs)              | [rfc][P256-RFC]            | `p256`             | [official][P256-TEST]    | ☆☆☆☆☆ |
 | utility    |  RANDOM                  | [`random`](/src/utils/rand.rs)              |                            | `getrandom`        | math                     | ★★★★★ |
 
 
@@ -143,3 +144,6 @@ Apache 2.0
 [BIP39-TEST]: https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json
 
 [SLIP10-RFC]: https://github.com/satoshilabs/slips/blob/master/slip-0010.md
+
+[P256-RFC]: https://tools.ietf.org/html/rfc6979
+[P256-TEST]: https://tools.ietf.org/html/rfc6979#appendix-A.2.5
