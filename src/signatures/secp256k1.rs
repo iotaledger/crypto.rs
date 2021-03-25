@@ -2,29 +2,45 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryInto;
-use k256::elliptic_curve::{
-    ecdh,
-    sec1::{Coordinates, EncodedPoint, ToEncodedPoint},
+use k256::{
+    elliptic_curve::{
+        ecdh,
+        generic_array::{typenum::Unsigned, GenericArray},
+        sec1::{Coordinates, EncodedPoint, ToEncodedPoint, UntaggedPointSize},
+    },
+    Secp256k1,
 };
 use signature::{Error as SigError, Signer, Verifier};
 
+/// A byte representation of an Secp256k1 field element.
 pub type FieldBytes = k256::FieldBytes;
+
+/// Secp256k1 Shared Secret - the result of a Diffie-Hellman key exchange.
+///
+/// Each party computes this from an (ephemeral) [SecretKey] and their counterparty's [PublicKey].
 pub type SharedSecret = k256::ecdh::SharedSecret;
 
 /// Secp256k1 Public Key
 pub struct PublicKey(k256::PublicKey);
 
+// algorithm identifier used for errors
+const NAME: &str = "Secp256k1";
+
 impl PublicKey {
-    /// Create a new `PublicKey` from SEC1-encoded bytes.
-    pub fn from_sec1_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        k256::PublicKey::from_sec1_bytes(bytes)
+    /// Load a [PublicKey] from a slice of bytes.
+    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
+        assert_buffer_eq!(bytes.len(), UntaggedPointSize::<Secp256k1>::USIZE, "bytes");
+
+        EncodedPoint::from_untagged_bytes(bytes.into())
+            .decode()
             .map(Self)
             .map_err(|_| crate::Error::ConvertError {
-                from: "SEC1 bytes",
+                from: "bytes",
                 to: "Secp256k1 Public Key",
             })
     }
 
+    /// Load a [PublicKey] from big-endian serialized coordinates.
     pub fn from_coord(x: &[u8], y: &[u8]) -> crate::Result<Self> {
         let x: &FieldBytes = x.try_into().map_err(|_| crate::Error::ConvertError {
             from: "bytes",
@@ -45,6 +61,19 @@ impl PublicKey {
             })
     }
 
+    /// Return the [PublicKey] as an array of bytes.
+    pub fn to_bytes(&self) -> GenericArray<u8, UntaggedPointSize<Secp256k1>> {
+        let point: EncodedPoint<Secp256k1> = self.0.to_encoded_point(false);
+
+        // sanity check encoded point
+        assert!(!point.is_compressed());
+        assert!(!point.is_identity());
+
+        // unwrap is okay - non-identity points are guaranteed by `PublicKey`.
+        point.to_untagged_bytes().unwrap()
+    }
+
+    /// Serialize this public key as SEC1 encoded coordinates.
     pub fn to_coord(&self) -> crate::Result<(FieldBytes, FieldBytes)> {
         match self.0.to_encoded_point(false).coordinates() {
             Coordinates::Uncompressed { x, y } => Ok((*x, *y)),
@@ -55,10 +84,11 @@ impl PublicKey {
         }
     }
 
+    /// Verify that the given `message` and `signature` are authentic.
     pub fn verify(&self, message: &[u8], signature: &[u8]) -> crate::Result<()> {
         signature::Signature::from_bytes(signature)
             .and_then(|signature| Verifier::verify(self, message, &signature))
-            .map_err(|_| crate::Error::SignatureError { alg: "Secp256k1" })
+            .map_err(|_| crate::Error::SignatureError { alg: NAME })
     }
 }
 
@@ -72,7 +102,7 @@ impl Verifier<Signature> for PublicKey {
 pub struct SecretKey(k256::SecretKey);
 
 impl SecretKey {
-    /// Generate a new random `SecretKey`.
+    /// Generate a new random [SecretKey].
     #[cfg(feature = "random")]
     #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
     pub fn generate() -> crate::Result<Self> {
@@ -83,7 +113,7 @@ impl SecretKey {
         Self::from_bytes(&bytes[..])
     }
 
-    /// Create a new `SecretKey` from big-endian bytes.
+    /// Load a [SecretKey] from a slice of big-endian bytes.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
         k256::SecretKey::from_bytes(bytes)
             .map(Self)
@@ -93,22 +123,23 @@ impl SecretKey {
             })
     }
 
-    /// Returns the `SecretKey` as a slice of bytes.
+    /// Return the [SecretKey] as a slice of bytes.
     pub fn to_bytes(&self) -> FieldBytes {
         self.0.to_bytes()
     }
 
-    /// Returns the `PublicKey` which corresponds to this `SecretKey`.
+    /// Return the [PublicKey] which corresponds to this [SecretKey].
     pub fn public_key(&self) -> PublicKey {
         PublicKey(self.0.public_key())
     }
 
+    /// Sign the given `message` and return a digital [signature][Signature].
     pub fn sign(&self, message: &[u8]) -> crate::Result<Signature> {
         self.try_sign(message)
-            .map_err(|_| crate::Error::SignatureError { alg: "Secp256k1" })
+            .map_err(|_| crate::Error::SignatureError { alg: NAME })
     }
 
-    /// Computes a Diffie-Hellman `SharedSecret` with the given `PublicKey`.
+    /// Compute the Diffie-Hellman [SharedSecret] from the [SecretKey] and the given [PublicKey].
     pub fn diffie_hellman(&self, public: &PublicKey) -> SharedSecret {
         ecdh::diffie_hellman(self.0.secret_scalar(), public.0.as_affine())
     }
@@ -120,7 +151,7 @@ impl Signer<Signature> for SecretKey {
     }
 }
 
-/// Secp256k1 Signature (fixed-size)
+/// Secp256k1 Signature
 #[derive(Debug)]
 pub struct Signature(k256::ecdsa::Signature);
 
