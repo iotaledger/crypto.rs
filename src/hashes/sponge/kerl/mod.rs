@@ -3,7 +3,7 @@
 
 use crate::hashes::sponge::{Sponge, HASH_LENGTH};
 
-mod bigint;
+pub mod bigint;
 
 use bigint::{binary_representation::U8Repr, endianness::BigEndian, error::Error as ConversionError, I384, T242, T243};
 
