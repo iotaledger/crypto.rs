@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg(feature = "kerl")]
+#![allow(deprecated)]
 
 use crypto::hashes::sponge::{kerl::Kerl, Sponge};
 
