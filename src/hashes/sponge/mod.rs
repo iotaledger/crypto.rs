@@ -7,8 +7,8 @@
 #[cfg_attr(docsrs, doc(cfg(feature = "curl-p")))]
 pub mod curl_p;
 
-#[cfg(feature = "kerl")]
-#[cfg_attr(docsrs, doc(cfg(feature = "kerl")))]
+#[cfg(feature = "kerl_deprecated_do_not_use")]
+#[cfg_attr(docsrs, doc(cfg(feature = "kerl_deprecated_do_not_use")))]
 #[cfg_attr(not(test), deprecated)]
 pub mod kerl;
 

@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "kerl")]
+#![cfg(feature = "kerl_deprecated_do_not_use")]
 #![allow(deprecated)]
 
 use crypto::hashes::sponge::{kerl::Kerl, Sponge};
