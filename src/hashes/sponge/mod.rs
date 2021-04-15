@@ -9,7 +9,7 @@ pub mod curl_p;
 
 #[cfg(feature = "kerl")]
 #[cfg_attr(docsrs, doc(cfg(feature = "kerl")))]
-#[deprecated]
+#[cfg_attr(not(test), deprecated)]
 pub mod kerl;
 
 /// The length of a hash in units of balanced trits.
