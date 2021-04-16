@@ -1,6 +1,10 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#[cfg(feature = "ternary_keys")]
+#[cfg_attr(docsrs, doc(cfg(feature = "ternary_keys")))]
+pub mod ternary;
+
 #[cfg(feature = "pbkdf")]
 #[cfg_attr(docsrs, doc(cfg(feature = "pbkdf")))]
 pub mod pbkdf;
