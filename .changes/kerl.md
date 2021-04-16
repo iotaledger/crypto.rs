@@ -1,5 +1,5 @@
 ---
-"cli.rs": minor
+"iota-crypto": minor
 ---
 
 Added
