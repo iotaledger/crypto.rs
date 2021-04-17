@@ -6,11 +6,14 @@
 
 use crate::{
     hashes::sponge::{Sponge, HASH_LENGTH},
-    signatures::ternary::{PrivateKey, PublicKey, RecoverableSignature, Signature, SIGNATURE_FRAGMENT_LENGTH},
+    keys::ternary::wots::WotsSecurityLevel,
+    signatures::ternary::{
+        PrivateKey, PublicKey, RecoverableSignature, Signature, MESSAGE_FRAGMENT_LENGTH, SIGNATURE_FRAGMENT_LENGTH,
+    },
 };
 
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
-use bee_ternary::{T1B1Buf, TritBuf, Trits, Tryte, T1B1};
+use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
 
 use zeroize::Zeroize;
 
@@ -63,6 +66,56 @@ impl fmt::Display for Error {
             Error::NonNullEntropyLastTrit => write!(f, "Last trit of the entropy is not null."),
         }
     }
+}
+
+/// When applying WOTS on a non-normalized message, the amount of private key data leaked is not uniform and some
+/// messages could result in most of (or all of) the key being leaked. As a consequence, even after one signature there
+/// is a varying chance that brute forcing another message becomes feasible. By normalizing the message, such "extreme"
+/// cases get alleviated, so that every signature exactly leaks half of the private key.
+pub fn normalize(message: &Trits<T1B1>) -> Result<TritBuf<T1B1Buf>, Error> {
+    if message.len() != HASH_LENGTH {
+        return Err(Error::InvalidMessageLength(message.len()));
+    }
+
+    let mut normalized = [0i8; WotsSecurityLevel::High as usize * MESSAGE_FRAGMENT_LENGTH];
+
+    for i in 0..WotsSecurityLevel::High as usize {
+        let mut sum: i16 = 0;
+
+        for j in (i * MESSAGE_FRAGMENT_LENGTH)..((i + 1) * MESSAGE_FRAGMENT_LENGTH) {
+            // Safe to unwrap because 3 trits can't underflow/overflow an i8.
+            normalized[j] = i8::try_from(&message[j * 3..j * 3 + 3]).unwrap();
+            sum += i16::from(normalized[j]);
+        }
+
+        while sum > 0 {
+            for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH..(i + 1) * MESSAGE_FRAGMENT_LENGTH] {
+                if (*t as i8) > Tryte::MIN_VALUE as i8 {
+                    *t -= 1;
+                    break;
+                }
+            }
+            sum -= 1;
+        }
+
+        while sum < 0 {
+            for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH..(i + 1) * MESSAGE_FRAGMENT_LENGTH] {
+                if (*t as i8) < Tryte::MAX_VALUE as i8 {
+                    *t += 1;
+                    break;
+                }
+            }
+            sum += 1;
+        }
+    }
+
+    // This usage of unsafe is fine since we are creating the normalized trits inside this function and we know that the
+    // content can't go wrong.
+    Ok(unsafe {
+        Trits::<T3B1>::from_raw_unchecked(&normalized, normalized.len() * 3)
+            .to_buf::<T3B1Buf>()
+            .encode::<T1B1Buf>()
+    })
 }
 
 /// Winternitz One Time Signature private key.
@@ -128,17 +181,21 @@ impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
         let mut sponge = S::default();
         let mut signature = self.state.clone();
 
-        for (i, chunk) in signature.chunks_mut(HASH_LENGTH).enumerate() {
-            // Safe to unwrap because 3 trits can't underflow/overflow an i8.
-            let val = i8::try_from(&message[i * 3..i * 3 + 3]).unwrap();
+        for (f, fragment) in signature.chunks_mut(SIGNATURE_FRAGMENT_LENGTH).enumerate() {
+            let message_fragment =
+                &message[f % 3 * MESSAGE_FRAGMENT_LENGTH * 3..(f % 3 + 1) * MESSAGE_FRAGMENT_LENGTH * 3];
+            for (c, chunk) in fragment.chunks_mut(HASH_LENGTH).enumerate() {
+                // Safe to unwrap because 3 trits can't underflow/overflow an i8.
+                let val = i8::try_from(&message_fragment[c * 3..c * 3 + 3]).unwrap();
 
-            // Hash each chunk of the private key an amount of times given by the corresponding byte of the message.
-            for _ in 0..(Tryte::MAX_VALUE as i8 - val) {
-                sponge
-                    .absorb(chunk)
-                    .and_then(|_| sponge.squeeze_into(chunk))
-                    .map_err(|_| Self::Error::FailedSpongeOperation)?;
-                sponge.reset();
+                // Hash each chunk of the private key an amount of times given by the corresponding byte of the message.
+                for _ in 0..(Tryte::MAX_VALUE as i8 - val) {
+                    sponge
+                        .absorb(chunk)
+                        .and_then(|_| sponge.squeeze_into(chunk))
+                        .map_err(|_| Self::Error::FailedSpongeOperation)?;
+                    sponge.reset();
+                }
             }
         }
 
@@ -146,6 +203,21 @@ impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
             state: signature,
             marker: PhantomData,
         })
+    }
+
+    fn from_trits(state: TritBuf<T1B1Buf>) -> Result<Self, Self::Error> {
+        if state.len() % SIGNATURE_FRAGMENT_LENGTH != 0 {
+            return Err(Error::InvalidSignatureLength(state.len()));
+        }
+
+        Ok(Self {
+            state,
+            marker: PhantomData,
+        })
+    }
+
+    fn as_trits(&self) -> &Trits<T1B1> {
+        &self.state
     }
 }
 
@@ -247,17 +319,21 @@ impl<S: Sponge + Default> RecoverableSignature for WotsSignature<S> {
         let mut digests = TritBuf::<T1B1Buf>::zeros(security * HASH_LENGTH);
         let mut hashed_signature = self.state.clone();
 
-        for (i, chunk) in hashed_signature.chunks_mut(HASH_LENGTH).enumerate() {
-            // Safe to unwrap because 3 trits can't underflow/overflow an i8.
-            let val = i8::try_from(&message[i * 3..i * 3 + 3]).unwrap();
+        for (f, fragment) in hashed_signature.chunks_mut(SIGNATURE_FRAGMENT_LENGTH).enumerate() {
+            let message_fragment =
+                &message[f % 3 * MESSAGE_FRAGMENT_LENGTH * 3..(f % 3 + 1) * MESSAGE_FRAGMENT_LENGTH * 3];
+            for (c, chunk) in fragment.chunks_mut(HASH_LENGTH).enumerate() {
+                // Safe to unwrap because 3 trits can't underflow/overflow an i8.
+                let val = i8::try_from(&message_fragment[c * 3..c * 3 + 3]).unwrap();
 
-            // Hash each chunk of the signature an amount of times given by the corresponding byte of the message.
-            for _ in 0..(val - Tryte::MIN_VALUE as i8) {
-                sponge
-                    .absorb(chunk)
-                    .and_then(|_| sponge.squeeze_into(chunk))
-                    .map_err(|_| <Self as RecoverableSignature>::Error::FailedSpongeOperation)?;
-                sponge.reset();
+                // Hash each chunk of the signature an amount of times given by the corresponding byte of the message.
+                for _ in 0..(val - Tryte::MIN_VALUE as i8) {
+                    sponge
+                        .absorb(chunk)
+                        .and_then(|_| sponge.squeeze_into(chunk))
+                        .map_err(|_| <Self as RecoverableSignature>::Error::FailedSpongeOperation)?;
+                    sponge.reset();
+                }
             }
         }
 

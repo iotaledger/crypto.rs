@@ -38,6 +38,14 @@ pub trait PrivateKey: Zeroize {
     ///
     /// * `message` A slice that holds a message to be signed.
     fn sign(&mut self, message: &Trits<T1B1>) -> Result<Self::Signature, Self::Error>;
+
+    /// Creates a private key from trits.
+    fn from_trits(buf: TritBuf<T1B1Buf>) -> Result<Self, Self::Error>
+    where
+        Self: Sized;
+
+    /// Interprets the private key as trits.
+    fn as_trits(&self) -> &Trits<T1B1>;
 }
 
 /// A ternary public key.
