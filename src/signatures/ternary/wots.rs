@@ -8,7 +8,8 @@ use crate::{
     hashes::sponge::{Sponge, HASH_LENGTH},
     keys::ternary::wots::WotsSecurityLevel,
     signatures::ternary::{
-        PrivateKey, PublicKey, RecoverableSignature, Signature, MESSAGE_FRAGMENT_LENGTH, SIGNATURE_FRAGMENT_LENGTH,
+        PrivateKey, PublicKey, RecoverableSignature, Signature, MESSAGE_FRAGMENT_LENGTH_TRITS,
+        MESSAGE_FRAGMENT_LENGTH_TRYTES, NUM_MESSAGE_FRAGMENTS, SIGNATURE_FRAGMENT_LENGTH,
     },
 };
 
@@ -68,28 +69,30 @@ impl fmt::Display for Error {
     }
 }
 
-/// When applying WOTS on a non-normalized message, the amount of private key data leaked is not uniform and some
-/// messages could result in most of (or all of) the key being leaked. As a consequence, even after one signature there
-/// is a varying chance that brute forcing another message becomes feasible. By normalizing the message, such "extreme"
-/// cases get alleviated, so that every signature exactly leaks half of the private key.
+/// Since the Winternitz One-Time Signature Scheme is based on hash chains, producing a signatures for a message - by
+/// definition - also reveals all the signatures for messages that are element-wise larger than the original message.
+/// As such, it is a crucial requirement for every W-OTS scheme to prevent this. While the original paper, mentioned
+/// above, uses an additional checksum for exactly that purpose, this scheme normalizes the message (i.e. assures that
+/// the sum over all it's elements is zero). Since no normalized messages can be element-wise larger than another
+/// normalized messages, this attack vector is prevented.
 pub fn normalize(message: &Trits<T1B1>) -> Result<TritBuf<T1B1Buf>, Error> {
     if message.len() != HASH_LENGTH {
         return Err(Error::InvalidMessageLength(message.len()));
     }
 
-    let mut normalized = [0i8; WotsSecurityLevel::High as usize * MESSAGE_FRAGMENT_LENGTH];
+    let mut normalized = [0i8; WotsSecurityLevel::High as usize * MESSAGE_FRAGMENT_LENGTH_TRYTES];
 
     for i in 0..WotsSecurityLevel::High as usize {
         let mut sum: i16 = 0;
 
-        for j in (i * MESSAGE_FRAGMENT_LENGTH)..((i + 1) * MESSAGE_FRAGMENT_LENGTH) {
+        for j in (i * MESSAGE_FRAGMENT_LENGTH_TRYTES)..((i + 1) * MESSAGE_FRAGMENT_LENGTH_TRYTES) {
             // Safe to unwrap because 3 trits can't underflow/overflow an i8.
             normalized[j] = i8::try_from(&message[j * 3..j * 3 + 3]).unwrap();
             sum += i16::from(normalized[j]);
         }
 
         while sum > 0 {
-            for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH..(i + 1) * MESSAGE_FRAGMENT_LENGTH] {
+            for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH_TRYTES..(i + 1) * MESSAGE_FRAGMENT_LENGTH_TRYTES] {
                 if (*t as i8) > Tryte::MIN_VALUE as i8 {
                     *t -= 1;
                     break;
@@ -99,7 +102,7 @@ pub fn normalize(message: &Trits<T1B1>) -> Result<TritBuf<T1B1Buf>, Error> {
         }
 
         while sum < 0 {
-            for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH..(i + 1) * MESSAGE_FRAGMENT_LENGTH] {
+            for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH_TRYTES..(i + 1) * MESSAGE_FRAGMENT_LENGTH_TRYTES] {
                 if (*t as i8) < Tryte::MAX_VALUE as i8 {
                     *t += 1;
                     break;
@@ -182,8 +185,8 @@ impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
         let mut signature = self.state.clone();
 
         for (f, fragment) in signature.chunks_mut(SIGNATURE_FRAGMENT_LENGTH).enumerate() {
-            let message_fragment =
-                &message[f % 3 * MESSAGE_FRAGMENT_LENGTH * 3..(f % 3 + 1) * MESSAGE_FRAGMENT_LENGTH * 3];
+            let message_fragment = &message[f % NUM_MESSAGE_FRAGMENTS * MESSAGE_FRAGMENT_LENGTH_TRITS
+                ..(f % NUM_MESSAGE_FRAGMENTS + 1) * MESSAGE_FRAGMENT_LENGTH_TRITS];
             for (c, chunk) in fragment.chunks_mut(HASH_LENGTH).enumerate() {
                 // Safe to unwrap because 3 trits can't underflow/overflow an i8.
                 let val = i8::try_from(&message_fragment[c * 3..c * 3 + 3]).unwrap();
@@ -320,8 +323,8 @@ impl<S: Sponge + Default> RecoverableSignature for WotsSignature<S> {
         let mut hashed_signature = self.state.clone();
 
         for (f, fragment) in hashed_signature.chunks_mut(SIGNATURE_FRAGMENT_LENGTH).enumerate() {
-            let message_fragment =
-                &message[f % 3 * MESSAGE_FRAGMENT_LENGTH * 3..(f % 3 + 1) * MESSAGE_FRAGMENT_LENGTH * 3];
+            let message_fragment = &message[f % NUM_MESSAGE_FRAGMENTS * MESSAGE_FRAGMENT_LENGTH_TRITS
+                ..(f % NUM_MESSAGE_FRAGMENTS + 1) * MESSAGE_FRAGMENT_LENGTH_TRITS];
             for (c, chunk) in fragment.chunks_mut(HASH_LENGTH).enumerate() {
                 // Safe to unwrap because 3 trits can't underflow/overflow an i8.
                 let val = i8::try_from(&message_fragment[c * 3..c * 3 + 3]).unwrap();

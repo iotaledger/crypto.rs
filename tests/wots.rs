@@ -112,5 +112,7 @@ fn wots_iota_go_json() {
                 .map(|trit| char::from(trit))
                 .collect::<String>()
         );
+
+        assert!(public_key.verify(&hash, &signature).unwrap());
     }
 }

@@ -8,17 +8,20 @@
 #[cfg_attr(not(test), deprecated)]
 pub mod wots;
 
-use crate::hashes::sponge::HASH_LENGTH;
+use crate::hashes::sponge::{HASH_LENGTH, HASH_LENGTH_TRYTES};
 
 use bee_ternary::{T1B1Buf, TritBuf, Trits, T1B1};
 
 use zeroize::Zeroize;
 
-/// Length of a message fragment.
-pub const MESSAGE_FRAGMENT_LENGTH: usize = 27;
-
+/// Length of a message fragment in trytes.
+pub const MESSAGE_FRAGMENT_LENGTH_TRYTES: usize = 27;
+/// Length of a message fragment in trits.
+pub const MESSAGE_FRAGMENT_LENGTH_TRITS: usize = MESSAGE_FRAGMENT_LENGTH_TRYTES * 3;
+/// The number of fragments in a hashed message to be signed.
+pub const NUM_MESSAGE_FRAGMENTS: usize = HASH_LENGTH_TRYTES / MESSAGE_FRAGMENT_LENGTH_TRYTES;
 /// Length of a signature fragment.
-pub const SIGNATURE_FRAGMENT_LENGTH: usize = MESSAGE_FRAGMENT_LENGTH * HASH_LENGTH;
+pub const SIGNATURE_FRAGMENT_LENGTH: usize = MESSAGE_FRAGMENT_LENGTH_TRYTES * HASH_LENGTH;
 
 /// A ternary private key.
 pub trait PrivateKey: Zeroize {

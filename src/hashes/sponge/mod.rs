@@ -14,6 +14,8 @@ pub mod kerl;
 
 /// The length of a hash in units of balanced trits.
 pub const HASH_LENGTH: usize = 243;
+/// The length of a hash in trytes.
+pub const HASH_LENGTH_TRYTES: usize = 243 / 3;
 
 use bee_ternary::{TritBuf, Trits};
 
