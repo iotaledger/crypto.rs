@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    hashes::sponge::{Sponge, HASH_LENGTH},
+    hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::{
         wots::{Error, WotsSecurityLevel},
         PrivateKeyGenerator,

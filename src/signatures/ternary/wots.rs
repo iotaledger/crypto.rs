@@ -5,7 +5,7 @@
 //! https://eprint.iacr.org/2011/191.pdf.
 
 use crate::{
-    hashes::sponge::{Sponge, HASH_LENGTH},
+    hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::wots::WotsSecurityLevel,
     signatures::ternary::{
         PrivateKey, PublicKey, RecoverableSignature, Signature, MESSAGE_FRAGMENT_LENGTH_TRITS,

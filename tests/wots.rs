@@ -5,7 +5,7 @@
 #![allow(deprecated)]
 
 use crypto::{
-    hashes::sponge::{kerl::Kerl, Sponge},
+    hashes::ternary::{kerl::Kerl, Sponge},
     keys::ternary::{
         seed::Seed,
         wots::{

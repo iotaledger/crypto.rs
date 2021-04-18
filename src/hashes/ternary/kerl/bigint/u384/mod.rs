@@ -11,7 +11,7 @@ pub use constants::{
     LE_U32_NEG_HALF_MAX_T242, LE_U32_ONLY_T243_OCCUPIED, LE_U8_0, LE_U8_1, LE_U8_2, LE_U8_MAX,
 };
 
-use crate::hashes::sponge::kerl::bigint::{
+use crate::hashes::ternary::kerl::bigint::{
     binary_representation::{BinaryRepresentation, U32Repr, U8Repr},
     endianness::{BigEndian, LittleEndian},
     error::Error,

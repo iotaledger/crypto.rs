@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::hashes::sponge::kerl::bigint::{binary_representation::U32Repr, endianness::LittleEndian, T242, U384};
+use crate::hashes::ternary::kerl::bigint::{binary_representation::U32Repr, endianness::LittleEndian, T242, U384};
 
 use bee_ternary::{Btrit, Utrit};
 

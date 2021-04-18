@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::hashes::sponge::{Sponge, HASH_LENGTH};
+use crate::hashes::ternary::{Sponge, HASH_LENGTH};
 
 pub mod bigint;
 

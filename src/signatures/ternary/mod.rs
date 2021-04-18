@@ -8,7 +8,7 @@
 #[cfg_attr(not(test), deprecated)]
 pub mod wots;
 
-use crate::hashes::sponge::{HASH_LENGTH, HASH_LENGTH_TRYTES};
+use crate::hashes::ternary::{HASH_LENGTH, HASH_LENGTH_TRYTES};
 
 use bee_ternary::{T1B1Buf, TritBuf, Trits, T1B1};
 

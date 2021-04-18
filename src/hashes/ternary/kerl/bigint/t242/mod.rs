@@ -15,7 +15,7 @@ pub use constants::{
     BTRIT_0, BTRIT_1, BTRIT_MAX, BTRIT_MIN, BTRIT_NEG_1, UTRIT_0, UTRIT_1, UTRIT_2, UTRIT_U384_MAX, UTRIT_U384_MAX_HALF,
 };
 
-use crate::hashes::sponge::kerl::bigint::{
+use crate::hashes::ternary::kerl::bigint::{
     binary_representation::{U32Repr, U8Repr},
     endianness::{BigEndian, LittleEndian},
     error::Error,

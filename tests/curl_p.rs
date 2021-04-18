@@ -3,7 +3,7 @@
 
 #![cfg(feature = "curl-p")]
 
-use crypto::hashes::sponge::curl_p::CurlP;
+use crypto::hashes::ternary::curl_p::CurlP;
 
 use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
 

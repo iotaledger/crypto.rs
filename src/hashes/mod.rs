@@ -1,9 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[cfg(feature = "sponge")]
-#[cfg_attr(docsrs, doc(cfg(feature = "sponge")))]
-pub mod sponge;
+#[cfg(feature = "ternary_hashes")]
+#[cfg_attr(docsrs, doc(cfg(feature = "ternary_hashes")))]
+pub mod ternary;
 
 #[cfg(feature = "blake2b")]
 #[cfg_attr(docsrs, doc(cfg(feature = "blake2b")))]

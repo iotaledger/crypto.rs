@@ -11,7 +11,7 @@ pub use constants::{
     LE_U32_NEG_2, LE_U8_0, LE_U8_1, LE_U8_2, LE_U8_MAX, LE_U8_MIN, LE_U8_NEG_1, LE_U8_NEG_2,
 };
 
-use crate::hashes::sponge::kerl::bigint::{
+use crate::hashes::ternary::kerl::bigint::{
     binary_representation::{
         BinaryRepresentation, U32Repr, U8Repr, BINARY_LEN_IN_U32 as LEN_IN_U32, BINARY_LEN_IN_U8 as LEN_IN_U8,
     },

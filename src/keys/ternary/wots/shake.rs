@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::{
-    hashes::sponge::{
+    hashes::ternary::{
         kerl::bigint::{binary_representation::U8Repr, endianness::BigEndian, I384, T242, T243},
         Sponge, HASH_LENGTH,
     },

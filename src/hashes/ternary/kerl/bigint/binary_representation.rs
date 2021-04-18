@@ -3,7 +3,7 @@
 
 //! Binary representation of big integers.
 
-use crate::hashes::sponge::kerl::bigint::sealed::Sealed;
+use crate::hashes::ternary::kerl::bigint::sealed::Sealed;
 
 /// The number of bits in an U384/I384.
 pub const BINARY_LEN: usize = 384;
