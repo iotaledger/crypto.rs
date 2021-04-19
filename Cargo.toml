@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.4.2"
+version = "0.5.0"
 license = "Apache-2.0"
 authors = [
   "Gustav Behm <gustav.behm@iota.org>",
@@ -31,12 +31,26 @@ x25519 = [ "x25519-dalek" ]
 random = [ "getrandom" ]
 aes = [ "aes-gcm", "cipher" ]
 blake2b = [ "blake2", "digest" ]
-ternary_hashes = []
+ternary_hashes = [ ]
 curl-p = [ "ternary_hashes", "bee-ternary" ]
-kerl_deprecated_do_not_use = [ "ternary_hashes", "bee-ternary", "byteorder", "lazy_static", "tiny-keccak" ]
-ternary_keys = []
-ternary_signatures = []
-wots_deprecated_do_not_use = [ "ternary_keys", "ternary_signatures", "bee-ternary", "sha3", "zeroize", "rand", "bee-common-derive" ]
+kerl_deprecated_do_not_use = [
+  "ternary_hashes",
+  "bee-ternary",
+  "byteorder",
+  "lazy_static",
+  "tiny-keccak"
+]
+ternary_keys = [ ]
+ternary_signatures = [ ]
+wots_deprecated_do_not_use = [
+  "ternary_keys",
+  "ternary_signatures",
+  "bee-ternary",
+  "sha3",
+  "zeroize",
+  "rand",
+  "bee-common-derive"
+]
 sha = [ "sha2", "digest" ]
 hmac = [ "hmac_" ]
 pbkdf = [ "pbkdf2" ]
@@ -110,7 +124,7 @@ chacha20poly1305 = { version = "0.7.1", optional = true }
   [dependencies.tiny-keccak]
   version = "2.0.2"
   optional = true
-  features = ["keccak"]
+  features = [ "keccak" ]
 
   [dependencies.sha2]
   version = "0.9.3"
