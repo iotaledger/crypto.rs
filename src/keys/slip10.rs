@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(clippy::from_over_into)]
+
 extern crate alloc;
 
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
@@ -170,8 +172,8 @@ impl AsRef<Chain> for Chain {
     }
 }
 
-impl From<[u8; 64]> for Key {
-    fn from(v: [u8; 64]) -> Key {
-        Key(v)
+impl Into<Vec<u8>> for Key {
+    fn into(self) -> Vec<u8> {
+        self.0.to_vec()
     }
 }
