@@ -8,7 +8,7 @@ use crate::hashes::ternary::{kerl::Kerl, Sponge, HASH_LENGTH};
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 use bee_ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1};
 
-use rand::distributions::{Distribution, Uniform};
+// use rand::distributions::{Distribution, Uniform};
 use zeroize::Zeroize;
 
 use core::str::FromStr;
@@ -46,21 +46,21 @@ impl Zeroize for Seed {
 }
 
 impl Seed {
-    /// Creates a new random `Seed`.
-    pub fn rand() -> Self {
-        // `ThreadRng` implements `CryptoRng` so it is safe to use in cryptographic contexts.
-        // https://rust-random.github.io/rand/rand/trait.CryptoRng.html
-        let mut rng = rand::thread_rng();
-        let trits = [Btrit::NegOne, Btrit::Zero, Btrit::PlusOne];
-        let range = Uniform::from(0..trits.len());
-        let mut seed = [Btrit::Zero; HASH_LENGTH];
-
-        for trit in seed.iter_mut() {
-            *trit = trits[range.sample(&mut rng)];
-        }
-
-        Self(<&Trits>::from(&seed as &[_]).to_buf())
-    }
+    // /// Creates a new random `Seed`.
+    // pub fn rand() -> Self {
+    //     // `ThreadRng` implements `CryptoRng` so it is safe to use in cryptographic contexts.
+    //     // https://rust-random.github.io/rand/rand/trait.CryptoRng.html
+    //     let mut rng = rand::thread_rng();
+    //     let trits = [Btrit::NegOne, Btrit::Zero, Btrit::PlusOne];
+    //     let range = Uniform::from(0..trits.len());
+    //     let mut seed = [Btrit::Zero; HASH_LENGTH];
+    //
+    //     for trit in seed.iter_mut() {
+    //         *trit = trits[range.sample(&mut rng)];
+    //     }
+    //
+    //     Self(<&Trits>::from(&seed as &[_]).to_buf())
+    // }
 
     /// Creates a new `Seed` from the current `Seed` and an index.
     pub fn subseed(&self, index: usize) -> Self {
