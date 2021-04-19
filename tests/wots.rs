@@ -80,11 +80,7 @@ fn wots_iota_go_json() {
 
         assert_eq!(
             object["address"].as_str().unwrap(),
-            public_key
-                .as_trits()
-                .iter_trytes()
-                .map(char::from)
-                .collect::<String>()
+            public_key.as_trits().iter_trytes().map(char::from).collect::<String>()
         );
 
         let hash = normalize(
@@ -99,11 +95,7 @@ fn wots_iota_go_json() {
 
         assert_eq!(
             object["signature"].as_str().unwrap(),
-            signature
-                .as_trits()
-                .iter_trytes()
-                .map(char::from)
-                .collect::<String>()
+            signature.as_trits().iter_trytes().map(char::from).collect::<String>()
         );
 
         let recovered_publick_key = signature.recover_public_key(&hash).unwrap();
