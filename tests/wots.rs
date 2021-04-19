@@ -3,6 +3,7 @@
 
 #![cfg(feature = "wots_deprecated_do_not_use")]
 #![allow(deprecated)]
+#![allow(clippy::needless_range_loop)]
 
 use crypto::{
     hashes::ternary::{kerl::Kerl, Sponge},
@@ -33,7 +34,7 @@ fn wots_generate_n_addresses_for_seed() {
     let reader = BufReader::new(File::open("tests/fixtures/wots/generateNAddressesForSeed.txt").unwrap());
 
     for line in reader.lines() {
-        let hashes = line.unwrap().split(",").map(|s| s.to_string()).collect::<Vec<String>>();
+        let hashes = line.unwrap().split(',').map(|s| s.to_string()).collect::<Vec<String>>();
         let seed = Seed::from_str(&hashes[0]).unwrap();
 
         for i in 1..5 {
@@ -47,7 +48,7 @@ fn wots_generate_n_addresses_for_seed() {
                 .unwrap()
                 .as_trits()
                 .iter_trytes()
-                .map(|trit| char::from(trit))
+                .map(char::from)
                 .collect::<String>();
 
             assert_eq!(hashes[i], public_key);
@@ -79,11 +80,7 @@ fn wots_iota_go_json() {
 
         assert_eq!(
             object["address"].as_str().unwrap(),
-            public_key
-                .as_trits()
-                .iter_trytes()
-                .map(|trit| char::from(trit))
-                .collect::<String>()
+            public_key.as_trits().iter_trytes().map(char::from).collect::<String>()
         );
 
         let hash = normalize(
@@ -98,11 +95,7 @@ fn wots_iota_go_json() {
 
         assert_eq!(
             object["signature"].as_str().unwrap(),
-            signature
-                .as_trits()
-                .iter_trytes()
-                .map(|trit| char::from(trit))
-                .collect::<String>()
+            signature.as_trits().iter_trytes().map(char::from).collect::<String>()
         );
 
         let recovered_publick_key = signature.recover_public_key(&hash).unwrap();
@@ -112,7 +105,7 @@ fn wots_iota_go_json() {
             recovered_publick_key
                 .as_trits()
                 .iter_trytes()
-                .map(|trit| char::from(trit))
+                .map(char::from)
                 .collect::<String>()
         );
 

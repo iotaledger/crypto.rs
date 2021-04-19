@@ -49,7 +49,7 @@ fn kerl_generate_trytes_and_hashes() {
     let reader = BufReader::new(File::open("tests/fixtures/kerl/generateTrytesAndHashes.txt").unwrap());
 
     for line in reader.lines() {
-        let hashes = line.unwrap().split(",").map(|s| s.to_string()).collect::<Vec<String>>();
+        let hashes = line.unwrap().split(',').map(|s| s.to_string()).collect::<Vec<String>>();
         digest(&hashes[0], &hashes[1]);
     }
 }
@@ -59,7 +59,7 @@ fn kerl_generate_multi_trytes_and_hash() {
     let reader = BufReader::new(File::open("tests/fixtures/kerl/generateMultiTrytesAndHash.txt").unwrap());
 
     for line in reader.lines() {
-        let hashes = line.unwrap().split(",").map(|s| s.to_string()).collect::<Vec<String>>();
+        let hashes = line.unwrap().split(',').map(|s| s.to_string()).collect::<Vec<String>>();
         digest_into(&hashes[0], &hashes[1]);
     }
 }
@@ -70,7 +70,7 @@ fn kerl_generate_trytes_and_multi_squeeze() {
     let reader = BufReader::new(File::open("tests/fixtures/kerl/generateTrytesAndMultiSqueeze.txt").unwrap());
 
     for line in reader.lines() {
-        let hashes = line.unwrap().split(",").map(|s| s.to_string()).collect::<Vec<String>>();
+        let hashes = line.unwrap().split(',').map(|s| s.to_string()).collect::<Vec<String>>();
         let input = TryteBuf::try_from_str(&hashes[0])
             .unwrap()
             .as_trits()
