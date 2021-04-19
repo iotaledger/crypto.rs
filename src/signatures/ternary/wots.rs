@@ -18,7 +18,7 @@ use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
 
 use zeroize::Zeroize;
 
-use std::{
+use core::{
     convert::TryFrom,
     fmt::{self, Display, Formatter},
     marker::PhantomData,

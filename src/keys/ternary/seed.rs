@@ -11,7 +11,7 @@ use bee_ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1};
 use rand::distributions::{Distribution, Uniform};
 use zeroize::Zeroize;
 
-use std::str::FromStr;
+use core::str::FromStr;
 
 /// Errors occuring when handling a `Seed`.
 #[derive(Debug, PartialEq)]

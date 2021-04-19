@@ -20,7 +20,7 @@ use sha3::{
     Shake256,
 };
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 /// Shake-based Winternitz One Time Signature private key generator builder.
 #[derive(Default)]

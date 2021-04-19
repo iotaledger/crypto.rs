@@ -12,7 +12,7 @@ use crate::{
 
 use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 
 /// Sponge-based Winternitz One Time Signature private key generator builder.
 #[derive(Default)]
