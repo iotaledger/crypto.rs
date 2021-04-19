@@ -170,8 +170,8 @@ impl AsRef<Chain> for Chain {
     }
 }
 
-impl Into<Vec<u8>> for Key {
-    fn into(self) -> Vec<u8> {
-        self.0.to_vec()
+impl From<[u8; 64]> for Key {
+    fn from(v: [u8; 64]) -> Key {
+        Key(v)
     }
 }
