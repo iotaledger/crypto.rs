@@ -4,6 +4,8 @@
 //! Winternitz One Time Signature scheme.
 //! https://eprint.iacr.org/2011/191.pdf.
 
+extern crate alloc;
+
 use crate::{
     hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::wots::WotsSecurityLevel,
@@ -18,6 +20,7 @@ use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
 
 use zeroize::Zeroize;
 
+use alloc::string::String;
 use core::{
     convert::TryFrom,
     fmt::{self, Display, Formatter},
