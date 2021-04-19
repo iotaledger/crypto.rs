@@ -7,7 +7,7 @@ mod utils;
 
 extern crate alloc;
 
-use alloc::vec::Vec;
+// use alloc::vec::Vec;
 use rand::{rngs::OsRng, RngCore};
 use unicode_normalization::UnicodeNormalization;
 
@@ -70,6 +70,7 @@ fn test_wordlist_codec() {
     }
 }
 
+/*
 #[test]
 fn test_wordlist_codec_different_data_different_encodings() {
     for _ in 0..1000 {
@@ -124,3 +125,4 @@ fn test_wordlist_codec_error_detection() {
         assert!(false_positives <= acceptable_false_positives);
     }
 }
+*/
