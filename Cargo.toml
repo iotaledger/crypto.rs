@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.5.0"
+version = "0.5.1"
 license = "Apache-2.0"
 authors = [
   "Gustav Behm <gustav.behm@iota.org>",
@@ -13,7 +13,7 @@ categories = [ "security" ]
 description = "The canonical source of cryptographic ground-truth for all IOTA Rust projects"
 homepage = "https://iota.org"
 repository = "https://github.com/iotaledger/crypto.rs"
-exclude = ["/tests", "/bindings", "/.github", "/.changes"]
+exclude = [ "/tests", "/bindings", "/.github", "/.changes" ]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -92,6 +92,5 @@ rand = "0.8"
 serde = { version = "1.0", features = [ "derive" ] }
 serde_json = "1.0"
 
-# for macos
 [profile.dev]
 split-debuginfo = "unpacked"
