@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.5.1]
+
+- This release updates a number of interlocking dependencies, but does not change the external interface.
+  - [a644f8d](https://www.github.com/iotaledger/crypto.rs/commit/a644f8d8e62b40071634d4c15efebc5942c2bd90) add .changefile on 2021-05-04
+
 ## \[0.5.0]
 
 - Added
