@@ -1,6 +1,8 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![allow(clippy::from_over_into)]
+
 extern crate alloc;
 
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};

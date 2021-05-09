@@ -1,5 +1,30 @@
 # Changelog
 
+## \[0.5.1]
+
+- This release updates a number of interlocking dependencies, but does not change the external interface.
+  - [a644f8d](https://www.github.com/iotaledger/crypto.rs/commit/a644f8d8e62b40071634d4c15efebc5942c2bd90) add .changefile on 2021-05-04
+
+## \[0.5.0]
+
+- Added
+
+- `Sponge` trait;
+
+- `Kerl` sponge implementation;
+
+- [f96b845](https://www.github.com/iotaledger/crypto.rs/commit/f96b845948a8f3ab02ff30126837499b7e015c1d) Add .change on 2021-04-16
+
+- [12df494](https://www.github.com/iotaledger/crypto.rs/commit/12df494bf837981db3cf026a2f57148c8756a0cf) Update .changes/kerl.md on 2021-04-16
+
+- Added
+
+- `WOTS` implementation;
+  - `keys` module;
+  - `signatures` module;
+
+- [eec08c3](https://www.github.com/iotaledger/crypto.rs/commit/eec08c3af29a92a6dfbeb56b23a272a38b0de606) Add wots .changes on 2021-04-18
+
 ## \[0.4.2]
 
 - Automated publishing
