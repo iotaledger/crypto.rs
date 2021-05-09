@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use aes_crate::{Aes128, Aes192, Aes256, BlockCipher, NewBlockCipher};
+use aes_crate::{Aes128, Aes192, Aes256, BlockCipher, BlockEncrypt, BlockDecrypt, NewBlockCipher};
 use block_modes::{block_padding::Pkcs7, BlockMode, Cbc};
 use core::{
     marker::PhantomData,
@@ -56,7 +56,7 @@ where
 
 impl<Cipher, Digest, KeyLen, TagLen> AesCbc<Cipher, Digest, KeyLen, TagLen>
 where
-    Cipher: BlockCipher + NewBlockCipher,
+    Cipher: BlockEncrypt + BlockDecrypt + NewBlockCipher,
     Digest: Clone + Default + BlockInput + FixedOutput + Reset + Update,
     KeyLen: ArrayLength<u8> + Shl<B1>,
     TagLen: ArrayLength<u8>,
@@ -84,7 +84,7 @@ where
         //  of the MAC computed in this step as M. The first T_LEN octets of
         //  M are used as T.
         let mut hmac: Hmac<Digest> =
-            Hmac::new_varkey(&key[..KeyLen::USIZE]).map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
+            Hmac::new_from_slice(&key[..KeyLen::USIZE]).map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
 
         hmac.update(associated_data);
         hmac.update(nonce);
@@ -95,13 +95,13 @@ where
     }
 
     fn cipher(key: &Key<Self>, nonce: &Nonce<Self>) -> crate::Result<AesCbcPkcs7<Cipher>> {
-        AesCbcPkcs7::new_var(&key[KeyLen::USIZE..], nonce).map_err(|_| crate::Error::CipherError { alg: Self::NAME })
+        AesCbcPkcs7::new_from_slices(&key[KeyLen::USIZE..], nonce).map_err(|_| crate::Error::CipherError { alg: Self::NAME })
     }
 }
 
 impl<Cipher, Digest, KeyLen, TagLen> Aead for AesCbc<Cipher, Digest, KeyLen, TagLen>
 where
-    Cipher: BlockCipher + NewBlockCipher,
+    Cipher: BlockEncrypt + BlockDecrypt + NewBlockCipher,
     Digest: Clone + Default + BlockInput + FixedOutput + Reset + Update,
     KeyLen: ArrayLength<u8> + Shl<B1>,
     TagLen: ArrayLength<u8>,
