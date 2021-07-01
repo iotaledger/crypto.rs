@@ -103,7 +103,7 @@ If you have questions about how to use this library, or why certain decisions we
 ## Tests
 
 ```
-cargo test --lib --all-features
+cargo test --lib --all --all-features --tests
 ```
 ### Doctest
 We aim to supply at least one docstest for every interface, so to see real world usage consult the rustdocs.
