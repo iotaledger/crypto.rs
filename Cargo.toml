@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.5.1"
+version = "0.6.0"
 license = "Apache-2.0"
 authors = [
   "Gustav Behm <gustav.behm@iota.org>",
@@ -73,7 +73,7 @@ chacha20poly1305 = { version = "0.8", optional = true }
 digest = { version = "0.9", optional = true, default-features = false }
 ed25519-zebra = { version = "2.2", optional = true, default-features = false }
 generic-array = { version = "0.14", optional = true, default-features = false }
-getrandom = { version = "0.2", optional = true, default-features = false, features = ["js"] }
+getrandom = { version = "0.2", optional = true, default-features = false, features = [ "js" ] }
 hmac_ = { version = "0.11", optional = true, default-features = false, package = "hmac" }
 lazy_static = { version = "1.4", optional = true, default-features = false }
 pbkdf2 = { version = "0.8", optional = true, default-features = false }

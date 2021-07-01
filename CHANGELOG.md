@@ -1,5 +1,20 @@
 # Changelog
 
+## \[0.6.0]
+
+- Added js feature to getrandom for wasm compatibility.
+  - [0a85dfd](https://www.github.com/iotaledger/crypto.rs/commit/0a85dfd161b46ba9a932ff84aa3e3ad9e27d2d08) add change file on 2021-07-01
+
+- Added
+
+- `Segment` field access;
+  - Enable `hardened` field read access;
+  - Enable `bs` field read access;
+
+- `bip39.rs` clippy error fix;
+
+- [41e776e](https://www.github.com/iotaledger/crypto.rs/commit/41e776ec77ff6291cf804b5e13687b373df89b51) Add .changes file for Segment field access on 2021-07-01
+
 ## \[0.5.1]
 
 - This release updates a number of interlocking dependencies, but does not change the external interface.
