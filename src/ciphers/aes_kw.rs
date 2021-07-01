@@ -1,7 +1,9 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use aes_crate::{cipher::generic_array::typenum::Unsigned as _, Aes128, Aes192, Aes256, BlockCipher, NewBlockCipher};
+use aes_crate::{
+    cipher::generic_array::typenum::Unsigned as _, Aes128, Aes192, Aes256, BlockDecrypt, BlockEncrypt, NewBlockCipher,
+};
 use core::{convert::TryInto as _, marker::PhantomData, mem};
 
 use crate::{Error, Result};
@@ -50,7 +52,7 @@ where
 
 impl<'a, T> AesKeyWrap<'a, T>
 where
-    T: BlockCipher + NewBlockCipher,
+    T: BlockEncrypt + BlockDecrypt + NewBlockCipher,
 {
     /// Wraps a key using the AES Key Wrap algorithm.
     ///
@@ -66,7 +68,7 @@ where
         // Inputs:  Plaintext, n 64-bit values {P1, P2, ..., Pn}, and Key, K (the KEK).
         // Outputs: Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}.
 
-        let cipher: T = T::new_varkey(self.key).unwrap();
+        let cipher: T = T::new_from_slice(self.key).unwrap();
         let N: usize = plaintext.len() / BLOCK;
         let R: &mut [u8] = &mut ciphertext[BLOCK..];
 
@@ -130,7 +132,7 @@ where
         // Inputs:  Ciphertext, (n+1) 64-bit values {C0, C1, ..., Cn}, and Key, K (the KEK).
         // Outputs: Plaintext, n 64-bit values {P0, P1, K, Pn}.
 
-        let cipher: T = T::new_varkey(self.key).unwrap();
+        let cipher: T = T::new_from_slice(self.key).unwrap();
         let N: usize = (ciphertext.len() / BLOCK) - 1;
         let R: &mut [u8] = plaintext;
 

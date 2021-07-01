@@ -74,4 +74,4 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: test
-        args: --manifest-path=Cargo.toml --all --release --all-features
+        args: --manifest-path=Cargo.toml --lib --all --release --all-features --tests
