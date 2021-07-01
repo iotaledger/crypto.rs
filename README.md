@@ -7,6 +7,7 @@
 [![tests](https://github.com/iotaledger/crypto.rs/actions/workflows/tests.yml/badge.svg)](https://github.com/iotaledger/crypto.rs/actions/workflows/tests.yml)
 [![coverage](https://coveralls.io/repos/github/iotaledger/crypto.rs/badge.svg?branch=dev)](https://coveralls.io/github/iotaledger/crypto.rs?branch=dev)
 [![dependency status](https://deps.rs/repo/github/iotaledger/crypto.rs/status.svg)](https://deps.rs/repo/github/iotaledger/crypto.rs)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fiotaledger%2Fcrypto.rs.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Fiotaledger%2Fcrypto.rs?ref=badge_shield)
 
 A boundary crate of selected implementations of crypto primitives that are considered to be safe to use within the IOTA Foundation.
 
@@ -143,3 +144,6 @@ Apache 2.0
 [BIP39-TEST]: https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json
 
 [SLIP10-RFC]: https://github.com/satoshilabs/slips/blob/master/slip-0010.md
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fiotaledger%2Fcrypto.rs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fiotaledger%2Fcrypto.rs?ref=badge_large)
