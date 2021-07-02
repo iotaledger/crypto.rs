@@ -133,9 +133,11 @@ impl Segment {
             bs: i.to_be_bytes(), // ser32(i)
         }
     }
+
     pub fn hardened(&self) -> bool {
         self.hardened
     }
+
     pub fn bs(&self) -> [u8; 4] {
         self.bs
     }
