@@ -133,9 +133,11 @@ impl Segment {
             bs: i.to_be_bytes(), // ser32(i)
         }
     }
+
     pub fn hardened(&self) -> bool {
         self.hardened
     }
+
     pub fn bs(&self) -> [u8; 4] {
         self.bs
     }
@@ -163,6 +165,10 @@ impl Chain {
         let mut ss = self.0.clone();
         ss.extend_from_slice(&o.as_ref().0);
         Self(ss)
+    }
+
+    pub fn segments(&self) -> Vec<Segment> {
+        self.0.clone()
     }
 }
 
