@@ -164,6 +164,10 @@ impl Chain {
         ss.extend_from_slice(&o.as_ref().0);
         Self(ss)
     }
+
+    pub fn segments(&self) -> Vec<Segment> {
+        self.0.clone()
+    }
 }
 
 impl Default for Chain {
