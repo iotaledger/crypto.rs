@@ -35,6 +35,8 @@ impl SecretKey {
     }
 }
 
+#[derive(Clone, Copy, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PublicKey(ed25519_zebra::VerificationKey);
 
 impl PublicKey {
@@ -82,6 +84,8 @@ impl Ord for PublicKey {
     }
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature(ed25519_zebra::Signature);
 
 impl Signature {
