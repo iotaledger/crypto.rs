@@ -9,6 +9,9 @@ use sp_core::{
 extern crate alloc;
 use alloc::vec::Vec;
 
+pub const PUBLIC_KEY_LENGTH: usize = 32;
+pub const SIGNATURE_LENGTH: usize = 64;
+
 /// An Schnorrkel/Ristretto x25519 (“sr25519”) key pair.
 pub struct KeyPair {
   inner: Pair,
@@ -25,14 +28,26 @@ impl AsRef<[u8]> for Signature {
   }
 }
 
-impl AsRef<[u8; 64]> for Signature {
-  fn as_ref(&self) -> &[u8; 64] {
+impl AsRef<[u8; SIGNATURE_LENGTH]> for Signature {
+  fn as_ref(&self) -> &[u8; SIGNATURE_LENGTH] {
     self.0.as_ref()
   }
 }
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Ord, PartialOrd)]
 pub struct PublicKey(Public);
+
+impl AsRef<[u8]> for PublicKey {
+  fn as_ref(&self) -> &[u8] {
+    self.0.as_ref()
+  }
+}
+
+impl AsRef<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
+  fn as_ref(&self) -> &[u8; PUBLIC_KEY_LENGTH] {
+    self.0.as_ref()
+  }
+}
 
 impl Signature {
   /// A new instance from the given slice that should be 64 bytes long.
