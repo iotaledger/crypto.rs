@@ -1,5 +1,6 @@
 use crate::{Error, Result};
 use parity_scale_codec::Encode;
+use serde::{Deserialize, Serialize};
 use sp_core::{
   crypto::{Derive, DeriveJunction as SrDeriveJunction},
   sr25519::{Pair, Public, Signature as SrSignature},
@@ -60,17 +61,17 @@ impl Signature {
 
   /// A new instance from the given 64-byte data.
   ///
-  ///NOTE: No checking goes on to ensure this is a real signature.
+  /// NOTE: No checking goes on to ensure this is a real signature.
   /// Only use it if you are certain that the array actually is a signature, or if you immediately verify the signature.
   /// All functions that verify signatures will fail if the Signature is not actually a valid signature.
-  pub fn from_raw(data: [u8; 64]) -> Self {
+  pub fn from_raw(data: [u8; SIGNATURE_LENGTH]) -> Self {
     Self(SrSignature::from_raw(data))
   }
 }
 
 /// A since derivation junction description.
 /// It is the single parameter used when creating a new secret key from an existing secret key.
-#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum DeriveJunction {
   /// Soft (vanilla) derivation. Public keys have a correspondent derivation.
   Soft([u8; 32]),
@@ -110,6 +111,14 @@ impl DeriveJunction {
 }
 
 impl PublicKey {
+  /// A new instance from the given 64-byte data.
+  ///
+  /// NOTE: No checking goes on to ensure this is a real public key.
+  /// Only use it if you are certain that the array actually is a pubkey.
+  pub fn from_raw(data: [u8; PUBLIC_KEY_LENGTH]) -> Self {
+    Self(Public::from_raw(data))
+  }
+
   /// Derive a child key from a series of given junctions.
   ///
   /// None if there are any hard junctions in there.
