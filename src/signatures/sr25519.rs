@@ -14,10 +14,7 @@ pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
 /// An Schnorrkel/Ristretto x25519 (“sr25519”) key pair.
-pub struct KeyPair {
-  inner: Pair,
-  seed: Vec<u8>,
-}
+pub struct KeyPair(Pair);
 
 /// An Schnorrkel/Ristretto x25519 (“sr25519”) signature.
 #[derive(Debug, Clone, Eq, PartialEq)]
@@ -135,42 +132,35 @@ impl PublicKey {
 impl KeyPair {
   /// Returns the KeyPair from the English BIP39 mnemonic, or an error if it’s invalid.
   pub fn from_mnemonic(mnemonic: &str, password: Option<&str>) -> Result<Self> {
-    let (pair, seed) = Pair::from_phrase(mnemonic, password).map_err(|_| Error::InvalidArgumentError {
+    let (pair, _seed) = Pair::from_phrase(mnemonic, password).map_err(|_| Error::InvalidArgumentError {
       alg: "mnemonic",
       expected: "a valid english BIP39 mnemonic",
     })?;
-    Ok(Self {
-      inner: pair,
-      seed: seed.to_vec(),
-    })
+    Ok(Self(pair))
   }
 
   /// Get the public key.
   pub fn public_key(&self) -> PublicKey {
-    PublicKey(self.inner.public())
+    PublicKey(self.0.public())
   }
 
   /// Signs a message.
   pub fn sign(&self, message: &[u8]) -> Signature {
-    Signature(self.inner.sign(message))
+    Signature(self.0.sign(message))
   }
 
   /// Derive a child key from a series of given junctions.
   pub fn derive<I: Iterator<Item = DeriveJunction>>(&self, path: I, seed: Option<[u8; 32]>) -> Result<Self> {
-    let (pair, _) = self.inner.derive(path.map(Into::into), seed).unwrap();
-    let seed = pair.to_raw_vec();
-    Ok(Self { inner: pair, seed })
+    let (pair, _) = self.0.derive(path.map(Into::into), seed).unwrap();
+    Ok(Self(pair))
   }
 
   /// Gets the seed as raw vec.
-  pub fn seed(&self) -> &[u8] {
-    &self.seed
+  pub fn seed(&self) -> Vec<u8> {
+    self.0.to_raw_vec()
   }
 
   pub fn from_seed(seed: &[u8]) -> Self {
-    Self {
-      inner: Pair::from_seed_slice(seed).expect("invalid seed length"),
-      seed: seed.to_vec(),
-    }
+    Self(Pair::from_seed_slice(seed).expect("invalid seed length"))
   }
 }
