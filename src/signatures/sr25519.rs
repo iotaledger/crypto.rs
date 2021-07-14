@@ -125,6 +125,11 @@ impl PublicKey {
   pub fn derive<I: Iterator<Item = DeriveJunction>>(&self, path: I) -> Option<Self> {
     self.0.derive(path.map(Into::into)).map(Self)
   }
+
+  /// Verify a signature on a message. Returns true if the signature is good.
+  pub fn verify<M: AsRef<[u8]>>(&self, sig: &Signature, message: M) -> bool {
+    Pair::verify(&sig.0, message, &self.0)
+  }
 }
 
 impl KeyPair {
@@ -167,10 +172,5 @@ impl KeyPair {
       inner: Pair::from_seed_slice(seed).expect("invalid seed length"),
       seed: seed.to_vec(),
     }
-  }
-
-  /// Verify a signature on a message. Returns true if the signature is good.
-  pub fn verify<M: AsRef<[u8]>>(sig: &Signature, message: M, pubkey: &PublicKey) -> bool {
-    Pair::verify(&sig.0, message, &pubkey.0)
   }
 }
