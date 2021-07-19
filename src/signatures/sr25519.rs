@@ -65,6 +65,11 @@ impl Signature {
     pub fn from_raw(data: [u8; SIGNATURE_LENGTH]) -> Self {
         Self(SrSignature::from_raw(data))
     }
+
+    /// Gets the wrapped sp_core's [`SrSignature`] reference.
+    pub fn inner(&self) -> &SrSignature {
+        &self.0
+    }
 }
 
 /// A since derivation junction description.
