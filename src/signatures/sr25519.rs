@@ -128,6 +128,11 @@ impl PublicKey {
     pub fn verify<M: AsRef<[u8]>>(&self, sig: &Signature, message: M) -> bool {
         Pair::verify(&sig.0, message, &self.0)
     }
+
+    /// Gets the wrapped sp_core's [`Public`] reference.
+    pub fn inner(&self) -> &Public {
+        &self.0
+    }
 }
 
 impl KeyPair {
