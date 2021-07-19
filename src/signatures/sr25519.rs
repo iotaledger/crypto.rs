@@ -131,11 +131,11 @@ impl PublicKey {
 }
 
 impl KeyPair {
-    /// Returns the KeyPair from the English BIP39 mnemonic, or an error if it’s invalid.
-    pub fn from_mnemonic(mnemonic: &str, password: Option<&str>) -> Result<Self> {
-        let (pair, _seed) = Pair::from_phrase(mnemonic, password).map_err(|_| Error::InvalidArgumentError {
-            alg: "mnemonic",
-            expected: "a valid english BIP39 mnemonic",
+    /// Returns the KeyPair from the English BIP39 mnemonic or seed, or an error if it’s invalid.
+    pub fn from_string(s: &str, password: Option<&str>) -> Result<Self> {
+        let pair = Pair::from_string(s, password).map_err(|_| Error::InvalidArgumentError {
+            alg: "KeyPair#from_string",
+            expected: "a valid seed or english BIP39 mnemonic",
         })?;
         Ok(Self(pair))
     }

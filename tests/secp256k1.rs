@@ -6,9 +6,9 @@
 use crypto::signatures::secp256k1::*;
 
 fn generate_keypair() -> (SecretKey, PublicKey) {
-  let secret = SecretKey::from_bytes(&rand::random::<[u8; 32]>()).unwrap();
-  let pk = secret.public_key();
-  (secret, pk)
+    let secret = SecretKey::from_bytes(&rand::random::<[u8; 32]>()).unwrap();
+    let pk = secret.public_key();
+    (secret, pk)
 }
 
 /*#[test]
@@ -32,97 +32,97 @@ fn test_signature_der() {
 
 #[test]
 fn test_sign_verify() {
-  let message_arr = [6u8; 32];
-  let (secp_privkey, secp_pubkey) = generate_keypair();
-  let secp_privkey = secp_privkey.to_bytes();
+    let message_arr = [6u8; 32];
+    let (secp_privkey, secp_pubkey) = generate_keypair();
+    let secp_privkey = secp_privkey.to_bytes();
 
-  let pubkey_a = secp_pubkey.to_bytes();
-  assert_eq!(pubkey_a.len(), 65);
-  let pubkey = PublicKey::from_bytes(&pubkey_a).unwrap();
-  let mut seckey_a = [0u8; 32];
-  for i in 0..32 {
-    seckey_a[i] = secp_privkey[i];
-  }
-  let seckey = SecretKey::from_bytes(&seckey_a).unwrap();
+    let pubkey_a = secp_pubkey.to_bytes();
+    assert_eq!(pubkey_a.len(), 65);
+    let pubkey = PublicKey::from_bytes(&pubkey_a).unwrap();
+    let mut seckey_a = [0u8; 32];
+    for i in 0..32 {
+        seckey_a[i] = secp_privkey[i];
+    }
+    let seckey = SecretKey::from_bytes(&seckey_a).unwrap();
 
-  let (sig, recid) = seckey.sign(&message_arr);
+    let (sig, recid) = seckey.sign(&message_arr);
 
-  // Self verify
-  assert!(pubkey.verify(&message_arr, &sig));
+    // Self verify
+    assert!(pubkey.verify(&message_arr, &sig));
 
-  // Self recover
-  let recovered_pubkey = PublicKey::recover(&message_arr, &sig, &recid).unwrap();
-  let rpa = recovered_pubkey.to_bytes();
-  let opa = pubkey.to_bytes();
-  let rpr: &[u8] = &rpa;
-  let opr: &[u8] = &opa;
-  assert_eq!(rpr, opr);
+    // Self recover
+    let recovered_pubkey = PublicKey::recover(&message_arr, &sig, &recid).unwrap();
+    let rpa = recovered_pubkey.to_bytes();
+    let opa = pubkey.to_bytes();
+    let rpr: &[u8] = &rpa;
+    let opr: &[u8] = &opa;
+    assert_eq!(rpr, opr);
 }
 
 #[test]
 fn test_failing_sign_verify() {
-  let seckey_a: [u8; 32] = [
-    169, 195, 92, 103, 2, 159, 75, 46, 158, 79, 249, 49, 208, 28, 48, 210, 5, 47, 136, 77, 21, 51, 224, 54, 213, 165,
-    90, 122, 233, 199, 0, 248,
-  ];
-  let seckey = SecretKey::from_bytes(&seckey_a).unwrap();
-  let pubkey = seckey.public_key();
-  let message_arr = [6u8; 32];
+    let seckey_a: [u8; 32] = [
+        169, 195, 92, 103, 2, 159, 75, 46, 158, 79, 249, 49, 208, 28, 48, 210, 5, 47, 136, 77, 21, 51, 224, 54, 213,
+        165, 90, 122, 233, 199, 0, 248,
+    ];
+    let seckey = SecretKey::from_bytes(&seckey_a).unwrap();
+    let pubkey = seckey.public_key();
+    let message_arr = [6u8; 32];
 
-  let (sig, recid) = seckey.sign(&message_arr);
-  let tmp = recid.as_u8();
-  assert_eq!(tmp, 1u8);
+    let (sig, recid) = seckey.sign(&message_arr);
+    let tmp = recid.as_u8();
+    assert_eq!(tmp, 1u8);
 
-  let recovered_pubkey = PublicKey::recover(&message_arr, &sig, &recid).unwrap();
-  let rpa = recovered_pubkey.to_bytes();
-  let opa = pubkey.to_bytes();
-  let rpr: &[u8] = &rpa;
-  let opr: &[u8] = &opa;
-  assert_eq!(rpr, opr);
+    let recovered_pubkey = PublicKey::recover(&message_arr, &sig, &recid).unwrap();
+    let rpa = recovered_pubkey.to_bytes();
+    let opa = pubkey.to_bytes();
+    let rpr: &[u8] = &rpa;
+    let opr: &[u8] = &opa;
+    assert_eq!(rpr, opr);
 }
 
 #[test]
 fn test_verify() {
-  let message_arr = [5u8; 32];
-  let (privkey, pubkey) = generate_keypair();
-  let (signature, _) = privkey.sign(&message_arr);
+    let message_arr = [5u8; 32];
+    let (privkey, pubkey) = generate_keypair();
+    let (signature, _) = privkey.sign(&message_arr);
 
-  let pubkey_a = pubkey.to_bytes();
-  assert_eq!(pubkey_a.len(), 65);
+    let pubkey_a = pubkey.to_bytes();
+    assert_eq!(pubkey_a.len(), 65);
 
-  let ctx_pubkey = PublicKey::from_bytes(&pubkey_a).unwrap();
-  let signature_a = signature.to_bytes();
-  assert_eq!(signature_a.len(), 64);
-  let ctx_sig = Signature::from_bytes(&signature_a).expect("signature is valid");
+    let ctx_pubkey = PublicKey::from_bytes(&pubkey_a).unwrap();
+    let signature_a = signature.to_bytes();
+    assert_eq!(signature_a.len(), 64);
+    let ctx_sig = Signature::from_bytes(&signature_a).expect("signature is valid");
 
-  assert!(pubkey.verify(&message_arr, &signature));
-  assert!(ctx_pubkey.verify(&message_arr, &ctx_sig));
+    assert!(pubkey.verify(&message_arr, &signature));
+    assert!(ctx_pubkey.verify(&message_arr, &ctx_sig));
 }
 
 #[test]
 fn secret_clear_on_drop() {
-  let secret: [u8; 32] = [1; 32];
-  let mut seckey = SecretKey::from_bytes(&secret).unwrap();
+    let secret: [u8; 32] = [1; 32];
+    let mut seckey = SecretKey::from_bytes(&secret).unwrap();
 
-  clear_on_drop::clear::Clear::clear(&mut seckey);
-  assert_eq!(seckey.to_bytes(), SecretKey::default().to_bytes());
+    clear_on_drop::clear::Clear::clear(&mut seckey);
+    assert_eq!(seckey.to_bytes(), SecretKey::default().to_bytes());
 }
 
 #[test]
 fn test_recover() {
-  let message_arr = [5u8; 32];
-  let (privkey, pubkey) = generate_keypair();
-  let (signature, rec_id) = privkey.sign(&message_arr);
+    let message_arr = [5u8; 32];
+    let (privkey, pubkey) = generate_keypair();
+    let (signature, rec_id) = privkey.sign(&message_arr);
 
-  let pubkey_a = pubkey.to_bytes();
-  assert_eq!(pubkey_a.len(), 65);
+    let pubkey_a = pubkey.to_bytes();
+    assert_eq!(pubkey_a.len(), 65);
 
-  let ctx_pubkey = PublicKey::recover(&message_arr, &signature, &rec_id).unwrap();
-  let sp = ctx_pubkey.to_bytes();
+    let ctx_pubkey = PublicKey::recover(&message_arr, &signature, &rec_id).unwrap();
+    let sp = ctx_pubkey.to_bytes();
 
-  let sps: &[u8] = &sp;
-  let gps: &[u8] = &pubkey_a;
-  assert_eq!(sps, gps);
+    let sps: &[u8] = &sp;
+    let gps: &[u8] = &pubkey_a;
+    assert_eq!(sps, gps);
 }
 
 /*fn from_hex(hex: &str, target: &mut [u8]) -> Result<usize, ()> {
@@ -203,68 +203,68 @@ fn test_low_s() {
 
 #[test]
 fn test_convert_key1() {
-  let secret: [u8; 32] = [
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-  ];
-  let expected: &[u8] = &[
-    0x04, 0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac, 0x55, 0xa0, 0x62, 0x95, 0xce, 0x87, 0x0b, 0x07, 0x02, 0x9b,
-    0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b, 0x16, 0xf8, 0x17, 0x98, 0x48, 0x3a, 0xda, 0x77, 0x26,
-    0xa3, 0xc4, 0x65, 0x5d, 0xa4, 0xfb, 0xfc, 0x0e, 0x11, 0x08, 0xa8, 0xfd, 0x17, 0xb4, 0x48, 0xa6, 0x85, 0x54, 0x19,
-    0x9c, 0x47, 0xd0, 0x8f, 0xfb, 0x10, 0xd4, 0xb8,
-  ];
-  let seckey = SecretKey::from_bytes(&secret).unwrap();
-  let pubkey = seckey.public_key();
-  assert_eq!(expected, &pubkey.to_bytes()[..]);
-  let pubkey_compressed = PublicKey::from_compressed_bytes(&pubkey.to_compressed_bytes()).unwrap();
-  assert_eq!(expected, &pubkey_compressed.to_bytes()[..]);
+    let secret: [u8; 32] = [
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+    ];
+    let expected: &[u8] = &[
+        0x04, 0x79, 0xbe, 0x66, 0x7e, 0xf9, 0xdc, 0xbb, 0xac, 0x55, 0xa0, 0x62, 0x95, 0xce, 0x87, 0x0b, 0x07, 0x02,
+        0x9b, 0xfc, 0xdb, 0x2d, 0xce, 0x28, 0xd9, 0x59, 0xf2, 0x81, 0x5b, 0x16, 0xf8, 0x17, 0x98, 0x48, 0x3a, 0xda,
+        0x77, 0x26, 0xa3, 0xc4, 0x65, 0x5d, 0xa4, 0xfb, 0xfc, 0x0e, 0x11, 0x08, 0xa8, 0xfd, 0x17, 0xb4, 0x48, 0xa6,
+        0x85, 0x54, 0x19, 0x9c, 0x47, 0xd0, 0x8f, 0xfb, 0x10, 0xd4, 0xb8,
+    ];
+    let seckey = SecretKey::from_bytes(&secret).unwrap();
+    let pubkey = seckey.public_key();
+    assert_eq!(expected, &pubkey.to_bytes()[..]);
+    let pubkey_compressed = PublicKey::from_compressed_bytes(&pubkey.to_compressed_bytes()).unwrap();
+    assert_eq!(expected, &pubkey_compressed.to_bytes()[..]);
 }
 
 #[test]
 fn test_convert_key2() {
-  let secret: [u8; 32] = [
-    0x4d, 0x5d, 0xb4, 0x10, 0x7d, 0x23, 0x7d, 0xf6, 0xa3, 0xd5, 0x8e, 0xe5, 0xf7, 0x0a, 0xe6, 0x3d, 0x73, 0xd7, 0x65,
-    0x8d, 0x40, 0x26, 0xf2, 0xee, 0xfd, 0x2f, 0x20, 0x4c, 0x81, 0x68, 0x2c, 0xb7,
-  ];
-  let expected: &[u8] = &[
-    0x04, 0x3f, 0xa8, 0xc0, 0x8c, 0x65, 0xa8, 0x3f, 0x6b, 0x4e, 0xa3, 0xe0, 0x4e, 0x1c, 0xc7, 0x0c, 0xbe, 0x3c, 0xd3,
-    0x91, 0x49, 0x9e, 0x3e, 0x05, 0xab, 0x7d, 0xed, 0xf2, 0x8a, 0xff, 0x9a, 0xfc, 0x53, 0x82, 0x00, 0xff, 0x93, 0xe3,
-    0xf2, 0xb2, 0xcb, 0x50, 0x29, 0xf0, 0x3c, 0x7e, 0xbe, 0xe8, 0x20, 0xd6, 0x3a, 0x4c, 0x5a, 0x95, 0x41, 0xc8, 0x3a,
-    0xce, 0xbe, 0x29, 0x3f, 0x54, 0xca, 0xcf, 0x0e,
-  ];
-  let seckey = SecretKey::from_bytes(&secret).unwrap();
-  let pubkey = seckey.public_key();
-  assert_eq!(expected, &pubkey.to_bytes()[..]);
-  let pubkey_compressed = PublicKey::from_compressed_bytes(&pubkey.to_compressed_bytes()).unwrap();
-  assert_eq!(expected, &pubkey_compressed.to_bytes()[..]);
+    let secret: [u8; 32] = [
+        0x4d, 0x5d, 0xb4, 0x10, 0x7d, 0x23, 0x7d, 0xf6, 0xa3, 0xd5, 0x8e, 0xe5, 0xf7, 0x0a, 0xe6, 0x3d, 0x73, 0xd7,
+        0x65, 0x8d, 0x40, 0x26, 0xf2, 0xee, 0xfd, 0x2f, 0x20, 0x4c, 0x81, 0x68, 0x2c, 0xb7,
+    ];
+    let expected: &[u8] = &[
+        0x04, 0x3f, 0xa8, 0xc0, 0x8c, 0x65, 0xa8, 0x3f, 0x6b, 0x4e, 0xa3, 0xe0, 0x4e, 0x1c, 0xc7, 0x0c, 0xbe, 0x3c,
+        0xd3, 0x91, 0x49, 0x9e, 0x3e, 0x05, 0xab, 0x7d, 0xed, 0xf2, 0x8a, 0xff, 0x9a, 0xfc, 0x53, 0x82, 0x00, 0xff,
+        0x93, 0xe3, 0xf2, 0xb2, 0xcb, 0x50, 0x29, 0xf0, 0x3c, 0x7e, 0xbe, 0xe8, 0x20, 0xd6, 0x3a, 0x4c, 0x5a, 0x95,
+        0x41, 0xc8, 0x3a, 0xce, 0xbe, 0x29, 0x3f, 0x54, 0xca, 0xcf, 0x0e,
+    ];
+    let seckey = SecretKey::from_bytes(&secret).unwrap();
+    let pubkey = seckey.public_key();
+    assert_eq!(expected, &pubkey.to_bytes()[..]);
+    let pubkey_compressed = PublicKey::from_compressed_bytes(&pubkey.to_compressed_bytes()).unwrap();
+    assert_eq!(expected, &pubkey_compressed.to_bytes()[..]);
 }
 
 #[test]
 fn test_convert_anykey() {
-  let (secp_privkey, secp_pubkey) = generate_keypair();
-  let secp_privkey = secp_privkey.to_bytes();
+    let (secp_privkey, secp_pubkey) = generate_keypair();
+    let secp_privkey = secp_privkey.to_bytes();
 
-  let mut secret = [0u8; 32];
-  for i in 0..32 {
-    secret[i] = secp_privkey[i];
-  }
+    let mut secret = [0u8; 32];
+    for i in 0..32 {
+        secret[i] = secp_privkey[i];
+    }
 
-  let seckey = SecretKey::from_bytes(&secret).unwrap();
-  let pubkey = seckey.public_key();
-  let public = pubkey.to_bytes();
-  let public_compressed = pubkey.to_compressed_bytes();
-  let pubkey_r: &[u8] = &public;
-  let pubkey_compressed_r: &[u8] = &public_compressed;
+    let seckey = SecretKey::from_bytes(&secret).unwrap();
+    let pubkey = seckey.public_key();
+    let public = pubkey.to_bytes();
+    let public_compressed = pubkey.to_compressed_bytes();
+    let pubkey_r: &[u8] = &public;
+    let pubkey_compressed_r: &[u8] = &public_compressed;
 
-  let secp_pubkey_a = secp_pubkey.to_bytes();
-  assert_eq!(secp_pubkey_a.len(), 65);
-  let secp_pubkey_compressed_a = secp_pubkey.to_compressed_bytes();
-  assert_eq!(secp_pubkey_compressed_a.len(), 33);
-  let secp_pubkey_r: &[u8] = &secp_pubkey_a;
-  let secp_pubkey_compressed_r: &[u8] = &secp_pubkey_compressed_a;
+    let secp_pubkey_a = secp_pubkey.to_bytes();
+    assert_eq!(secp_pubkey_a.len(), 65);
+    let secp_pubkey_compressed_a = secp_pubkey.to_compressed_bytes();
+    assert_eq!(secp_pubkey_compressed_a.len(), 33);
+    let secp_pubkey_r: &[u8] = &secp_pubkey_a;
+    let secp_pubkey_compressed_r: &[u8] = &secp_pubkey_compressed_a;
 
-  assert_eq!(secp_pubkey_r, pubkey_r);
-  assert_eq!(secp_pubkey_compressed_r, pubkey_compressed_r);
+    assert_eq!(secp_pubkey_r, pubkey_r);
+    assert_eq!(secp_pubkey_compressed_r, pubkey_compressed_r);
 }
 
 /*#[test]
@@ -293,26 +293,26 @@ fn test_pubkey_combine() {
 
 #[test]
 fn test_pubkey_equality() {
-  for _ in 0..10 {
-    let secret = SecretKey::from_bytes(&rand::random::<[u8; 32]>()).unwrap();
-    let public = secret.public_key();
+    for _ in 0..10 {
+        let secret = SecretKey::from_bytes(&rand::random::<[u8; 32]>()).unwrap();
+        let public = secret.public_key();
 
-    let public2 = PublicKey::from_bytes(&public.to_bytes()).unwrap();
-    let public3 = PublicKey::from_compressed_bytes(&public.to_compressed_bytes()).unwrap();
+        let public2 = PublicKey::from_bytes(&public.to_bytes()).unwrap();
+        let public3 = PublicKey::from_compressed_bytes(&public.to_compressed_bytes()).unwrap();
 
-    // Reflexivity
-    assert_eq!(public, public);
-    assert_eq!(public2, public2);
-    assert_eq!(public3, public3);
+        // Reflexivity
+        assert_eq!(public, public);
+        assert_eq!(public2, public2);
+        assert_eq!(public3, public3);
 
-    // Symmetry
-    assert_eq!(public2, public);
-    assert_eq!(public, public2);
-    assert_eq!(public2, public3);
-    assert_eq!(public3, public2);
+        // Symmetry
+        assert_eq!(public2, public);
+        assert_eq!(public, public2);
+        assert_eq!(public2, public3);
+        assert_eq!(public3, public2);
 
-    // Transitivity
-    assert_eq!(public, public3);
-    assert_eq!(public3, public);
-  }
+        // Transitivity
+        assert_eq!(public, public3);
+        assert_eq!(public3, public);
+    }
 }

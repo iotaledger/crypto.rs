@@ -4,17 +4,17 @@ use crypto::signatures::sr25519::{DeriveJunction, KeyPair};
 use hex_literal::hex;
 
 #[test]
-fn from_mnemonic() {
+fn from_string() {
     let mnemonics = include!("fixtures/sr25519.rs");
     let message = b"crypto.rs";
 
     for mnemonic in mnemonics.iter() {
-        let k = KeyPair::from_mnemonic(mnemonic, None).unwrap();
-        let o = KeyPair::from_seed(k.seed());
+        let k = KeyPair::from_string(mnemonic, None).unwrap();
+        let o = KeyPair::from_seed(&k.seed());
         assert_eq!(k.public_key(), o.public_key());
         let public_key = k.public_key();
         let signature = k.sign(&message[..]);
-        assert!(KeyPair::verify(&signature, &message[..], &public_key));
+        assert!(public_key.verify(&signature, &message[..]));
     }
 }
 
@@ -30,12 +30,12 @@ fn derive_soft_should_work() {
     assert_eq!(derive_1.public_key(), derive_1b.public_key());
     assert_ne!(derive_1.public_key(), derive_2.public_key());
 
-    assert_eq!(derive_1.public_key(), KeyPair::from_seed(derive_1.seed()).public_key());
+    assert_eq!(derive_1.public_key(), KeyPair::from_seed(&derive_1.seed()).public_key());
     assert_eq!(
         derive_1b.public_key(),
-        KeyPair::from_seed(derive_1b.seed()).public_key()
+        KeyPair::from_seed(&derive_1b.seed()).public_key()
     );
-    assert_eq!(derive_2.public_key(), KeyPair::from_seed(derive_2.seed()).public_key());
+    assert_eq!(derive_2.public_key(), KeyPair::from_seed(&derive_2.seed()).public_key());
 }
 
 // taken from https://github.com/paritytech/substrate/blob/master/primitives/core/src/sr25519.rs
@@ -50,12 +50,12 @@ fn derive_hard_should_work() {
     assert_eq!(derive_1.public_key(), derive_1b.public_key());
     assert_ne!(derive_1.public_key(), derive_2.public_key());
 
-    assert_eq!(derive_1.public_key(), KeyPair::from_seed(derive_1.seed()).public_key());
+    assert_eq!(derive_1.public_key(), KeyPair::from_seed(&derive_1.seed()).public_key());
     assert_eq!(
         derive_1b.public_key(),
-        KeyPair::from_seed(derive_1b.seed()).public_key()
+        KeyPair::from_seed(&derive_1b.seed()).public_key()
     );
-    assert_eq!(derive_2.public_key(), KeyPair::from_seed(derive_2.seed()).public_key());
+    assert_eq!(derive_2.public_key(), KeyPair::from_seed(&derive_2.seed()).public_key());
 }
 
 // taken from https://github.com/paritytech/substrate/blob/master/primitives/core/src/sr25519.rs
