@@ -20,22 +20,22 @@ fn test_x25519_rfc7748() -> crypto::Result<()> {
     for tv in tvs.iter() {
         let secret_a: SecretKey = {
             let bytes = hex::decode(tv.secret_a).unwrap();
-            SecretKey::from_bytes(&bytes)?
+            SecretKey::try_from_slice(&bytes)?
         };
 
         let public_a: Option<PublicKey> = {
             let bytes = tv.public_a.map(hex::decode).transpose().unwrap();
-            bytes.map(|bytes| PublicKey::from_bytes(&bytes)).transpose()?
+            bytes.map(|bytes| PublicKey::try_from_slice(&bytes)).transpose()?
         };
 
         let secret_b: Option<SecretKey> = {
             let bytes = tv.secret_b.map(hex::decode).transpose().unwrap();
-            bytes.map(|bytes| SecretKey::from_bytes(&bytes)).transpose()?
+            bytes.map(|bytes| SecretKey::try_from_slice(&bytes)).transpose()?
         };
 
         let public_b: PublicKey = {
             let bytes = hex::decode(tv.public_b).unwrap();
-            PublicKey::from_bytes(&bytes)?
+            PublicKey::try_from_slice(&bytes)?
         };
 
         let expected: Vec<u8> = hex::decode(tv.shared).unwrap();

@@ -32,14 +32,13 @@ impl PublicKey {
     }
 
     /// Load a [`PublicKey`] from a slice of bytes.
-    #[deprecated(since = "1.0.0", note = "Please use from_bytes instead")]
-    pub fn try_from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        let array: [u8; PUBLIC_KEY_LENGTH] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
+    pub fn try_from_slice(slice: &[u8]) -> crate::Result<Self> {
+        let bytes: [u8; PUBLIC_KEY_LENGTH] = slice.try_into().map_err(|_| crate::Error::ConvertError {
             from: "bytes",
             to: "X25519 Public Key",
         })?;
 
-        Ok(Self(array.into()))
+        Ok(Self::from_bytes(bytes))
     }
 
     /// Returns the [`PublicKey`] as an array of bytes.
@@ -49,6 +48,12 @@ impl PublicKey {
 
     /// Returns the [`PublicKey`] as a slice of bytes.
     pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_bytes()
+    }
+}
+
+impl AsRef<[u8]> for PublicKey {
+    fn as_ref(&self) -> &[u8] {
         self.0.as_bytes()
     }
 }
@@ -68,14 +73,18 @@ impl SecretKey {
         Self::from_bytes(&bytes[..])
     }
 
+    pub fn from_bytes(bytes: [u8; SECRET_KEY_LENGTH]) -> Self {
+        Self(bytes.into())
+    }
+
     /// Load a [`SecretKey`] from a slice of bytes.
-    pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        let array: [u8; SECRET_KEY_LENGTH] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
+    pub fn try_from_slice(slice: &[u8]) -> crate::Result<Self> {
+        let bytes: [u8; SECRET_KEY_LENGTH] = slice.try_into().map_err(|_| crate::Error::ConvertError {
             from: "bytes",
             to: "X25519 Secret Key",
         })?;
 
-        Ok(Self(array.into()))
+        Ok(Self::from_bytes(bytes))
     }
 
     /// Returns the [`SecretKey`] as an array of bytes.
