@@ -90,6 +90,7 @@ fn test_golden() -> crypto::Result<()> {
         assert_eq!(sigb, sk.sign(&msg).to_bytes());
         let sig = Signature::from_bytes(sigb);
         assert!(PublicKey::verify(&pk, &sig, &msg));
+        #[cfg(feature = "random")]
         assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
     }
 
@@ -151,6 +152,7 @@ fn test_vectors() -> crypto::Result<()> {
         assert_eq!(sigb, sk.sign(&msg).to_bytes());
         let sig = Signature::from_bytes(sigb);
         assert!(PublicKey::verify(&pk, &sig, &msg));
+        #[cfg(feature = "random")]
         assert!(!PublicKey::verify(&SecretKey::generate()?.public_key(), &sig, &msg));
 
         utils::corrupt(&mut sigb);
