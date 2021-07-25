@@ -6,7 +6,7 @@
 mod utils;
 
 pub const SECRET_KEY_LENGTH: usize = 32;
-pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
+pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
 use crypto::signatures::ed25519::{PublicKey, SecretKey, Signature};
@@ -22,9 +22,9 @@ fn test_zip215() -> crypto::Result<()> {
     let ms = msg.as_bytes();
 
     for tv in tvs.iter() {
-        let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+        let mut pkb = [0; PUBLIC_KEY_LENGTH];
         hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
-        let pk = PublicKey::from_compressed_bytes(pkb)?;
+        let pk = PublicKey::try_from_bytes(pkb)?;
 
         let mut sigb = [0; SIGNATURE_LENGTH];
         hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
@@ -55,7 +55,7 @@ fn test_malleability() -> crypto::Result<()> {
         0x7d, 0x4d, 0x0e, 0x7f, 0x61, 0x53, 0xa6, 0x9b, 0x62, 0x42, 0xb5, 0x22, 0xab, 0xbe, 0xe6, 0x85, 0xfd, 0xa4,
         0x42, 0x0f, 0x88, 0x34, 0xb1, 0x08, 0xc3, 0xbd, 0xae, 0x36, 0x9e, 0xf5, 0x49, 0xfa,
     ];
-    let pk = PublicKey::from_compressed_bytes(pkb)?;
+    let pk = PublicKey::try_from_bytes(pkb)?;
 
     assert!(!PublicKey::verify(&pk, &sig, &ms));
 
@@ -77,11 +77,11 @@ fn test_golden() -> crypto::Result<()> {
         let sk = SecretKey::from_le_bytes(skb)?;
         assert_eq!(skb, sk.to_le_bytes());
 
-        let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+        let mut pkb = [0; PUBLIC_KEY_LENGTH];
         hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
-        assert_eq!(pkb, sk.public_key().to_compressed_bytes());
-        let pk = PublicKey::from_compressed_bytes(pkb)?;
-        assert_eq!(pkb, pk.to_compressed_bytes());
+        assert_eq!(pkb, sk.public_key().to_bytes());
+        let pk = PublicKey::try_from_bytes(pkb)?;
+        assert_eq!(pkb, pk.to_bytes());
 
         let msg = hex::decode(tv.message).unwrap();
 
@@ -109,17 +109,17 @@ fn test_eq_ord() -> crypto::Result<()> {
     let public_key = "f24a3306ce8698c6bafb11f465f2be695f220fddbca69ca9cf133757c9c29378";
     let public_key_different = "82eeba00688da228b83bbe32d6c2e2d548550ab3c6e30752d9fe2617e89f554d";
 
-    let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+    let mut pkb = [0; PUBLIC_KEY_LENGTH];
     hex::decode_to_slice(public_key, &mut pkb as &mut [u8]).unwrap();
-    let pk = PublicKey::from_compressed_bytes(pkb)?;
+    let pk = PublicKey::try_from_bytes(pkb)?;
 
-    let mut pkb_eq = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+    let mut pkb_eq = [0; PUBLIC_KEY_LENGTH];
     hex::decode_to_slice(public_key, &mut pkb_eq as &mut [u8]).unwrap();
-    let pk_eq = PublicKey::from_compressed_bytes(pkb_eq)?;
+    let pk_eq = PublicKey::try_from_bytes(pkb_eq)?;
 
-    let mut pkb_diff = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+    let mut pkb_diff = [0; PUBLIC_KEY_LENGTH];
     hex::decode_to_slice(public_key_different, &mut pkb_diff as &mut [u8]).unwrap();
-    let pk_diff = PublicKey::from_compressed_bytes(pkb_diff)?;
+    let pk_diff = PublicKey::try_from_bytes(pkb_diff)?;
 
     assert!(pk == pk_eq);
     assert!(pk != pk_diff);
@@ -139,11 +139,11 @@ fn test_vectors() -> crypto::Result<()> {
         let sk = SecretKey::from_le_bytes(skb)?;
         assert_eq!(skb, sk.to_le_bytes());
 
-        let mut pkb = [0; COMPRESSED_PUBLIC_KEY_LENGTH];
+        let mut pkb = [0; PUBLIC_KEY_LENGTH];
         hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
-        assert_eq!(pkb, sk.public_key().to_compressed_bytes());
-        let pk = PublicKey::from_compressed_bytes(pkb)?;
-        assert_eq!(pkb, pk.to_compressed_bytes());
+        assert_eq!(pkb, sk.public_key().to_bytes());
+        let pk = PublicKey::try_from_bytes(pkb)?;
+        assert_eq!(pkb, pk.to_bytes());
 
         let msg = hex::decode(tv.message).unwrap();
 

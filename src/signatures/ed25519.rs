@@ -4,7 +4,9 @@
 use core::{cmp::Ordering, convert::TryFrom};
 
 pub const SECRET_KEY_LENGTH: usize = 32;
-pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 32;
+pub const PUBLIC_KEY_LENGTH: usize = 32;
+#[deprecated(since = "1.0.0", note = "Please use PUBLIC_KEY_LENGTH instead")]
+pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = PUBLIC_KEY_LENGTH;
 pub const SIGNATURE_LENGTH: usize = 64;
 
 pub struct SecretKey(ed25519_zebra::SigningKey);
@@ -42,17 +44,27 @@ impl PublicKey {
         self.0.verify(&sig.0, msg).is_ok()
     }
 
-    pub fn to_compressed_bytes(&self) -> [u8; COMPRESSED_PUBLIC_KEY_LENGTH] {
+    pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
         self.0.into()
     }
 
-    pub fn from_compressed_bytes(bs: [u8; COMPRESSED_PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
-        ed25519_zebra::VerificationKey::try_from(bs)
+    #[deprecated(since = "1.0.0", note = "Please use to_bytes instead")]
+    pub fn to_compressed_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
+        self.to_bytes()
+    }
+
+    pub fn try_from_bytes(bytes: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
+        ed25519_zebra::VerificationKey::try_from(bytes)
             .map(Self)
             .map_err(|_| crate::Error::ConvertError {
                 from: "compressed bytes",
                 to: "Ed25519 public key",
             })
+    }
+
+    #[deprecated(since = "1.0.0", note = "Please use try_from_bytes instead")]
+    pub fn from_compressed_bytes(bs: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
+        Self::try_from_bytes(bs)
     }
 }
 
