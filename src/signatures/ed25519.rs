@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::{cmp::Ordering, convert::TryFrom};
+use core::hash::{Hash, Hasher};
 
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 32;
@@ -47,6 +48,7 @@ impl SecretKey {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
 pub struct PublicKey(ed25519_zebra::VerificationKey);
 
 impl PublicKey {
@@ -88,6 +90,19 @@ impl AsRef<[u8]> for PublicKey {
     }
 }
 
+impl TryFrom<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
+    type Error = crate::Error;
+    fn try_from(bytes: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
+        Self::try_from_bytes(bytes)
+    }
+}
+
+impl From<&PublicKey> for [u8; PUBLIC_KEY_LENGTH] {
+    fn from(pk: &PublicKey) -> Self {
+        pk.to_bytes()
+    }
+}
+
 impl PartialEq for PublicKey {
     fn eq(&self, other: &Self) -> bool {
         self.as_ref() == other.as_ref()
@@ -105,6 +120,12 @@ impl PartialOrd for PublicKey {
 impl Ord for PublicKey {
     fn cmp(&self, other: &Self) -> Ordering {
         self.as_ref().cmp(&other.as_ref())
+    }
+}
+
+impl Hash for PublicKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        (self.as_bytes()).hash(state);
     }
 }
 

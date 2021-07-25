@@ -24,6 +24,7 @@ pub const SECRET_KEY_LEN: usize = SECRET_KEY_LENGTH;
 pub type SharedSecret = x25519_dalek::SharedSecret;
 
 /// An X25519 Public Key
+#[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub struct PublicKey(x25519_dalek::PublicKey);
 
 impl PublicKey {
@@ -55,6 +56,18 @@ impl PublicKey {
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+}
+
+impl From<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
+    fn from(bytes: [u8; PUBLIC_KEY_LENGTH]) -> Self {
+        Self::from_bytes(bytes)
+    }
+}
+
+impl From<&PublicKey> for [u8; PUBLIC_KEY_LENGTH] {
+    fn from(pk: &PublicKey) -> Self {
+        pk.to_bytes()
     }
 }
 
