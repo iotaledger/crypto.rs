@@ -17,19 +17,29 @@ impl SecretKey {
     pub fn generate() -> crate::Result<Self> {
         let mut bs = [0u8; SECRET_KEY_LENGTH];
         crate::utils::rand::fill(&mut bs)?;
-        Self::from_le_bytes(bs)
+        Self::from_bytes(bs)
     }
 
     pub fn public_key(&self) -> PublicKey {
         PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
     }
 
-    pub fn to_le_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
+    pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
         self.0.into()
     }
 
+    #[deprecated(since = "1.0.0", note = "Please use to_bytes instead")]
+    pub fn to_le_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
+        self.to_bytes()
+    }
+
+    pub fn from_bytes(bytes: [u8; SECRET_KEY_LENGTH]) -> Self {
+        Self(bytes.into())
+    }
+
+    #[deprecated(since = "1.0.0", note = "Please use from_bytes instead")]
     pub fn from_le_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> crate::Result<Self> {
-        Ok(SecretKey(ed25519_zebra::SigningKey::from(bs)))
+        Ok(Self::from_bytes(bs))
     }
 
     pub fn sign(&self, msg: &[u8]) -> Signature {

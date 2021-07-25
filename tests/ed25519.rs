@@ -74,8 +74,8 @@ fn test_golden() -> crypto::Result<()> {
     for tv in tvs.iter() {
         let mut skb = [0; SECRET_KEY_LENGTH];
         hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
-        let sk = SecretKey::from_le_bytes(skb)?;
-        assert_eq!(skb, sk.to_le_bytes());
+        let sk = SecretKey::from_bytes(skb);
+        assert_eq!(skb, sk.to_bytes());
 
         let mut pkb = [0; PUBLIC_KEY_LENGTH];
         hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
@@ -136,8 +136,8 @@ fn test_vectors() -> crypto::Result<()> {
     for tv in tvs.iter() {
         let mut skb = [0; SECRET_KEY_LENGTH];
         hex::decode_to_slice(tv.secret_key, &mut skb as &mut [u8]).unwrap();
-        let sk = SecretKey::from_le_bytes(skb)?;
-        assert_eq!(skb, sk.to_le_bytes());
+        let sk = SecretKey::from_bytes(skb);
+        assert_eq!(skb, sk.to_bytes());
 
         let mut pkb = [0; PUBLIC_KEY_LENGTH];
         hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
