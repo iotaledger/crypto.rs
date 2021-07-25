@@ -11,8 +11,12 @@
 
 use core::convert::TryInto;
 
-pub const PUBLIC_KEY_LEN: usize = 32;
-pub const SECRET_KEY_LEN: usize = 32;
+pub const PUBLIC_KEY_LENGTH: usize = 32;
+#[deprecated(since = "1.0.0", note = "Please use PUBLIC_KEY_LENGTH instead")]
+pub const PUBLIC_KEY_LEN: usize = PUBLIC_KEY_LENGTH;
+pub const SECRET_KEY_LENGTH: usize = 32;
+#[deprecated(since = "1.0.0", note = "Please use SECRET_KEY_LENGTH instead")]
+pub const SECRET_KEY_LEN: usize = SECRET_KEY_LENGTH;
 
 /// An X25519 Shared Secret - the result of a Diffie-Hellman key exchange.
 ///
@@ -25,7 +29,7 @@ pub struct PublicKey(x25519_dalek::PublicKey);
 impl PublicKey {
     /// Load a [`PublicKey`] from a slice of bytes.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        let array: [u8; PUBLIC_KEY_LEN] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
+        let array: [u8; PUBLIC_KEY_LENGTH] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
             from: "bytes",
             to: "X25519 Public Key",
         })?;
@@ -34,7 +38,7 @@ impl PublicKey {
     }
 
     /// Returns the [`PublicKey`] as an array of bytes.
-    pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LEN] {
+    pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
         self.0.to_bytes()
     }
 
@@ -52,7 +56,7 @@ impl SecretKey {
     #[cfg(feature = "random")]
     #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
     pub fn generate() -> crate::Result<Self> {
-        let mut bytes: [u8; SECRET_KEY_LEN] = [0; SECRET_KEY_LEN];
+        let mut bytes: [u8; SECRET_KEY_LENGTH] = [0; SECRET_KEY_LENGTH];
 
         crate::utils::rand::fill(&mut bytes[..])?;
 
@@ -61,7 +65,7 @@ impl SecretKey {
 
     /// Load a [`SecretKey`] from a slice of bytes.
     pub fn from_bytes(bytes: &[u8]) -> crate::Result<Self> {
-        let array: [u8; SECRET_KEY_LEN] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
+        let array: [u8; SECRET_KEY_LENGTH] = bytes.try_into().map_err(|_| crate::Error::ConvertError {
             from: "bytes",
             to: "X25519 Secret Key",
         })?;
@@ -70,7 +74,7 @@ impl SecretKey {
     }
 
     /// Returns the [`SecretKey`] as an array of bytes.
-    pub fn to_bytes(&self) -> [u8; SECRET_KEY_LEN] {
+    pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
         self.0.to_bytes()
     }
 
