@@ -44,6 +44,10 @@ impl PublicKey {
         self.0.verify(&sig.0, msg).is_ok()
     }
 
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+
     pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
         self.0.into()
     }
@@ -70,7 +74,7 @@ impl PublicKey {
 
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
-        &self.0.as_ref()
+        self.0.as_ref()
     }
 }
 
