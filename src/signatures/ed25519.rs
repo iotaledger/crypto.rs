@@ -18,7 +18,7 @@ impl SecretKey {
     pub fn generate() -> crate::Result<Self> {
         let mut bs = [0u8; SECRET_KEY_LENGTH];
         crate::utils::rand::fill(&mut bs)?;
-        Self::from_bytes(bs)
+        Ok(Self::from_bytes(bs))
     }
 
     pub fn public_key(&self) -> PublicKey {

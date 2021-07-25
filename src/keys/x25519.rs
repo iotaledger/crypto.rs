@@ -80,10 +80,8 @@ impl SecretKey {
     #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
     pub fn generate() -> crate::Result<Self> {
         let mut bytes: [u8; SECRET_KEY_LENGTH] = [0; SECRET_KEY_LENGTH];
-
         crate::utils::rand::fill(&mut bytes[..])?;
-
-        Self::from_bytes(&bytes[..])
+        Ok(Self::from_bytes(bytes))
     }
 
     pub fn from_bytes(bytes: [u8; SECRET_KEY_LENGTH]) -> Self {
