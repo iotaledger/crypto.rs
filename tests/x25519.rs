@@ -60,3 +60,26 @@ fn test_x25519_rfc7748() -> crypto::Result<()> {
 
     Ok(())
 }
+
+#[cfg(all(feature = "ed25519", feature = "sha"))]
+#[test]
+fn test_x25519_from_ed25519() -> crypto::Result<()> {
+    use core::convert::TryInto;
+    use crypto::signatures::ed25519;
+
+    let sk1 = ed25519::SecretKey::from_bytes([1_u8; 32]);
+    let xsk1: SecretKey = (&sk1).into();
+    let pk1 = sk1.public_key();
+    let xpk1: PublicKey = (&pk1).try_into()?;
+    assert_eq!(xsk1.public_key(), xpk1);
+
+    let xsk2 = SecretKey::from_bytes([2_u8; 32]);
+    let xpk2 = xsk2.public_key();
+
+    let s21 = xsk2.diffie_hellman(&xpk1);
+    let s12 = xsk1.diffie_hellman(&xpk2);
+    assert!(s21.to_bytes() == s12.to_bytes());
+
+    Ok(())
+}
+

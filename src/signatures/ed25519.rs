@@ -32,6 +32,10 @@ impl SecretKey {
         self.0.into()
     }
 
+    pub fn as_bytes(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+
     #[deprecated(since = "1.0.0", note = "Please use to_bytes instead")]
     pub fn to_le_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
         self.to_bytes()

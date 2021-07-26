@@ -11,6 +11,12 @@
 
 use core::convert::TryInto;
 
+#[cfg(feature = "ed25519")]
+use core::convert::TryFrom;
+
+#[cfg(feature = "ed25519")]
+use crate::signatures::ed25519;
+
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 #[deprecated(since = "1.0.0", note = "Please use PUBLIC_KEY_LENGTH instead")]
 pub const PUBLIC_KEY_LEN: usize = PUBLIC_KEY_LENGTH;
@@ -50,6 +56,29 @@ impl PublicKey {
     /// Returns the [`PublicKey`] as a slice of bytes.
     pub fn as_bytes(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+}
+
+#[cfg(feature = "ed25519")]
+impl TryFrom<&ed25519::PublicKey> for PublicKey {
+    type Error = crate::Error;
+    fn try_from(pk: &ed25519::PublicKey) -> crate::Result<Self> {
+        // We need to get `EdwardsPoint` from `pk`.
+        // `pk.as_bytes()` returns compressed Edwards Y coordinate bytes.
+        let mut y_bytes = [0_u8; 32];
+        y_bytes.copy_from_slice(pk.as_bytes());
+        // Try reconstruct X,Y,Z,T coordinates of `EdwardsPoint` from it.
+        match curve25519_dalek::edwards::CompressedEdwardsY(y_bytes).decompress() {
+            Some(decompressed_edwards) => {
+                // `pk` is a valid `ed25519::PublicKey` hence contains valid `EdwardsPoint`.
+                // x25519 uses Montgomery form, and `x25519::PublicKey` is just a `MontgomeryPoint`.
+                // `MontgomeryPoint` can be constructed from `EdwardsPoint` with `to_montgomery()` method.
+                // Can't construct `x25519::PublicKey` directly from `MontgomeryPoint`,
+                // do it via intermediate bytes.
+                Ok(PublicKey::from_bytes(decompressed_edwards.to_montgomery().to_bytes()))
+            }
+            None => Err(crate::error::Error::ConvertError { from: "ed25519 public key", to: "x25519 public key", }),
+        }
     }
 }
 
@@ -111,5 +140,23 @@ impl SecretKey {
     /// Computes the Diffie-Hellman [`SharedSecret`] from the [`SecretKey`] and the given [`PublicKey`].
     pub fn diffie_hellman(&self, public: &PublicKey) -> SharedSecret {
         self.0.diffie_hellman(&public.0)
+    }
+}
+
+#[cfg(all(feature = "ed25519", feature = "sha"))]
+impl From<&ed25519::SecretKey> for SecretKey {
+    fn from(sk: &ed25519::SecretKey) -> SecretKey {
+        // We need to extract scalar from `sk`.
+        // It's not directly accessible from `sk`,
+        // nor can `x25519::SecretKey` be constructed directly with a scalar.
+        // `ed25519::SecretKey` only exposes seed bytes,
+        // we have to reconstruct scalar bytes from seed.
+        use crate::hashes::Digest;
+        let h = crate::hashes::sha::Sha512::digest(sk.as_bytes());
+        // The low half of hash is used as scalar bytes.
+        let mut scalar_bytes = [0u8; 32];
+        scalar_bytes[..].copy_from_slice(&h.as_slice()[0..32]);
+        // No need to do "clamping" here, it's done in `x25519::SecretKey::from_bytes()` constructor.
+        SecretKey::from_bytes(scalar_bytes)
     }
 }
