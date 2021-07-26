@@ -24,6 +24,13 @@ impl SecretKey {
         Ok(Self::from_bytes(bs))
     }
 
+    #[cfg(feature = "rand")]
+    pub fn generate_with<R: rand::CryptoRng + rand::RngCore>(rng: &mut R) -> Self {
+        let mut bs = [0_u8; SECRET_KEY_LENGTH];
+        rng.fill_bytes(&mut bs);
+        Self::from_bytes(bs)
+    }
+
     pub fn public_key(&self) -> PublicKey {
         PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
     }

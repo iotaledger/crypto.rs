@@ -113,6 +113,13 @@ impl SecretKey {
         Ok(Self::from_bytes(bytes))
     }
 
+    #[cfg(feature = "rand")]
+    pub fn generate_with<R: rand::CryptoRng + rand::RngCore>(rng: &mut R) -> Self {
+        let mut bs = [0_u8; SECRET_KEY_LENGTH];
+        rng.fill_bytes(&mut bs);
+        Self::from_bytes(bs)
+    }
+
     pub fn from_bytes(bytes: [u8; SECRET_KEY_LENGTH]) -> Self {
         Self(bytes.into())
     }
