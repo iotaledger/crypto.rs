@@ -39,8 +39,13 @@ impl SecretKey {
         self.0.into()
     }
 
-    pub fn as_bytes(&self) -> &[u8] {
+    pub fn as_slice(&self) -> &[u8] {
         self.0.as_ref()
+    }
+
+    #[deprecated(since = "1.0.0", note = "Please use as_slice instead")]
+    pub fn as_bytes(&self) -> &[u8] {
+        self.as_slice()
     }
 
     #[deprecated(since = "1.0.0", note = "Please use to_bytes instead")]
@@ -70,8 +75,13 @@ impl PublicKey {
         self.0.verify(&sig.0, msg).is_ok()
     }
 
-    pub fn as_bytes(&self) -> &[u8] {
+    pub fn as_slice(&self) -> &[u8] {
         self.0.as_ref()
+    }
+
+    #[deprecated(since = "1.0.0", note = "Please use as_slice instead")]
+    pub fn as_bytes(&self) -> &[u8] {
+        self.as_slice()
     }
 
     pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
@@ -139,7 +149,7 @@ impl Ord for PublicKey {
 
 impl Hash for PublicKey {
     fn hash<H: Hasher>(&self, state: &mut H) {
-        (self.as_bytes()).hash(state);
+        (self.as_slice()).hash(state);
     }
 }
 

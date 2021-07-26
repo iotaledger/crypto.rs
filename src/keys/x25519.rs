@@ -54,8 +54,13 @@ impl PublicKey {
     }
 
     /// Returns the [`PublicKey`] as a slice of bytes.
-    pub fn as_bytes(&self) -> &[u8] {
+    pub fn as_slice(&self) -> &[u8] {
         self.0.as_bytes()
+    }
+
+    #[deprecated(since = "1.0.0", note = "Please use as_slice instead")]
+    pub fn as_bytes(&self) -> &[u8] {
+        self.as_slice()
     }
 }
 
@@ -64,9 +69,9 @@ impl TryFrom<&ed25519::PublicKey> for PublicKey {
     type Error = crate::Error;
     fn try_from(pk: &ed25519::PublicKey) -> crate::Result<Self> {
         // We need to get `EdwardsPoint` from `pk`.
-        // `pk.as_bytes()` returns compressed Edwards Y coordinate bytes.
+        // `pk.as_slice()` returns compressed Edwards Y coordinate bytes.
         let mut y_bytes = [0_u8; 32];
-        y_bytes.copy_from_slice(pk.as_bytes());
+        y_bytes.copy_from_slice(pk.as_slice());
         // Try reconstruct X,Y,Z,T coordinates of `EdwardsPoint` from it.
         match curve25519_dalek::edwards::CompressedEdwardsY(y_bytes).decompress() {
             Some(decompressed_edwards) => {
@@ -159,7 +164,7 @@ impl From<&ed25519::SecretKey> for SecretKey {
         // `ed25519::SecretKey` only exposes seed bytes,
         // we have to reconstruct scalar bytes from seed.
         use crate::hashes::Digest;
-        let h = crate::hashes::sha::Sha512::digest(sk.as_bytes());
+        let h = crate::hashes::sha::Sha512::digest(sk.as_slice());
         // The low half of hash is used as scalar bytes.
         let mut scalar_bytes = [0u8; 32];
         scalar_bytes[..].copy_from_slice(&h.as_slice()[0..32]);
