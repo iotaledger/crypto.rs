@@ -18,11 +18,7 @@ use core::convert::TryFrom;
 use crate::signatures::ed25519;
 
 pub const PUBLIC_KEY_LENGTH: usize = 32;
-#[deprecated(since = "1.0.0", note = "Please use PUBLIC_KEY_LENGTH instead")]
-pub const PUBLIC_KEY_LEN: usize = PUBLIC_KEY_LENGTH;
 pub const SECRET_KEY_LENGTH: usize = 32;
-#[deprecated(since = "1.0.0", note = "Please use SECRET_KEY_LENGTH instead")]
-pub const SECRET_KEY_LEN: usize = SECRET_KEY_LENGTH;
 
 /// An X25519 Shared Secret - the result of a Diffie-Hellman key exchange.
 ///
@@ -56,11 +52,6 @@ impl PublicKey {
     /// Returns the [`PublicKey`] as a slice of bytes.
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_bytes()
-    }
-
-    #[deprecated(since = "1.0.0", note = "Please use as_slice instead")]
-    pub fn as_bytes(&self) -> &[u8] {
-        self.as_slice()
     }
 }
 

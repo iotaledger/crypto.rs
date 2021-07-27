@@ -9,8 +9,6 @@ use core::{
 
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 32;
-#[deprecated(since = "1.0.0", note = "Please use PUBLIC_KEY_LENGTH instead")]
-pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = PUBLIC_KEY_LENGTH;
 pub const SIGNATURE_LENGTH: usize = 64;
 
 pub struct SecretKey(ed25519_zebra::SigningKey);
@@ -43,23 +41,8 @@ impl SecretKey {
         self.0.as_ref()
     }
 
-    #[deprecated(since = "1.0.0", note = "Please use as_slice instead")]
-    pub fn as_bytes(&self) -> &[u8] {
-        self.as_slice()
-    }
-
-    #[deprecated(since = "1.0.0", note = "Please use to_bytes instead")]
-    pub fn to_le_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
-        self.to_bytes()
-    }
-
     pub fn from_bytes(bytes: [u8; SECRET_KEY_LENGTH]) -> Self {
         Self(bytes.into())
-    }
-
-    #[deprecated(since = "1.0.0", note = "Please use from_bytes instead")]
-    pub fn from_le_bytes(bs: [u8; SECRET_KEY_LENGTH]) -> crate::Result<Self> {
-        Ok(Self::from_bytes(bs))
     }
 
     pub fn sign(&self, msg: &[u8]) -> Signature {
@@ -79,18 +62,8 @@ impl PublicKey {
         self.0.as_ref()
     }
 
-    #[deprecated(since = "1.0.0", note = "Please use as_slice instead")]
-    pub fn as_bytes(&self) -> &[u8] {
-        self.as_slice()
-    }
-
     pub fn to_bytes(self) -> [u8; PUBLIC_KEY_LENGTH] {
         self.0.into()
-    }
-
-    #[deprecated(since = "1.0.0", note = "Please use to_bytes instead")]
-    pub fn to_compressed_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
-        self.to_bytes()
     }
 
     pub fn try_from_bytes(bytes: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
@@ -100,11 +73,6 @@ impl PublicKey {
                 from: "compressed bytes",
                 to: "Ed25519 public key",
             })
-    }
-
-    #[deprecated(since = "1.0.0", note = "Please use try_from_bytes instead")]
-    pub fn from_compressed_bytes(bs: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
-        Self::try_from_bytes(bs)
     }
 }
 
