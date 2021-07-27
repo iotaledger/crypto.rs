@@ -82,4 +82,3 @@ fn test_x25519_from_ed25519() -> crypto::Result<()> {
 
     Ok(())
 }
-

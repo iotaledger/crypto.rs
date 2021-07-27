@@ -82,7 +82,10 @@ impl TryFrom<&ed25519::PublicKey> for PublicKey {
                 // do it via intermediate bytes.
                 Ok(PublicKey::from_bytes(decompressed_edwards.to_montgomery().to_bytes()))
             }
-            None => Err(crate::error::Error::ConvertError { from: "ed25519 public key", to: "x25519 public key", }),
+            None => Err(crate::error::Error::ConvertError {
+                from: "ed25519 public key",
+                to: "x25519 public key",
+            }),
         }
     }
 }
