@@ -84,7 +84,7 @@ impl PublicKey {
         self.as_slice()
     }
 
-    pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
+    pub fn to_bytes(self) -> [u8; PUBLIC_KEY_LENGTH] {
         self.0.into()
     }
 
@@ -121,8 +121,8 @@ impl TryFrom<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
     }
 }
 
-impl From<&PublicKey> for [u8; PUBLIC_KEY_LENGTH] {
-    fn from(pk: &PublicKey) -> Self {
+impl From<PublicKey> for [u8; PUBLIC_KEY_LENGTH] {
+    fn from(pk: PublicKey) -> Self {
         pk.to_bytes()
     }
 }

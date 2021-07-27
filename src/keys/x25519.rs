@@ -49,7 +49,7 @@ impl PublicKey {
     }
 
     /// Returns the [`PublicKey`] as an array of bytes.
-    pub fn to_bytes(&self) -> [u8; PUBLIC_KEY_LENGTH] {
+    pub fn to_bytes(self) -> [u8; PUBLIC_KEY_LENGTH] {
         self.0.to_bytes()
     }
 
@@ -102,8 +102,8 @@ impl From<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
     }
 }
 
-impl From<&PublicKey> for [u8; PUBLIC_KEY_LENGTH] {
-    fn from(pk: &PublicKey) -> Self {
+impl From<PublicKey> for [u8; PUBLIC_KEY_LENGTH] {
+    fn from(pk: PublicKey) -> Self {
         pk.to_bytes()
     }
 }
