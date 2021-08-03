@@ -35,7 +35,7 @@ mod test {
 
             let mut expected_master_private_key = [0u8; 32];
             hex::decode_to_slice(&tv.master_private_key, &mut expected_master_private_key as &mut [u8]).unwrap();
-            assert_eq!(expected_master_private_key, m.secret_key()?.to_le_bytes());
+            assert_eq!(expected_master_private_key, m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
                 let ck = seed.derive(Curve::Ed25519, &c.chain)?;
@@ -46,7 +46,7 @@ mod test {
 
                 let mut expected_private_key = [0u8; 32];
                 hex::decode_to_slice(&c.private_key, &mut expected_private_key as &mut [u8]).unwrap();
-                assert_eq!(expected_private_key, ck.secret_key()?.to_le_bytes());
+                assert_eq!(expected_private_key, ck.secret_key().to_bytes());
             }
         }
 
