@@ -1,5 +1,15 @@
 # Changelog
 
+## \[0.7.0]
+
+- - Enabled to access the `Segment` vector in `Chain`.
+- Added consistent line breaks between methods.
+- [50c0f53](https://www.github.com/iotaledger/crypto.rs/commit/50c0f53262861cdb4f3728a9a8c4e67b53ec68f0) Add .change file for Chain access on 2021-07-02
+- - Unified naming convention in ed25519 and x25519 modules.
+- Added useful methods and standard traits implementations.
+- Added conversion of ed25519 keys to x25519 keys.
+- [b52caec](https://www.github.com/iotaledger/crypto.rs/commit/b52caec7a8890049407ce4ce02488a31578d155a) added changes on 2021-07-28
+
 ## \[0.6.0]
 
 - Added js feature to getrandom for wasm compatibility.
