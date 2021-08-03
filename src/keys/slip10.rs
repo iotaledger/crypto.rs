@@ -179,7 +179,7 @@ impl Default for Chain {
 
 impl AsRef<Chain> for Chain {
     fn as_ref(&self) -> &Self {
-        &self
+        self
     }
 }
 
