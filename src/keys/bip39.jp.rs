@@ -4,7 +4,7 @@
 // https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/japanese.txt
 
 pub const JAPANESE: Wordlist = Wordlist {
-    separator: &"　",
+    separator: "　",
     words: &[
         "あいこくしん",
         "あいさつ",

@@ -105,13 +105,13 @@ impl Eq for PublicKey {}
 
 impl PartialOrd for PublicKey {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.as_ref().partial_cmp(&other.as_ref())
+        self.as_ref().partial_cmp(other.as_ref())
     }
 }
 
 impl Ord for PublicKey {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.as_ref().cmp(&other.as_ref())
+        self.as_ref().cmp(other.as_ref())
     }
 }
 
