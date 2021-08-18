@@ -22,6 +22,10 @@ pub struct Signature(libsecp256k1::Signature);
 pub struct RecoveryId(libsecp256k1::RecoveryId);
 
 impl SecretKey {
+    pub fn inner(&self) -> &libsecp256k1::SecretKey {
+        &self.0
+    }
+
     /// Get a secret key from a raw byte array.
     pub fn from_bytes(bytes: &[u8; SECRET_KEY_LENGTH]) -> Result<Self> {
         Ok(Self(libsecp256k1::SecretKey::parse(bytes).map_err(|_| {

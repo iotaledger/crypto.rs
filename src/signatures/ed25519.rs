@@ -58,7 +58,7 @@ impl PublicKey {
 
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
-        &self.0.as_ref()
+        self.0.as_ref()
     }
 }
 
@@ -72,13 +72,13 @@ impl Eq for PublicKey {}
 
 impl PartialOrd for PublicKey {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.as_ref().partial_cmp(&other.as_ref())
+        self.as_ref().partial_cmp(other.as_ref())
     }
 }
 
 impl Ord for PublicKey {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.as_ref().cmp(&other.as_ref())
+        self.as_ref().cmp(other.as_ref())
     }
 }
 

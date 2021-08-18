@@ -127,7 +127,7 @@ fn from_str_invalid_length() {
     let trytes = "VBAZOIZIWGBRAXMFDUBLP";
 
     assert_eq!(
-        Seed::from_str(&trytes).err(),
+        Seed::from_str(trytes).err(),
         Some(SeedError::InvalidLength(trytes.len() * 3))
     );
 }
@@ -136,7 +136,7 @@ fn from_str_invalid_length() {
 fn from_str_invalid_trytes() {
     let trytes = "APSNZAPL@NAGSXGZMZYCSXROJ9KUX9HVOPODQHMWNJOCGBKRIOOQKYGPFAIQBYNIODMIWMFKJGKRWFFPY";
 
-    assert_eq!(Seed::from_str(&trytes).err(), Some(SeedError::InvalidTrytes));
+    assert_eq!(Seed::from_str(trytes).err(), Some(SeedError::InvalidTrytes));
 }
 
 #[test]

@@ -30,7 +30,7 @@ fn test_zip215() -> crypto::Result<()> {
         hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
         let sig = Signature::from_bytes(sigb);
 
-        assert!(PublicKey::verify(&pk, &sig, &ms));
+        assert!(PublicKey::verify(&pk, &sig, ms));
     }
 
     Ok(())
