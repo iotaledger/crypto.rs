@@ -88,7 +88,7 @@ unicode-normalization = { version = "0.1", optional = true, default-features = f
 curve25519-dalek = { version = "3", optional = true, default-features = false, features = [ "u64_backend" ] }
 x25519-dalek = { version = "1.1", optional = true, default-features = false, features = [ "u64_backend" ] }
 zeroize = { version = "1.3", optional = true, default-features = false }
-sp-core = {  version = "3.0.0", git = "https://github.com/paritytech/substrate", rev = "e5437efefa82bd8eb567f1245f0a7443ac4e4fe7", optional = true }
+sp-core = {  version = "3.0.0", optional = true }
 parity-scale-codec = { version = "2.3", optional = true }
 libsecp256k1 = { version = "0.5", default-features = false, features = [ "hmac", "static-context" ], optional = true }
 
