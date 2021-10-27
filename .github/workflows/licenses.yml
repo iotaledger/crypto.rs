@@ -4,13 +4,9 @@ on:
   push:
     branches:
       - dev
-      - stable
-      - coordicide
   pull_request:
     branches:
       - dev
-      - stable
-      - coordicide
 
 jobs:
   licenses:
