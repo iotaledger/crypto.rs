@@ -1,5 +1,22 @@
 # Changelog
 
+## \[0.8.0]
+
+- Support for the Blake2b hashing function to 160 bits
+
+- Wrapper around VarBlake2b for 160 bits hash
+
+- New tests for 160 bits copied from blake2b-256
+
+- Generate new test vector created with b2sum using the inputs of blake2b-256 test vector
+
+- Update list of supported algorithms
+
+- [dd055a4](https://www.github.com/iotaledger/crypto.rs/commit/dd055a4a1df8866228334086c8f13d1a05096bce) Add Blake2b-160 ([#111](https://www.github.com/iotaledger/crypto.rs/pull/111)) on 2021-10-27
+
+- Update bee-ternary requirement from 0.4.2-alpha to 0.5.0
+  - [5f3c9d2](https://www.github.com/iotaledger/crypto.rs/commit/5f3c9d2770760eaaf32880322f45d57518d24fd0) Add .changes file for bee-ternary bump ([#115](https://www.github.com/iotaledger/crypto.rs/pull/115)) on 2021-11-11
+
 ## \[0.7.0]
 
 - - Enabled to access the `Segment` vector in `Chain`.
