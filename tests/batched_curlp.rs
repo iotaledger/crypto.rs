@@ -293,7 +293,7 @@ where
         batch_hasher.add(input_trit_buf.clone());
     }
 
-    for (index, hash) in batch_hasher.hash_batched().enumerate() {
+    for (index, hash) in batch_hasher.hash().enumerate() {
         assert_eq!(expected_hash, hash, "input {} failed", index);
     }
 }
@@ -318,7 +318,7 @@ where
         expected_hashes.push(expected_hash);
     }
 
-    for (index, hash) in batch_hasher.hash_batched().enumerate() {
+    for (index, hash) in batch_hasher.hash().enumerate() {
         assert_eq!(expected_hashes[index], hash, "input {} failed", index);
     }
 }

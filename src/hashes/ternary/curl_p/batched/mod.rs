@@ -6,14 +6,14 @@
 mod bct;
 mod bct_curlp;
 
-use crate::hashes::ternary::{curl_p::CurlP, HASH_LENGTH};
+use crate::hashes::ternary::HASH_LENGTH;
 
 use bct::{BcTrit, BcTritArr, BcTritBuf};
 use bct_curlp::BctCurlP;
 
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
-    Btrit, T1B1Buf, TritBuf,
+    Btrit, TritBuf,
 };
 
 /// The number of inputs that can be processed in a single batch.
@@ -37,8 +37,6 @@ pub struct CurlPBatchHasher<B: RawEncodingBuf> {
     buf_demux: TritBuf,
     /// The CurlP hasher for binary coded trits.
     bct_curlp: BctCurlP,
-    /// The regular CurlP hasher.
-    curlp: CurlP,
 }
 
 impl<B> CurlPBatchHasher<B>
@@ -56,7 +54,6 @@ where
             bct_hashes: BcTritArr::<HASH_LENGTH>::zeros(),
             buf_demux: TritBuf::zeros(HASH_LENGTH),
             bct_curlp: BctCurlP::new(),
-            curlp: CurlP::new(),
         }
     }
 
@@ -141,11 +138,11 @@ where
         self.buf_demux.clone()
     }
 
-    /// Hash the received inputs using the batched version of CurlP.
+    /// Hash the received inputs.
     ///
     /// This function also takes care of cleaning the buffers of the struct and resetting the
     /// batched CurlP hasher so it can be called at any time.
-    pub fn hash_batched(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
+    pub fn hash(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
         let total = self.trit_inputs.len();
         // Reset batched CurlP hasher.
         self.bct_curlp.reset();
@@ -162,19 +159,6 @@ where
         BatchedHashes {
             hasher: self,
             range: 0..total,
-        }
-    }
-
-    /// Hash the received inputs using the regular version of CurlP.
-    ///
-    /// In particular this function does not use the `bct_inputs` and `bct_hashes` buffers, takes
-    /// care of cleaning the `trit_inputs` buffer and resets the regular CurlP hasher so it can be
-    /// called at any time.
-    pub fn hash_unbatched(&mut self) -> impl Iterator<Item = TritBuf> + '_ {
-        self.curlp.reset();
-        UnbatchedHashes {
-            curl: &mut self.curlp,
-            trit_inputs: self.trit_inputs.drain(..),
         }
     }
 }
@@ -195,25 +179,5 @@ where
     fn next(&mut self) -> Option<Self::Item> {
         let index = self.range.next()?;
         Some(self.hasher.demux(index))
-    }
-}
-
-/// A helper iterator type for the output of the `hash_unbatched` method.
-struct UnbatchedHashes<'a, B: RawEncodingBuf> {
-    curl: &'a mut CurlP,
-    trit_inputs: std::vec::Drain<'a, TritBuf<B>>,
-}
-
-impl<'a, B> Iterator for UnbatchedHashes<'a, B>
-where
-    B: RawEncodingBuf,
-    B::Slice: RawEncoding<Trit = Btrit>,
-{
-    type Item = TritBuf;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let buf = self.trit_inputs.next()?;
-        // FIXME: Could we make regular `CurlP` generic too?`
-        Some(self.curl.digest(&buf.encode::<T1B1Buf>()))
     }
 }
