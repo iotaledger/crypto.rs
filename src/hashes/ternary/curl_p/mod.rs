@@ -4,5 +4,5 @@
 mod batched;
 mod regular;
 
-pub use batched::{CurlPBatched, BATCH_SIZE};
+pub use batched::{CurlPBatchHasher, BATCH_SIZE};
 pub use regular::CurlP;

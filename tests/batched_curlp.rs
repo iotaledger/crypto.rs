@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crypto::hashes::ternary::{
-    curl_p::{CurlPBatched, BATCH_SIZE},
+    curl_p::{CurlPBatchHasher, BATCH_SIZE},
     HASH_LENGTH,
 };
 
@@ -287,7 +287,7 @@ where
 
     assert_eq!(expected_hash.len(), HASH_LENGTH);
 
-    let mut batch_hasher = CurlPBatched::new(input_trit_buf.len());
+    let mut batch_hasher = CurlPBatchHasher::new(input_trit_buf.len());
 
     for _ in 0..BATCH_SIZE {
         batch_hasher.add(input_trit_buf.clone());
@@ -303,7 +303,7 @@ where
     B: RawEncodingBuf<Slice = S> + Clone,
     S: RawEncoding<Trit = Btrit, Buf = B> + ?Sized,
 {
-    let mut batch_hasher = CurlPBatched::new(8019);
+    let mut batch_hasher = CurlPBatchHasher::new(8019);
 
     let mut expected_hashes = vec![];
 
