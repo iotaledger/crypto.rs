@@ -26,7 +26,7 @@ const NUM_ROUNDS: usize = 81;
 /// This hasher works by interleaving the trits of the inputs in each batch and hashing this
 /// interleaved representation. It is also able to fall back to the regular CurlP algorithm if
 /// required.
-pub struct BatchHasher<B: RawEncodingBuf> {
+pub struct CurlPBatched<B: RawEncodingBuf> {
     /// The trits of the inputs before being interleaved.
     trit_inputs: Vec<TritBuf<B>>,
     /// An interleaved representation of the input trits.
@@ -41,7 +41,7 @@ pub struct BatchHasher<B: RawEncodingBuf> {
     curlp: CurlP,
 }
 
-impl<B> BatchHasher<B>
+impl<B> CurlPBatched<B>
 where
     B: RawEncodingBuf,
     B::Slice: RawEncoding<Trit = Btrit>,
@@ -181,7 +181,7 @@ where
 
 /// A helper iterator type for the output of the `hash_batched` method.
 struct BatchedHashes<'a, B: RawEncodingBuf> {
-    hasher: &'a mut BatchHasher<B>,
+    hasher: &'a mut CurlPBatched<B>,
     range: std::ops::Range<usize>,
 }
 
