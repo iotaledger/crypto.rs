@@ -114,6 +114,16 @@ impl BctCurlP {
         }
     }
 
+    fn squeeze_aux(&mut self, chunk: &mut BcTrits) {
+        if let SpongeDirection::Squeeze = self.direction {
+            self.transform();
+        }
+
+        self.direction = SpongeDirection::Squeeze;
+
+        chunk.copy_from_slice(unsafe { self.state.get_unchecked(0..HASH_LENGTH) });
+    }
+
     // This method shouldn't assume that `result` has any particular content, just that it has an
     // adequate size.
     pub(crate) fn squeeze_into(&mut self, result: &mut BcTrits) {
@@ -128,14 +138,7 @@ impl BctCurlP {
         let hash_count = trit_count / HASH_LENGTH;
 
         for i in 0..hash_count {
-            unsafe { result.get_unchecked_mut(i * HASH_LENGTH..(i + 1) * HASH_LENGTH) }
-                .copy_from_slice(unsafe { self.state.get_unchecked(0..HASH_LENGTH) });
-
-            if let SpongeDirection::Squeeze = self.direction {
-                self.transform();
-            }
+            self.squeeze_aux(unsafe { result.get_unchecked_mut(i * HASH_LENGTH..(i + 1) * HASH_LENGTH) });
         }
-
-        self.direction = SpongeDirection::Squeeze;
     }
 }
