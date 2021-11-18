@@ -37,33 +37,18 @@ pub(super) fn transform(p: &mut [U256; 3], n: &mut [U256; 3]) {
     for state_rotation in STATE_ROTATIONS.iter() {
         let (p2, n2) = rotate_state(p, n, state_rotation.offset, state_rotation.shift);
 
-        macro_rules! compute {
-            ($i: expr, $j: expr) => {
-                let tmp = batch_box(p[$i][$j], n[$i][$j], p2[$i][$j], n2[$i][$j]);
-                p[$i][$j] = tmp.0;
-                n[$i][$j] = tmp.1;
-            };
+        for i in 0..3 {
+            for j in 0..4 {
+                let tmp = batch_box(p[i][j], n[i][j], p2[i][j], n2[i][j]);
+                p[i][j] = tmp.0;
+                n[i][j] = tmp.1;
+            }
         }
 
-        compute!(0, 0);
-        compute!(0, 1);
-        compute!(0, 2);
-        compute!(0, 3);
-        compute!(1, 0);
-        compute!(1, 1);
-        compute!(1, 2);
-        compute!(1, 3);
-        compute!(2, 0);
-        compute!(2, 1);
-        compute!(2, 2);
-        compute!(2, 3);
-
-        p[0].clear_after_243();
-        p[1].clear_after_243();
-        p[2].clear_after_243();
-        n[0].clear_after_243();
-        n[1].clear_after_243();
-        n[2].clear_after_243();
+        for i in 0..3 {
+            p[i].clear_after_243();
+            n[i].clear_after_243();
+        }
     }
 
     reorder(p, n);
@@ -81,13 +66,10 @@ fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: u8) -> ([U25
         };
     }
 
-    rotate!(p, p2, 0);
-    rotate!(p, p2, 1);
-    rotate!(p, p2, 2);
-
-    rotate!(n, n2, 0);
-    rotate!(n, n2, 1);
-    rotate!(n, n2, 2);
+    for i in 0..3 {
+        rotate!(p, p2, i);
+        rotate!(n, n2, i);
+    }
 
     (p2, n2)
 }
