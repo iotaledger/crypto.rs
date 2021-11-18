@@ -84,6 +84,13 @@ impl BctCurlP {
 
     pub(crate) fn absorb(&mut self, bc_trits: &BcTrits) {
         let mut length = bc_trits.len();
+
+        assert!(
+            length % HASH_LENGTH == 0,
+            "trits slice length must be multiple of {}",
+            HASH_LENGTH
+        );
+
         let mut offset = 0;
 
         if let SpongeDirection::Squeeze = self.direction {
@@ -91,7 +98,7 @@ impl BctCurlP {
         }
 
         loop {
-            let length_to_copy = if length < HASH_LENGTH { length } else { HASH_LENGTH };
+            let length_to_copy = length.min(HASH_LENGTH);
             // This is safe as `length_to_copy <= HASH_LENGTH`.
             unsafe { self.state.get_unchecked_mut(0..length_to_copy) }
                 .copy_from_slice(unsafe { bc_trits.get_unchecked(offset..offset + length_to_copy) });
@@ -111,6 +118,13 @@ impl BctCurlP {
     // adequate size.
     pub(crate) fn squeeze_into(&mut self, result: &mut BcTrits) {
         let trit_count = result.len();
+
+        assert!(
+            trit_count % HASH_LENGTH == 0,
+            "trits slice length must be multiple of {}",
+            HASH_LENGTH
+        );
+
         let hash_count = trit_count / HASH_LENGTH;
 
         for i in 0..hash_count {
@@ -123,10 +137,5 @@ impl BctCurlP {
         }
 
         self.direction = SpongeDirection::Squeeze;
-
-        let last = trit_count - hash_count * HASH_LENGTH;
-
-        unsafe { result.get_unchecked_mut(trit_count - last..trit_count) }
-            .copy_from_slice(unsafe { self.state.get_unchecked(0..last) });
     }
 }
