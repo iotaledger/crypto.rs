@@ -11,7 +11,7 @@ use crate::hashes::ternary::{
 
 pub(crate) struct BctCurlP {
     state: BcTritArr<{ 3 * HASH_LENGTH }>,
-    scratch_pad: BcTritArr<{ 3 * HASH_LENGTH }>,
+    state_copy: BcTritArr<{ 3 * HASH_LENGTH }>,
 }
 
 impl BctCurlP {
@@ -21,7 +21,7 @@ impl BctCurlP {
         assert!(3 * HASH_LENGTH > 728);
         Self {
             state: BcTritArr::filled(HIGH_BITS),
-            scratch_pad: BcTritArr::filled(HIGH_BITS),
+            state_copy: BcTritArr::filled(HIGH_BITS),
         }
     }
 
@@ -30,48 +30,46 @@ impl BctCurlP {
     }
 
     pub(crate) fn transform(&mut self) {
+        #[inline(always)]
+        pub(crate) fn sbox(x_lo: usize, x_hi: usize, y_lo: usize, y_hi: usize) -> BcTrit {
+            let d = x_hi ^ y_lo;
+            BcTrit(!(d & x_lo), d | (x_lo ^ y_hi))
+        }
+
         let mut scratch_pad_index = 0;
 
         // All the unchecked accesses here are guaranteed to be safe by the assertion inside `new`.
         for _round in 0..NUM_ROUNDS as usize {
-            self.scratch_pad.copy_from_slice(&self.state);
+            self.state_copy.copy_from_slice(&self.state);
 
-            let BcTrit(mut alpha, mut beta) = unsafe { *self.scratch_pad.get_unchecked(scratch_pad_index) };
+            let BcTrit(mut lo, mut hi) = unsafe { *self.state_copy.get_unchecked(scratch_pad_index) };
 
             scratch_pad_index += 364;
 
-            let mut temp = unsafe { *self.scratch_pad.get_unchecked(scratch_pad_index) };
+            let mut temp = unsafe { *self.state_copy.get_unchecked(scratch_pad_index) };
 
-            let delta = beta ^ temp.lo();
-
-            *unsafe { self.state.get_unchecked_mut(0) } = BcTrit(!(delta & alpha), delta | (alpha ^ temp.hi()));
+            *unsafe { self.state.get_unchecked_mut(0) } = sbox(lo, hi, temp.lo(), temp.hi());
 
             let mut state_index = 1;
 
             while state_index < self.state.len() {
                 scratch_pad_index += 364;
 
-                alpha = temp.lo();
-                beta = temp.hi();
-                temp = unsafe { *self.scratch_pad.get_unchecked(scratch_pad_index) };
+                lo = temp.lo();
+                hi = temp.hi();
+                temp = unsafe { *self.state_copy.get_unchecked(scratch_pad_index) };
 
-                let delta = beta ^ temp.lo();
-
-                *unsafe { self.state.get_unchecked_mut(state_index) } =
-                    BcTrit(!(delta & alpha), delta | (alpha ^ temp.hi()));
+                *unsafe { self.state.get_unchecked_mut(state_index) } = sbox(lo, hi, temp.lo(), temp.hi());
 
                 state_index += 1;
 
                 scratch_pad_index -= 365;
 
-                alpha = temp.lo();
-                beta = temp.hi();
-                temp = unsafe { *self.scratch_pad.get_unchecked(scratch_pad_index) };
+                lo = temp.lo();
+                hi = temp.hi();
+                temp = unsafe { *self.state_copy.get_unchecked(scratch_pad_index) };
 
-                let delta = beta ^ temp.lo();
-
-                *unsafe { self.state.get_unchecked_mut(state_index) } =
-                    BcTrit(!(delta & alpha), delta | (alpha ^ temp.hi()));
+                *unsafe { self.state.get_unchecked_mut(state_index) } = sbox(lo, hi, temp.lo(), temp.hi());
 
                 state_index += 1;
             }
