@@ -93,22 +93,27 @@ impl BcTrits {
         }
     }
 
+    #[inline(always)]
     pub(crate) fn len(&self) -> usize {
         self.inner.len()
     }
 
+    #[inline(always)]
     pub(crate) fn copy_from_slice(&mut self, slice: &Self) {
         self.inner.copy_from_slice(&slice.inner)
     }
 
+    #[inline(always)]
     pub(crate) unsafe fn get_unchecked<I: BcTritsIndex>(&self, index: I) -> &I::Output {
         index.get_unchecked(self)
     }
 
+    #[inline(always)]
     pub(crate) unsafe fn get_unchecked_mut<I: BcTritsIndex>(&mut self, index: I) -> &mut I::Output {
         index.get_unchecked_mut(self)
     }
 
+    #[inline(always)]
     pub(crate) fn iter(&self) -> impl Iterator<Item = &BcTrit> {
         self.inner.iter()
     }
@@ -124,10 +129,12 @@ pub(crate) trait BcTritsIndex {
 impl BcTritsIndex for usize {
     type Output = BcTrit;
 
+    #[inline(always)]
     unsafe fn get_unchecked(self, trits: &BcTrits) -> &Self::Output {
         trits.inner.get_unchecked(self)
     }
 
+    #[inline(always)]
     unsafe fn get_unchecked_mut(self, trits: &mut BcTrits) -> &mut Self::Output {
         trits.inner.get_unchecked_mut(self)
     }
