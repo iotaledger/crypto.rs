@@ -58,12 +58,12 @@ pub(super) fn transform(p: &mut [U256; 3], n: &mut [U256; 3]) {
         compute!(2, 2);
         compute!(2, 3);
 
-        p[0].norm243();
-        p[1].norm243();
-        p[2].norm243();
-        n[0].norm243();
-        n[1].norm243();
-        n[2].norm243();
+        p[0].clear_after_243();
+        p[1].clear_after_243();
+        p[2].clear_after_243();
+        n[0].clear_after_243();
+        n[1].clear_after_243();
+        n[2].clear_after_243();
     }
 
     reorder(p, n);

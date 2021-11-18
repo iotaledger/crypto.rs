@@ -111,7 +111,7 @@ impl U256 {
         self
     }
 
-    pub(super) fn norm243(&mut self) {
+    pub(super) fn clear_after_243(&mut self) {
         self[3] &= (1 << (64 - (256 - 243))) - 1;
     }
 }
@@ -163,9 +163,9 @@ mod tests {
     }
 
     #[test]
-    fn norm243() {
+    fn clear_after_243() {
         let mut x = U256([u64::MAX; 4]);
-        x.norm243();
+        x.clear_after_243();
 
         assert_eq!(U256([u64::MAX, u64::MAX, u64::MAX, 2251799813685247]), x);
     }
