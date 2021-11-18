@@ -77,7 +77,6 @@ pub(super) fn transform(p: &mut [U256; 3], n: &mut [U256; 3]) {
     reorder(p, n);
 }
 
-
 /// Rotates the Curl state by `offset * 243 + shift`.
 ///
 /// It performs a left rotation of the state elements towards lower indices.
@@ -106,7 +105,6 @@ fn batch_box(x_p: u64, x_n: u64, y_p: u64, y_n: u64) -> (u64, u64) {
     let tmp = x_n ^ y_p;
     (tmp & !x_p, !tmp & !(x_p ^ y_n))
 }
-
 
 /// Arranges the state so that the trit at index `(244 * k) % 729` becomes the trit at index `k`.
 ///
