@@ -1,5 +1,9 @@
 // Copyright 2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
+
+//! Transform operations for the CurlP hasher.
+//!
+//! The documentation found here was copied from <https://github.com/iotaledger/iota.go/blob/legacy/curl/transform.go>.
 use super::{u256::U256, HASH_LENGTH};
 
 use lazy_static::lazy_static;
@@ -10,6 +14,9 @@ const NUM_ROUNDS: usize = 81;
 const ROTATION_OFFSET: usize = 364;
 const STATE_SIZE: usize = HASH_LENGTH * 3;
 
+/// Type to store the chunk offset and the bit shift of the state after each round.
+///
+/// Since the modulo operations are rather costly, they are pre-computed in [`STATE_ROTATIONS`].
 #[derive(Clone, Copy)]
 struct StateRotation {
     offset: usize,
@@ -33,6 +40,22 @@ lazy_static! {
     };
 }
 
+/// Performs the Curl transformation.
+///
+/// According to the specification, one Curl round performs the following transformation:
+///   for i ← 1 to 729
+///     x ← S[1]
+///     S ← rot(S)
+///     y ← S[1]
+///     N[i] ← g(x,y)
+///   S ← N
+/// Each element of the state S is combined with its rotated counterpart using the S-box g.  This is
+/// equivalent to rotating just once and applying the S-box on the entire state:
+///   N ← rot(S)
+///   S ← g(S,N)
+/// The only difference then is, that the trits are at the wrong position. Successive trits are now
+/// an opposite rotation apart. This rotation offset adds up over the rounds and needs to be
+/// reverted in the end.
 pub(super) fn transform(p: &mut [U256; 3], n: &mut [U256; 3]) {
     for state_rotation in STATE_ROTATIONS.iter() {
         let (p2, n2) = rotate_state(p, n, state_rotation.offset, state_rotation.shift);
@@ -54,6 +77,10 @@ pub(super) fn transform(p: &mut [U256; 3], n: &mut [U256; 3]) {
     reorder(p, n);
 }
 
+
+/// Rotates the Curl state by `offset * 243 + shift`.
+///
+/// It performs a left rotation of the state elements towards lower indices.
 fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: u8) -> ([U256; 3], [U256; 3]) {
     let mut p2 = <[U256; 3]>::default();
     let mut n2 = <[U256; 3]>::default();
@@ -74,11 +101,19 @@ fn rotate_state(p: &[U256; 3], n: &[U256; 3], offset: usize, shift: u8) -> ([U25
     (p2, n2)
 }
 
+/// Applies the Curl S-box on `64` trits encoded as positive and negative bits.
 fn batch_box(x_p: u64, x_n: u64, y_p: u64, y_n: u64) -> (u64, u64) {
     let tmp = x_n ^ y_p;
     (tmp & !x_p, !tmp & !(x_p ^ y_n))
 }
 
+
+/// Arranges the state so that the trit at index `(244 * k) % 729` becomes the trit at index `k`.
+///
+/// Since the state is organized as `3` chunks of `243` trits each, the 1st output trit lies at
+/// index `(0, 0)`, 2nd at `(1, 1)`, 3rd at `(2, 2)`, 4th at `(0, 3)`, 5th at `(1, 4)`...  Thus, in
+/// order to rearrange the 1st chunk, copy trits 3*k from the 1st chunk, trits `3*  k + 1` from the
+/// 2nd chunk and trits `3 * k + 2` from the 3rd chunk.
 fn reorder(p: &mut [U256; 3], n: &mut [U256; 3]) {
     const M0: u64 = 0x9249249249249249;
     const M1: u64 = M0 << 1;
