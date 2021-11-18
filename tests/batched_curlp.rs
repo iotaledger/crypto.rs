@@ -26,7 +26,7 @@ where
 {
     let input_trit_buf = TryteBuf::try_from_str(input).unwrap().as_trits().encode::<B>();
     let expected_hash = TryteBuf::try_from_str(output).unwrap().as_trits().encode::<T1B1Buf>();
-    
+
     assert_eq!(expected_hash.len(), HASH_LENGTH);
 
     let mut batch_hasher = CurlPBatchHasher::new(input_trit_buf.len());
