@@ -31,13 +31,15 @@ impl U256 {
         self[(i / 64) % 4] |= 1 << (i % 64)
     }
 
-    pub(super) fn shr_into(&mut self, x: &Self, shift: usize) -> &mut Self {
-        let offset = shift / 64;
-        let r = shift % 64;
+    pub(super) fn shr_into(&mut self, x: &Self, shift: u8) -> &mut Self {
+        // `offset <= 4` by construction.
+        let offset = usize::from(shift / 64);
+        let r = usize::from(shift % 64);
 
         if r == 0 {
             for i in offset..4 {
-                self[(i - offset) % 4] |= x[i];
+                // `0 <= i - offset < 4` because `offset <= i < 4` .
+                self[i - offset] |= x[i];
             }
             return self;
         }
@@ -69,13 +71,15 @@ impl U256 {
         self
     }
 
-    pub(super) fn shl_into(&mut self, x: &Self, shift: usize) -> &mut Self {
-        let offset = shift / 64;
-        let l = shift % 64;
+    pub(super) fn shl_into(&mut self, x: &Self, shift: u8) -> &mut Self {
+        // `offset <= 4` by construction.
+        let offset = usize::from(shift / 64);
+        let l = usize::from(shift % 64);
 
         if l == 0 {
             for i in offset..4 {
-                self[i] |= x[(i - offset) % 4];
+                // `0 <= i - offset < 4` because `offset <= i < 4` .
+                self[i] |= x[i - offset];
             }
             return self;
         }
