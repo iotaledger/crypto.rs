@@ -2,9 +2,12 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use crate::hashes::ternary::{
-    curl_p::batched::{
-        bct::{BcTrit, BcTritArr, BcTrits},
-        HIGH_BITS, NUM_ROUNDS,
+    curl_p::{
+        batched::{
+            bct::{BcTrit, BcTritArr, BcTrits},
+            HIGH_BITS, NUM_ROUNDS,
+        },
+        SpongeDirection,
     },
     HASH_LENGTH,
 };
@@ -12,6 +15,7 @@ use crate::hashes::ternary::{
 pub(crate) struct BctCurlP {
     state: BcTritArr<{ 3 * HASH_LENGTH }>,
     state_copy: BcTritArr<{ 3 * HASH_LENGTH }>,
+    direction: SpongeDirection,
 }
 
 impl BctCurlP {
@@ -22,11 +26,13 @@ impl BctCurlP {
         Self {
             state: BcTritArr::filled(HIGH_BITS),
             state_copy: BcTritArr::filled(HIGH_BITS),
+            direction: SpongeDirection::Absorb,
         }
     }
 
     pub(crate) fn reset(&mut self) {
         self.state.fill(HIGH_BITS);
+        self.direction = SpongeDirection::Absorb;
     }
 
     pub(crate) fn transform(&mut self) {
@@ -80,6 +86,10 @@ impl BctCurlP {
         let mut length = bc_trits.len();
         let mut offset = 0;
 
+        if let SpongeDirection::Squeeze = self.direction {
+            panic!("absorb after squeeze");
+        }
+
         loop {
             let length_to_copy = if length < HASH_LENGTH { length } else { HASH_LENGTH };
             // This is safe as `length_to_copy <= HASH_LENGTH`.
@@ -101,23 +111,22 @@ impl BctCurlP {
     // adequate size.
     pub(crate) fn squeeze_into(&mut self, result: &mut BcTrits) {
         let trit_count = result.len();
-
         let hash_count = trit_count / HASH_LENGTH;
 
         for i in 0..hash_count {
             unsafe { result.get_unchecked_mut(i * HASH_LENGTH..(i + 1) * HASH_LENGTH) }
                 .copy_from_slice(unsafe { self.state.get_unchecked(0..HASH_LENGTH) });
 
-            self.transform();
+            if let SpongeDirection::Squeeze = self.direction {
+                self.transform();
+            }
         }
+
+        self.direction = SpongeDirection::Squeeze;
 
         let last = trit_count - hash_count * HASH_LENGTH;
 
         unsafe { result.get_unchecked_mut(trit_count - last..trit_count) }
             .copy_from_slice(unsafe { self.state.get_unchecked(0..last) });
-
-        if trit_count % HASH_LENGTH != 0 {
-            self.transform();
-        }
     }
 }

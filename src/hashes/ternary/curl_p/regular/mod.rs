@@ -6,14 +6,9 @@ mod u256;
 
 use u256::U256;
 
-use crate::hashes::ternary::HASH_LENGTH;
+use crate::hashes::ternary::{curl_p::SpongeDirection, HASH_LENGTH};
 
 use bee_ternary::{Btrit, TritBuf, Trits};
-
-enum SpongeDirection {
-    Absorb,
-    Squeeze,
-}
 
 /// State of the ternary cryptographic function `CurlP`.
 pub struct CurlP {

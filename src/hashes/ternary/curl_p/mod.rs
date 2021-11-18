@@ -6,3 +6,8 @@ mod regular;
 
 pub use batched::{CurlPBatchHasher, BATCH_SIZE};
 pub use regular::CurlP;
+
+pub(crate) enum SpongeDirection {
+    Absorb,
+    Squeeze,
+}
