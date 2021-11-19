@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.9.1]
+
+- Make `iota-crypto` `no_std`.
+  - [6b7b524](https://www.github.com/iotaledger/crypto.rs/commit/6b7b524bf90a08af40752b5cecf3d04ac0f30098) Make curl_p module no_std ([#118](https://www.github.com/iotaledger/crypto.rs/pull/118)) on 2021-11-19
+
 ## \[0.9.0]
 
 - Replace Curl implementation with an unrolled version for better performance.
