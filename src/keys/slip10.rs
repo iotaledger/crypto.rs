@@ -3,7 +3,6 @@
 
 #![allow(clippy::from_over_into)]
 
-
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
 use core::{convert::TryFrom, default::Default};
