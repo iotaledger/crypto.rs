@@ -1,5 +1,11 @@
 # Changelog
 
+## \[0.9.0]
+
+- Replace Curl implementation with an unrolled version for better performance.
+  Add a batched version of Curl.
+  - [18ab209](https://www.github.com/iotaledger/crypto.rs/commit/18ab209cd6c842b310ff614af840ebf3f1c70022) Add unrolled curl and batched curl ([#116](https://www.github.com/iotaledger/crypto.rs/pull/116)) on 2021-11-19
+
 ## \[0.8.0]
 
 - Support for the Blake2b hashing function to 160 bits
