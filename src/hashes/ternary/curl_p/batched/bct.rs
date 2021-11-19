@@ -1,8 +1,6 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-extern crate alloc;
-
 use alloc::vec::Vec;
 use core::ops::{Deref, DerefMut, Range};
 

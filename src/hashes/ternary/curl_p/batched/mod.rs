@@ -6,8 +6,6 @@
 mod bct;
 mod bct_curlp;
 
-extern crate alloc;
-
 use crate::hashes::ternary::HASH_LENGTH;
 
 use bct::{BcTrit, BcTritArr, BcTritBuf};
