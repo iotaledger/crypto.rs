@@ -1,7 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use std::ops::{Deref, DerefMut, Range};
+extern crate alloc;
+
+use alloc::vec::Vec;
+use core::ops::{Deref, DerefMut, Range};
 
 #[derive(Clone, Copy, Debug)]
 pub(crate) struct BcTrit(pub(crate) usize, pub(crate) usize);

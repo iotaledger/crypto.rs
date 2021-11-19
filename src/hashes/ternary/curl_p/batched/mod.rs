@@ -6,6 +6,8 @@
 mod bct;
 mod bct_curlp;
 
+extern crate alloc;
+
 use crate::hashes::ternary::HASH_LENGTH;
 
 use bct::{BcTrit, BcTritArr, BcTritBuf};
@@ -16,8 +18,10 @@ use bee_ternary::{
     Btrit, TritBuf,
 };
 
+use alloc::vec::Vec;
+
 /// The number of inputs that can be processed in a single batch.
-pub const BATCH_SIZE: usize = 8 * std::mem::size_of::<usize>();
+pub const BATCH_SIZE: usize = 8 * core::mem::size_of::<usize>();
 const HIGH_BITS: usize = usize::max_value();
 const NUM_ROUNDS: usize = 81;
 
@@ -166,7 +170,7 @@ where
 /// A helper iterator type for the output of the `hash_batched` method.
 struct BatchedHashes<'a, B: RawEncodingBuf> {
     hasher: &'a mut CurlPBatchHasher<B>,
-    range: std::ops::Range<usize>,
+    range: core::ops::Range<usize>,
 }
 
 impl<'a, B> Iterator for BatchedHashes<'a, B>

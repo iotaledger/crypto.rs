@@ -33,7 +33,7 @@ random = [ "getrandom" ]
 aes = [ "aes-gcm", "cipher" ]
 blake2b = [ "blake2", "digest" ]
 ternary_hashes = [ ]
-curl-p = [ "ternary_hashes", "bee-ternary", "lazy_static" ]
+curl-p = [ "ternary_hashes", "bee-ternary", "lazy_static/spin_no_std" ]
 kerl_deprecated_do_not_use = [
   "ternary_hashes",
   "bee-ternary",
