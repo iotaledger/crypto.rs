@@ -1,0 +1,28 @@
+name: Support no_std
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  no_std:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install stable
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: riscv64gc-unknown-none-elf
+        override: true
+
+    - name: Check
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+        args: --release --target=riscv64gc-unknown-none-elf --manifest-path Cargo.toml
