@@ -3,11 +3,7 @@
 
 #![allow(dead_code)]
 
-use alloc::vec::Vec;
-
 pub mod fresh {
-    use super::*;
-
     pub fn bytestring() -> Vec<u8> {
         let s = if rand::random::<u8>() % 4 == 0 {
             0
