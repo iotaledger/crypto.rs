@@ -27,7 +27,7 @@ To be included in this list an implementation must:
 | ciphers     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
 | hashes       | BLAKE2b-160        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
 | hashes       | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
-| hashes       | CURL-P             | [`curl-p`](/src/hashes/curl_p.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
+| hashes       | CURL-P             | [`curl-p`](/src/hashes/ternary/curl_p/mod.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |
 | hashes       | SHA2-256           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
 | hashes       | SHA2-384           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
 | hashes       | SHA2-512           | [`sha`](/src/hashes/sha.rs)         | [spec][SHA2-SPEC]          | `sha2`             | [nist][SHA2-TEST]        | ★★★★★ |
