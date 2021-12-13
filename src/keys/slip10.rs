@@ -1,7 +1,7 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-extern crate alloc;
+#![allow(clippy::from_over_into)]
 
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
@@ -60,11 +60,10 @@ pub type ChainCode = [u8; 32];
 pub struct Key([u8; 64]);
 
 impl Key {
-    pub fn secret_key(&self) -> crate::Result<SecretKey> {
+    pub fn secret_key(&self) -> SecretKey {
         let mut il = [0; 32];
         il.copy_from_slice(&self.0[..32]);
-        // TODO: this conversion should never fail
-        SecretKey::from_le_bytes(il)
+        SecretKey::from_bytes(il)
     }
 
     pub fn chain_code(&self) -> ChainCode {
@@ -132,6 +131,14 @@ impl Segment {
         }
     }
 
+    pub fn hardened(&self) -> bool {
+        self.hardened
+    }
+
+    pub fn bs(&self) -> [u8; 4] {
+        self.bs
+    }
+
     pub const HARDEN_MASK: u32 = 1 << 31;
 }
 
@@ -156,6 +163,10 @@ impl Chain {
         ss.extend_from_slice(&o.as_ref().0);
         Self(ss)
     }
+
+    pub fn segments(&self) -> Vec<Segment> {
+        self.0.clone()
+    }
 }
 
 impl Default for Chain {
@@ -166,7 +177,7 @@ impl Default for Chain {
 
 impl AsRef<Chain> for Chain {
     fn as_ref(&self) -> &Self {
-        &self
+        self
     }
 }
 

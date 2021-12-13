@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.4.2"
+version = "0.9.1"
 license = "Apache-2.0"
 authors = [
   "Gustav Behm <gustav.behm@iota.org>",
@@ -13,6 +13,7 @@ categories = [ "security" ]
 description = "The canonical source of cryptographic ground-truth for all IOTA Rust projects"
 homepage = "https://iota.org"
 repository = "https://github.com/iotaledger/crypto.rs"
+exclude = [ "/tests", "/bindings", "/.github", "/.changes" ]
 
 [package.metadata.docs.rs]
 all-features = true
@@ -27,12 +28,31 @@ std = [ ]
 aes-kw = [ "aes-crate" ]
 chacha = [ "chacha20poly1305", "cipher" ]
 ed25519 = [ "ed25519-zebra" ]
-x25519 = [ "x25519-dalek" ]
+x25519 = [ "x25519-dalek", "curve25519-dalek" ]
 x448 = [ "x448-crate" ]
 random = [ "getrandom" ]
 aes = [ "aes-gcm", "cipher" ]
 blake2b = [ "blake2", "digest" ]
-curl-p = [ "bee-ternary" ]
+ternary_hashes = [ ]
+curl-p = [ "ternary_hashes", "bee-ternary", "lazy_static/spin_no_std" ]
+kerl_deprecated_do_not_use = [
+  "ternary_hashes",
+  "bee-ternary",
+  "byteorder",
+  "lazy_static",
+  "tiny-keccak"
+]
+ternary_keys = [ ]
+ternary_signatures = [ ]
+wots_deprecated_do_not_use = [
+  "ternary_keys",
+  "ternary_signatures",
+  "bee-ternary",
+  "sha3",
+  "zeroize",
+  "rand",
+  "bee-common-derive"
+]
 sha = [ "sha2", "digest" ]
 hmac = [ "hmac_" ]
 pbkdf = [ "pbkdf2" ]
@@ -43,95 +63,37 @@ slip10 = [ "hmac", "sha", "ed25519", "random", "serde" ]
 cipher = [ "aead", "generic-array" ]
 
 [dependencies]
-chacha20poly1305 = { version = "0.7.1", optional = true }
-
-  [dependencies.ed25519-zebra]
-  version = "2.2.0"
-  optional = true
-  default-features = false
-
-  [dependencies.x25519-dalek]
-  version = "1.1.0"
-  optional = true
-  default-features = false
-  features = [ "u64_backend" ]
-
-  [dependencies.x448-crate]
-  version = "0.6"
-  package = "x448"
-  optional = true
-  default-features = false
-
-  [dependencies.getrandom]
-  version = "0.2.0"
-  optional = true
-  default-features = false
-
-  [dependencies.aead]
-  version = "0.3"
-  optional = true
-  default-features = false
-
-  [dependencies.generic-array]
-  version = "0.14"
-  optional = true
-  default-features = false
-
-  [dependencies.aes-crate]
-  version = "0.6"
-  package = "aes"
-  optional = true
-  default-features = false
-
-  [dependencies.aes-gcm]
-  version = "0.8.0"
-  optional = true
-  features = [ "aes" ]
-  default-features = false
-
-  [dependencies.blake2]
-  version = "0.9.1"
-  optional = true
-  default-features = false
-
-  [dependencies.bee-ternary]
-  version = "0.3.4-alpha"
-  optional = true
-  default-features = false
-
-  [dependencies.sha2]
-  version = "0.9.3"
-  optional = true
-  default-features = false
-
-  [dependencies.hmac_]
-  version = "0.10.1"
-  package = "hmac"
-  optional = true
-  default-features = false
-
-  [dependencies.pbkdf2]
-  version = "0.7.3"
-  optional = true
-  default-features = false
-
-  [dependencies.unicode-normalization]
-  version = "0.1.17"
-  optional = true
-  default-features = false
-
-  [dependencies.digest]
-  version = "0.9.0"
-  optional = true
-  default-features = false
-
-  [dependencies.serde]
-  version = "1.0.123"
-  optional = true
-  features = [ "derive" ]
+aead = { version = "0.4", optional = true, default-features = false }
+aes-crate = { version = "0.7", optional = true, default-features = false, package = "aes" }
+aes-gcm = { version = "0.9", optional = true, default-features = false, features = [ "aes" ] }
+bee-common-derive = { version = "0.1.1-alpha", optional = true, default-features = false }
+bee-ternary = { version = "0.5.2", optional = true, default-features = false }
+blake2 = { version = "0.9", optional = true, default-features = false }
+byteorder = { version = "1.4", optional = true, default-features = false }
+chacha20poly1305 = { version = "0.8", optional = true }
+digest = { version = "0.9", optional = true, default-features = false }
+ed25519-zebra = { version = "2.2", optional = true, default-features = false }
+generic-array = { version = "0.14", optional = true, default-features = false }
+getrandom = { version = "0.2", optional = true, default-features = false, features = [ "js" ] }
+hmac_ = { version = "0.11", optional = true, default-features = false, package = "hmac" }
+lazy_static = { version = "1.4", optional = true, default-features = false }
+pbkdf2 = { version = "0.8", optional = true, default-features = false }
+rand = { version = "0.8", optional = true, default-features = false }
+sha2 = { version = "0.9", optional = true, default-features = false }
+serde = { version = "1.0", optional = true, features = [ "derive" ] }
+sha3 = { version = "0.9", optional = true, default-features = false }
+tiny-keccak = { version = "2.0", optional = true, features = [ "keccak" ] }
+unicode-normalization = { version = "0.1", optional = true, default-features = false }
+curve25519-dalek = { version = "3", optional = true, default-features = false, features = [ "u64_backend" ] }
+x25519-dalek = { version = "1.1", optional = true, default-features = false, features = [ "u64_backend" ] }
+zeroize = { version = "1.3", optional = true, default-features = false }
+x448-crate = { version = "0.6", package = "x448", optional = true, default-features = false }
 
 [dev-dependencies]
-hex = "0.4.2"
-rand = "0.8.3"
-serde = { version = "1.0.117", features = [ "derive" ] }
-serde_json = "1.0.64"
+hex = "0.4"
+rand = "0.8"
+serde = { version = "1.0", features = [ "derive" ] }
+serde_json = "1.0"
+
+[profile.dev]
+split-debuginfo = "unpacked"
