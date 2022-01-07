@@ -5,7 +5,7 @@
 
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
-use core::{convert::TryFrom, default::Default};
+use std::convert::{From, TryFrom};
 
 use serde::{Deserialize, Serialize};
 
@@ -37,11 +37,16 @@ impl Curve {
 /// But since the seed entropy is always passed through HMAC-SHA512 any bytesequence is acceptable,
 /// therefore formally the size requirement is context sensitive.
 #[derive(Default)]
+#[cfg_attr(test, derive(Debug, PartialEq))]
 pub struct Seed(Vec<u8>);
 
 impl Seed {
+    #[deprecated(
+        since = "0.9.2",
+        note = "Use the generic [std::convert::From]. Like `\"Foobar\".into()`"
+    )]
     pub fn from_bytes(bs: &[u8]) -> Self {
-        Self(bs.to_vec())
+        bs.into()
     }
 
     pub fn to_master_key(&self, curve: Curve) -> Key {
@@ -52,6 +57,16 @@ impl Seed {
 
     pub fn derive(&self, curve: Curve, chain: &Chain) -> crate::Result<Key> {
         self.to_master_key(curve).derive(chain)
+    }
+}
+
+/// Generic [From] implementation to allow any type to be a [Seed]-source which can be referenced as an u8-slice.
+impl<T> From<T> for Seed
+where
+    T: AsRef<[u8]>,
+{
+    fn from(bs: T) -> Self {
+        Self(bs.as_ref().to_vec())
     }
 }
 
@@ -179,5 +194,19 @@ impl AsRef<Chain> for Chain {
 impl Into<Vec<u8>> for Key {
     fn into(self) -> Vec<u8> {
         self.0.to_vec()
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_seed_from() {
+        #[allow(deprecated)]
+        let deprecated = Seed::from_bytes("foo bar baz".as_bytes());
+        let generic: Seed = "foo bar baz".into();
+
+        assert_eq!(deprecated, generic);
     }
 }
