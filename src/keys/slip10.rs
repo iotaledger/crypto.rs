@@ -5,7 +5,10 @@
 
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
-use std::convert::{From, TryFrom};
+use core::{
+    convert::{From, TryFrom},
+    default::Default,
+};
 
 use serde::{Deserialize, Serialize};
 
