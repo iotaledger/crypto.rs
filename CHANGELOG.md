@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.9.2]
+- Add standard trait implementation of`From` for Slip10 `Seed`. Deprecates `Seed::from_bytes()`.
+- Use of standard trait `Default` for Slip10 `Chain` deprecates `Chain::empty()`.
+
 ## \[0.9.1]
 
 - Make `iota-crypto` `no_std`.
