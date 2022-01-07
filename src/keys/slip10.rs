@@ -163,7 +163,7 @@ pub struct Chain(Vec<Segment>);
 
 impl Chain {
     pub fn empty() -> Self {
-        Self(Vec::new())
+        Self(Vec::default())
     }
 
     pub fn from_u32<I: IntoIterator<Item = u32>>(is: I) -> Self {
