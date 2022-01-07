@@ -26,7 +26,7 @@ mod test {
         let tvs = include!("fixtures/slip10_ed25519.rs");
 
         for tv in &tvs {
-            let seed = Seed::from_bytes(&hex::decode(tv.seed).unwrap());
+            let seed: Seed = hex::decode(tv.seed).unwrap().into();
 
             let m = seed.to_master_key(Curve::Ed25519);
             let mut expected_master_chain_code = [0u8; 32];
