@@ -162,6 +162,7 @@ impl Segment {
 pub struct Chain(Vec<Segment>);
 
 impl Chain {
+    #[deprecated(since = "0.9.2", note = "Use `Chain::default()` instead.`")]
     pub fn empty() -> Self {
         Self(Vec::default())
     }
