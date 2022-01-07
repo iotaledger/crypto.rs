@@ -36,6 +36,7 @@ impl Curve {
 ///
 /// But since the seed entropy is always passed through HMAC-SHA512 any bytesequence is acceptable,
 /// therefore formally the size requirement is context sensitive.
+#[derive(Default)]
 pub struct Seed(Vec<u8>);
 
 impl Seed {
@@ -117,7 +118,7 @@ impl TryFrom<&[u8]> for Key {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Segment {
     hardened: bool,
     bs: [u8; 4],
@@ -142,7 +143,7 @@ impl Segment {
     pub const HARDEN_MASK: u32 = 1 << 31;
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub struct Chain(Vec<Segment>);
 
 impl Chain {
@@ -166,12 +167,6 @@ impl Chain {
 
     pub fn segments(&self) -> Vec<Segment> {
         self.0.clone()
-    }
-}
-
-impl Default for Chain {
-    fn default() -> Self {
-        Chain::empty()
     }
 }
 
