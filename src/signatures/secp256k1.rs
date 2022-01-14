@@ -1,9 +1,19 @@
-use crate::{Error, Result};
+extern crate alloc;
+
+pub use crate::keys::bip44::*;
+use crate::{macs::hmac::HMAC_SHA512, Error, Result};
+
+use alloc::vec::Vec;
 
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 65;
 pub const COMPRESSED_PUBLIC_KEY_LENGTH: usize = 33;
 pub const SIGNATURE_LENGTH: usize = 64;
+
+/// A seed is an arbitrary bytestring used to create the root of the tree.
+///
+/// The BIP32 standard restricts the size of the seed to be between 128 and 512 bits; 256 bits is advised.
+pub struct Seed(Vec<u8>);
 
 /// Secret key (256-bit) on a secp256k1 curve.
 #[derive(Default)]
@@ -20,6 +30,70 @@ pub struct Signature(libsecp256k1::Signature);
 /// Tag used for public key recovery from signatures.
 #[derive(Debug, Copy, Clone, Eq, PartialEq)]
 pub struct RecoveryId(libsecp256k1::RecoveryId);
+
+/// ExtendedPrivateKey is used for child key derivation.
+pub struct ExtendedPrivateKey {
+    secret_key: SecretKey,
+    chain_code: Vec<u8>,
+}
+
+impl ExtendedPrivateKey {
+    pub fn child_key(&self, segment: &Segment) -> Result<Self> {
+        let mut input = if segment.is_normal() {
+            libsecp256k1::PublicKey::from_secret_key(&self.secret_key.0)
+                .serialize_compressed()
+                .to_vec()
+        } else {
+            let mut i = Vec::new();
+            i.push(0);
+            i.extend_from_slice(&self.secret_key.0.serialize());
+            i
+        };
+        input.extend(segment.bs().to_vec());
+        let mut result = [0; 64];
+        HMAC_SHA512(&input, &self.chain_code, &mut result);
+        let (secret_key, chain_code) = result.split_at(32);
+
+        let mut secret_key = SecretKey::from_slice(&secret_key)?;
+        secret_key.tweak_add(&self.secret_key)?;
+
+        Ok(Self {
+            secret_key,
+            chain_code: chain_code.to_vec(),
+        })
+    }
+
+    pub fn secret_key(&self) -> &SecretKey {
+        &self.secret_key
+    }
+
+    pub fn chain_code(&self) -> &[u8] {
+        &self.chain_code
+    }
+}
+
+impl Seed {
+    pub fn from_bytes(bs: &[u8]) -> Self {
+        Self(bs.to_vec())
+    }
+
+    pub fn derive(&self, chain: &Chain) -> Result<ExtendedPrivateKey> {
+        let mut result = [0; 64];
+        HMAC_SHA512(&self.0, b"Bitcoin seed", &mut result);
+        let (secret_key, chain_code) = result.split_at(32);
+
+        let mut sk = ExtendedPrivateKey {
+            secret_key: SecretKey::from_slice(secret_key)?,
+            chain_code: chain_code.to_vec(),
+        };
+
+        for segment in &chain.0 {
+            sk = sk.child_key(segment)?;
+        }
+
+        Ok(sk)
+    }
+}
 
 impl SecretKey {
     pub fn inner(&self) -> &libsecp256k1::SecretKey {
