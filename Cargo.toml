@@ -62,7 +62,7 @@ bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
 slip10 = [ "hmac", "sha", "ed25519", "random", "serde" ]
 cipher = [ "aead", "generic-array" ]
-secp256k1 = [ "libsecp256k1" ]
+secp256k1 = [ "libsecp256k1", "hmac", "sha", "serde" ]
 
 [dependencies]
 aead = { version = "0.4", optional = true, default-features = false }
