@@ -15,7 +15,7 @@ pub mod bip39;
 
 #[cfg(any(feature = "slip10", feature = "secp256k1"))]
 #[cfg_attr(docsrs, doc(cfg(any(feature = "slip10", feature = "secp256k1"))))]
-pub(crate) mod bip44;
+pub mod bip44;
 
 #[cfg(feature = "slip10")]
 #[cfg_attr(docsrs, doc(cfg(feature = "slip10")))]
