@@ -3,7 +3,7 @@
 
 use core::{
     cmp::Ordering,
-    convert::TryFrom,
+    convert::{TryFrom, TryInto},
     hash::{Hash, Hasher},
 };
 
@@ -45,8 +45,34 @@ impl SecretKey {
         Self(bytes.into())
     }
 
+    pub fn try_from_slice(slice: &[u8]) -> crate::Result<Self> {
+        slice.try_into().map(Self).map_err(|_| crate::Error::ConvertError {
+            from: "byte slice",
+            to: "Ed25519 private key",
+        })
+    }
+
     pub fn sign(&self, msg: &[u8]) -> Signature {
         Signature(self.0.sign(msg))
+    }
+}
+
+impl AsRef<[u8]> for SecretKey {
+    fn as_ref(&self) -> &[u8] {
+        self.as_slice()
+    }
+}
+
+impl From<[u8; PUBLIC_KEY_LENGTH]> for SecretKey {
+    fn from(bytes: [u8; PUBLIC_KEY_LENGTH]) -> Self {
+        Self::from_bytes(bytes)
+    }
+}
+
+impl TryFrom<&[u8]> for SecretKey {
+    type Error = crate::Error;
+    fn try_from(slice: &[u8]) -> crate::Result<Self> {
+        Self::try_from_slice(slice)
     }
 }
 
@@ -67,18 +93,23 @@ impl PublicKey {
     }
 
     pub fn try_from_bytes(bytes: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
-        ed25519_zebra::VerificationKey::try_from(bytes)
-            .map(Self)
-            .map_err(|_| crate::Error::ConvertError {
-                from: "compressed bytes",
-                to: "Ed25519 public key",
-            })
+        bytes.try_into().map(Self).map_err(|_| crate::Error::ConvertError {
+            from: "compressed byte array",
+            to: "Ed25519 public key",
+        })
+    }
+
+    pub fn try_from_slice(slice: &[u8]) -> crate::Result<Self> {
+        slice.try_into().map(Self).map_err(|_| crate::Error::ConvertError {
+            from: "compressed byte slice",
+            to: "Ed25519 public key",
+        })
     }
 }
 
 impl AsRef<[u8]> for PublicKey {
     fn as_ref(&self) -> &[u8] {
-        self.0.as_ref()
+        self.as_slice()
     }
 }
 
@@ -86,6 +117,13 @@ impl TryFrom<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
     type Error = crate::Error;
     fn try_from(bytes: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
         Self::try_from_bytes(bytes)
+    }
+}
+
+impl TryFrom<&[u8]> for PublicKey {
+    type Error = crate::Error;
+    fn try_from(slice: &[u8]) -> crate::Result<Self> {
+        Self::try_from_slice(slice)
     }
 }
 
