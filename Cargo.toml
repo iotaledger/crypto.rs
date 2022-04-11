@@ -63,7 +63,7 @@ slip10 = [ "hmac", "sha", "ed25519", "random", "serde" ]
 cipher = [ "aead", "generic-array" ]
 
 [dependencies]
-block-modes = { version = "0.7", optional = true, default-features = false }
+block-modes = { version = "0.8", optional = true, default-features = false }
 aead = { version = "0.4", optional = true, default-features = false }
 aes-crate = { version = "0.7", optional = true, default-features = false, package = "aes" }
 aes-gcm = { version = "0.9", optional = true, default-features = false, features = [ "aes" ] }
