@@ -9,7 +9,6 @@ type Mnemonic = str;
 type Passphrase = str;
 type Seed = [u8; 64];
 
-extern crate alloc;
 use alloc::string::{String, ToString};
 
 use unicode_normalization::UnicodeNormalization;
@@ -145,15 +144,12 @@ pub mod wordlist {
                 None => return Err(Error::NoSuchWord(w.to_string())),
                 Some(idx) => {
                     let r = i % 8;
+                    acc <<= 8 - r;
+                    acc |= idx >> (11 - (8 - r));
+                    data.push(acc as u8);
                     if r + 11 < 16 {
-                        acc <<= 8 - r;
-                        acc |= idx >> (11 - (8 - r));
-                        data.push(acc as u8);
                         acc = idx & ((1 << (11 - (8 - r))) - 1);
                     } else {
-                        acc <<= 8 - r;
-                        acc |= idx >> (11 - (8 - r));
-                        data.push(acc as u8);
                         acc = (idx & ((1 << (11 - (8 - r))) - 1)) >> (11 - 8 - (8 - r));
                         data.push(acc as u8);
                         acc = idx & ((1 << (11 - 8 - (8 - r))) - 1);

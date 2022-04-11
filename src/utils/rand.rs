@@ -15,7 +15,7 @@ pub fn fill(bs: &mut [u8]) -> crate::Result<()> {
 /// # Safety
 /// This function fills the memory of the returned type with random values, there are no guarantees
 /// that the type's invariants hold and so may lead to undefined behavior if used inappropriately.
-pub unsafe fn gen<T>() -> crate::Result<T> {
+pub unsafe fn gen<T: Sized + Copy>() -> crate::Result<T> {
     let mut t = core::mem::MaybeUninit::uninit();
     fill(core::slice::from_raw_parts_mut(
         t.as_mut_ptr() as *mut u8,

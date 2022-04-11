@@ -1,5 +1,83 @@
 # Changelog
 
+## \[0.9.1]
+
+- Make `iota-crypto` `no_std`.
+  - [6b7b524](https://www.github.com/iotaledger/crypto.rs/commit/6b7b524bf90a08af40752b5cecf3d04ac0f30098) Make curl_p module no_std ([#118](https://www.github.com/iotaledger/crypto.rs/pull/118)) on 2021-11-19
+
+## \[0.9.0]
+
+- Replace Curl implementation with an unrolled version for better performance.
+  Add a batched version of Curl.
+  - [18ab209](https://www.github.com/iotaledger/crypto.rs/commit/18ab209cd6c842b310ff614af840ebf3f1c70022) Add unrolled curl and batched curl ([#116](https://www.github.com/iotaledger/crypto.rs/pull/116)) on 2021-11-19
+
+## \[0.8.0]
+
+- Support for the Blake2b hashing function to 160 bits
+
+- Wrapper around VarBlake2b for 160 bits hash
+
+- New tests for 160 bits copied from blake2b-256
+
+- Generate new test vector created with b2sum using the inputs of blake2b-256 test vector
+
+- Update list of supported algorithms
+
+- [dd055a4](https://www.github.com/iotaledger/crypto.rs/commit/dd055a4a1df8866228334086c8f13d1a05096bce) Add Blake2b-160 ([#111](https://www.github.com/iotaledger/crypto.rs/pull/111)) on 2021-10-27
+
+- Update bee-ternary requirement from 0.4.2-alpha to 0.5.0
+  - [5f3c9d2](https://www.github.com/iotaledger/crypto.rs/commit/5f3c9d2770760eaaf32880322f45d57518d24fd0) Add .changes file for bee-ternary bump ([#115](https://www.github.com/iotaledger/crypto.rs/pull/115)) on 2021-11-11
+
+## \[0.7.0]
+
+- - Enabled to access the `Segment` vector in `Chain`.
+- Added consistent line breaks between methods.
+- [50c0f53](https://www.github.com/iotaledger/crypto.rs/commit/50c0f53262861cdb4f3728a9a8c4e67b53ec68f0) Add .change file for Chain access on 2021-07-02
+- - Unified naming convention in ed25519 and x25519 modules.
+- Added useful methods and standard traits implementations.
+- Added conversion of ed25519 keys to x25519 keys.
+- [b52caec](https://www.github.com/iotaledger/crypto.rs/commit/b52caec7a8890049407ce4ce02488a31578d155a) added changes on 2021-07-28
+
+## \[0.6.0]
+
+- Added js feature to getrandom for wasm compatibility.
+  - [0a85dfd](https://www.github.com/iotaledger/crypto.rs/commit/0a85dfd161b46ba9a932ff84aa3e3ad9e27d2d08) add change file on 2021-07-01
+
+- Added
+
+- `Segment` field access;
+  - Enable `hardened` field read access;
+  - Enable `bs` field read access;
+
+- `bip39.rs` clippy error fix;
+
+- [41e776e](https://www.github.com/iotaledger/crypto.rs/commit/41e776ec77ff6291cf804b5e13687b373df89b51) Add .changes file for Segment field access on 2021-07-01
+
+## \[0.5.1]
+
+- This release updates a number of interlocking dependencies, but does not change the external interface.
+  - [a644f8d](https://www.github.com/iotaledger/crypto.rs/commit/a644f8d8e62b40071634d4c15efebc5942c2bd90) add .changefile on 2021-05-04
+
+## \[0.5.0]
+
+- Added
+
+- `Sponge` trait;
+
+- `Kerl` sponge implementation;
+
+- [f96b845](https://www.github.com/iotaledger/crypto.rs/commit/f96b845948a8f3ab02ff30126837499b7e015c1d) Add .change on 2021-04-16
+
+- [12df494](https://www.github.com/iotaledger/crypto.rs/commit/12df494bf837981db3cf026a2f57148c8756a0cf) Update .changes/kerl.md on 2021-04-16
+
+- Added
+
+- `WOTS` implementation;
+  - `keys` module;
+  - `signatures` module;
+
+- [eec08c3](https://www.github.com/iotaledger/crypto.rs/commit/eec08c3af29a92a6dfbeb56b23a272a38b0de606) Add wots .changes on 2021-04-18
+
 ## \[0.4.2]
 
 - Automated publishing
