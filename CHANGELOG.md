@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.9.2]
+
+- Bump version of `bee-ternary` to `v0.6.0`
+  - [bbb25e4](https://www.github.com/iotaledger/crypto.rs/commit/bbb25e45fd8482ef30d1d913622a875251c95f48) Add change file ([#131](https://www.github.com/iotaledger/crypto.rs/pull/131)) on 2022-04-25
+
 ## \[0.9.1]
 
 - Make `iota-crypto` `no_std`.
