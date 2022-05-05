@@ -77,7 +77,7 @@ fn test_aead_all<A: Aead>(tvs: &[TestVector]) -> crypto::Result<()> {
 #[cfg(feature = "aes")]
 mod aes {
     use super::{test_aead_all, TestVector};
-    use crypto::ciphers::aes::Aes256Gcm;
+    use crypto::ciphers::aes_gcm::Aes256Gcm;
 
     #[test]
     fn test_vectors_aes_256_gcm() {
