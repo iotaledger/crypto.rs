@@ -22,7 +22,6 @@ pub type Tag<T> = GenericArray<u8, <T as Aead>::TagLength>;
 /// Example using [`Aes256Gcm`][`crate::ciphers::aes::Aes256Gcm`]:
 ///
 /// ```rust
-///
 /// # #[cfg(all(feature = "random", feature = "aes-gcm"))]
 /// # {
 /// use crypto::ciphers::{
