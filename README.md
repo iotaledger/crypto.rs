@@ -25,6 +25,7 @@ To be included in this list an implementation must:
 | ciphers     | AES-256-GCM        | [`aes`](/src/ciphers/aes.rs)        | [spec][AES-GCM-SPEC]       | `aes-gcm`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
 | ciphers     | AES-KW        | [`aes-kw`](/src/ciphers/aes_kw.rs)        | [spec][AES-GCM-SPEC]       | `aes-crate`          | [nist][AES-GCM-TEST]     | ★★★☆☆ |
 | ciphers     | XCHACHA20-POLY1305 | [`chacha`](/src/ciphers/chacha.rs)  | [rfc][XCHACHA-RFC]         | `chacha20poly1305` | [official][XCHACHA-TEST] | ★★★★★ |
+| ciphers     | AES-CBC | [`aes-cbc`](/src/aes_cbc.rs) | [rfc](https://tools.ietf.org/html/rfc7518) | `crypto.rs` | [official](https://tools.ietf.org/html/rfc7518#appendix-B) | ☆☆☆☆☆ |
 | hashes       | BLAKE2b-160        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
 | hashes       | BLAKE2b-256        | [`blake2b`](/src/hashes/blake2b.rs) | [rfc][BLAKE2B-RFC]         | `blake2`           | [official][BLAKE2B-TEST] | ★★★★☆ |
 | hashes       | CURL-P             | [`curl-p`](/src/hashes/ternary/curl_p/mod.rs)   | [rfc][CURL-RFC]            | `bee-ternary`      | official                 | ★★☆☆☆ |

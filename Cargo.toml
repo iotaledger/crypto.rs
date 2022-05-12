@@ -25,12 +25,14 @@ name = "crypto"
 [features]
 default = [ ]
 std = [ ]
+aes-cbc = [ "aes-crate", "block-modes", "cipher", "hmac", "sha", "subtle" ]
 aes-kw = [ "aes-crate" ]
+aes-gcm = [ "aes-gcm-crate", "cipher"]
 chacha = [ "chacha20poly1305", "cipher" ]
 ed25519 = [ "ed25519-zebra" ]
 x25519 = [ "x25519-dalek", "curve25519-dalek" ]
 random = [ "getrandom" ]
-aes = [ "aes-gcm", "cipher" ]
+aes = [ "aes-cbc", "aes-gcm", "aes-kw" ]
 blake2b = [ "blake2", "digest" ]
 ternary_hashes = [ ]
 curl-p = [ "ternary_hashes", "bee-ternary", "lazy_static/spin_no_std" ]
@@ -62,9 +64,10 @@ slip10 = [ "hmac", "sha", "ed25519", "random", "serde" ]
 cipher = [ "aead", "generic-array" ]
 
 [dependencies]
+block-modes = { version = "0.8", optional = true, default-features = false }
 aead = { version = "0.4", optional = true, default-features = false }
 aes-crate = { version = "0.7", optional = true, default-features = false, package = "aes" }
-aes-gcm = { version = "0.9", optional = true, default-features = false, features = [ "aes" ] }
+aes-gcm-crate = { version = "0.9", optional = true, default-features = false, package = "aes-gcm", features = [ "aes" ] }
 bee-common-derive = { version = "0.1.1-alpha", optional = true, default-features = false }
 bee-ternary = { version = "0.6.0", optional = true, default-features = false }
 blake2 = { version = "0.9", optional = true, default-features = false }
@@ -78,6 +81,7 @@ hmac_ = { version = "0.11", optional = true, default-features = false, package =
 lazy_static = { version = "1.4", optional = true, default-features = false }
 pbkdf2 = { version = "0.8", optional = true, default-features = false }
 rand = { version = "0.8", optional = true, default-features = false }
+subtle = { version = "2.4", default-features = false, optional = true }
 sha2 = { version = "0.9", optional = true, default-features = false }
 serde = { version = "1.0", optional = true, features = [ "derive" ] }
 sha3 = { version = "0.9", optional = true, default-features = false }
