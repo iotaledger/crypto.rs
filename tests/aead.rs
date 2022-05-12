@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(any(feature = "aes", feature = "chacha", feature = "aes-cbc"))]
+#![cfg(any(feature = "aes-gcm", feature = "chacha", feature = "aes-cbc"))]
 
 mod utils;
 
@@ -74,7 +74,7 @@ fn test_aead_all<A: Aead>(tvs: &[TestVector]) -> crypto::Result<()> {
     Ok(())
 }
 
-#[cfg(feature = "aes")]
+#[cfg(feature = "aes-gcm")]
 mod aes {
     use super::{test_aead_all, TestVector};
     use crypto::ciphers::aes_gcm::Aes256Gcm;
