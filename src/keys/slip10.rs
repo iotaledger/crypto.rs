@@ -56,7 +56,7 @@ impl Seed {
 
 pub type ChainCode = [u8; 32];
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug)]
 pub struct Key([u8; 64]);
 
 impl Key {
@@ -117,7 +117,7 @@ impl TryFrom<&[u8]> for Key {
     }
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct Segment {
     hardened: bool,
     bs: [u8; 4],
