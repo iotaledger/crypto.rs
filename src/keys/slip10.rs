@@ -8,6 +8,7 @@ use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 use core::{convert::TryFrom, default::Default};
 
 use serde::{Deserialize, Serialize};
+use zeroize::Zeroize;
 
 use alloc::vec::Vec;
 
@@ -56,7 +57,7 @@ impl Seed {
 
 pub type ChainCode = [u8; 32];
 
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Copy, Debug, Zeroize)]
 pub struct Key([u8; 64]);
 
 impl Key {
