@@ -1,5 +1,20 @@
 # Changelog
 
+## \[0.11.0]
+
+- Add AES-CBC algorithms (`Aes128CbcHmac256`, `Aes192CbcHmac384`, `Aes256CbcHmac512`).
+  - [8454c9b](https://www.github.com/iotaledger/crypto.rs/commit/8454c9b8279bd40ef4e5b20b8dad496b21a269fc) Add AES-CBC ([#41](https://www.github.com/iotaledger/crypto.rs/pull/41)) on 2022-05-12
+
+## \[0.10.0]
+
+- Bump version minor to fix https://github.com/iotaledger/bee/issues/1360
+  - [95662a7](https://www.github.com/iotaledger/crypto.rs/commit/95662a79448907cc9bf572595fc178b4fbc61531) Bump version minor ([#134](https://www.github.com/iotaledger/crypto.rs/pull/134)) on 2022-05-04
+
+## \[0.9.2]
+
+- Bump version of `bee-ternary` to `v0.6.0`
+  - [bbb25e4](https://www.github.com/iotaledger/crypto.rs/commit/bbb25e45fd8482ef30d1d913622a875251c95f48) Add change file ([#131](https://www.github.com/iotaledger/crypto.rs/pull/131)) on 2022-04-25
+
 ## \[0.9.1]
 
 - Make `iota-crypto` `no_std`.
