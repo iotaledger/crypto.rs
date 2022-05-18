@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.10.0"
+version = "0.11.0"
 license = "Apache-2.0"
 authors = [
   "Gustav Behm <gustav.behm@iota.org>",
@@ -25,9 +25,16 @@ name = "crypto"
 [features]
 default = [ ]
 std = [ ]
-aes-cbc = [ "aes-crate", "block-modes", "cipher", "hmac", "sha", "subtle" ]
+aes-cbc = [
+  "aes-crate",
+  "block-modes",
+  "cipher",
+  "hmac",
+  "sha",
+  "subtle"
+]
 aes-kw = [ "aes-crate" ]
-aes-gcm = [ "aes-gcm-crate", "cipher"]
+aes-gcm = [ "aes-gcm-crate", "cipher" ]
 chacha = [ "chacha20poly1305", "cipher" ]
 ed25519 = [ "ed25519-zebra" ]
 x25519 = [ "x25519-dalek", "curve25519-dalek" ]

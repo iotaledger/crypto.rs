@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.11.0]
+
+- Add AES-CBC algorithms (`Aes128CbcHmac256`, `Aes192CbcHmac384`, `Aes256CbcHmac512`).
+  - [8454c9b](https://www.github.com/iotaledger/crypto.rs/commit/8454c9b8279bd40ef4e5b20b8dad496b21a269fc) Add AES-CBC ([#41](https://www.github.com/iotaledger/crypto.rs/pull/41)) on 2022-05-12
+
 ## \[0.10.0]
 
 - Bump version minor to fix https://github.com/iotaledger/bee/issues/1360
