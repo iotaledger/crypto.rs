@@ -14,11 +14,16 @@ use generic_array::{
     typenum::{Double, Unsigned, B1, U16, U24, U32},
     ArrayLength,
 };
-use hmac_::{Hmac, Mac, NewMac};
-use sha2::{
-    digest::{BlockInput, FixedOutput, Reset, Update},
-    Sha256, Sha384, Sha512,
+use hmac_::{
+    digest::{
+        block_buffer::Eager,
+        core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore, UpdateCore},
+        typenum::{IsLess, Le, NonZero, U256},
+        FixedOutput, HashMarker, OutputSizeUser, Reset,
+    },
+    Hmac, Mac,
 };
+use sha2::{Sha256, Sha384, Sha512};
 use subtle::ConstantTimeEq;
 
 use crate::ciphers::traits::{Aead, Key, Nonce, Tag};
@@ -36,7 +41,7 @@ type AesCbcPkcs7<Cipher> = Cbc<Cipher, Pkcs7>;
 
 type NonceLength = U16;
 
-type DigestOutput<Digest> = <Digest as FixedOutput>::OutputSize;
+type DigestOutput<Digest> = <Digest as OutputSizeUser>::OutputSize;
 
 /// AES in Cipher Block Chaining mode with PKCS #7 padding and HMAC
 ///
@@ -56,6 +61,7 @@ where
     const BLOCK_SIZE: usize = <<Cipher as BlockCipher>::BlockSize as Unsigned>::USIZE;
 }
 
+// Trait bounds for [`Digest`] taken from: https://github.com/RustCrypto/MACs/issues/114
 impl<Cipher, Digest, KeyLen, TagLen> AesCbc<Cipher, Digest, KeyLen, TagLen>
 where
     Cipher: BlockCipher
@@ -64,7 +70,13 @@ where
         + block_modes::cipher::NewBlockCipher
         + aes_crate::BlockEncrypt
         + aes_crate::BlockDecrypt,
-    Digest: Clone + Default + BlockInput + FixedOutput + Reset + Update,
+    Digest: Clone + CoreProxy + Default + FixedOutput + Reset,
+
+    Digest::Core: HashMarker + UpdateCore + FixedOutputCore + BufferKindUser<BufferKind = Eager> + Default + Clone,
+    <Digest::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+    Le<<Digest::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    <Digest::Core as OutputSizeUser>::OutputSize: Sub<TagLen, Output = TagLen>,
+
     KeyLen: ArrayLength<u8> + Shl<B1>,
     TagLen: ArrayLength<u8>,
     Double<KeyLen>: ArrayLength<u8>,
@@ -93,10 +105,10 @@ where
         let mut hmac: Hmac<Digest> =
             Hmac::new_from_slice(&key[..KeyLen::USIZE]).map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
 
-        hmac.update(associated_data);
-        hmac.update(nonce);
-        hmac.update(ciphertext);
-        hmac.update(&((associated_data.len() as u64) * 8).to_be_bytes());
+        Mac::update(&mut hmac, associated_data);
+        Mac::update(&mut hmac, nonce);
+        Mac::update(&mut hmac, ciphertext);
+        Mac::update(&mut hmac, &((associated_data.len() as u64) * 8).to_be_bytes());
 
         Ok(Split::split(hmac.finalize().into_bytes()).0)
     }
@@ -107,10 +119,15 @@ where
     }
 }
 
+// Trait bounds for [`Digest`] taken from: https://github.com/RustCrypto/MACs/issues/114
 impl<Cipher, Digest, KeyLen, TagLen> Aead for AesCbc<Cipher, Digest, KeyLen, TagLen>
 where
     Cipher: BlockCipher + NewBlockCipher + aes_crate::BlockEncrypt + aes_crate::BlockDecrypt,
-    Digest: Clone + Default + BlockInput + FixedOutput + Reset + Update,
+    Digest: CoreProxy + Clone + Default + FixedOutput + Reset,
+    Digest::Core: HashMarker + UpdateCore + FixedOutputCore + BufferKindUser<BufferKind = Eager> + Default + Clone,
+    <Digest::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
+    Le<<Digest::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
+    <Digest::Core as OutputSizeUser>::OutputSize: Sub<TagLen, Output = TagLen>,
     KeyLen: ArrayLength<u8> + Shl<B1>,
     TagLen: ArrayLength<u8>,
     Double<KeyLen>: ArrayLength<u8>,

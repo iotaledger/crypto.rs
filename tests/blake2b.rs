@@ -3,7 +3,7 @@
 
 #[cfg(feature = "blake2b")]
 mod test {
-    use blake2::VarBlake2b;
+    use blake2::Blake2bVar;
     use crypto::hashes::blake2b;
     use digest::{Digest, Update, VariableOutput};
     use serde::{Deserialize, Serialize};
@@ -21,16 +21,20 @@ mod test {
         out_160: Option<String>,
     }
 
-    fn variable_blake2b(input: &[u8], key: &str, size: usize) -> Vec<u8> {
-        let mut digest: VarBlake2b = if key.is_empty() {
-            VarBlake2b::new_keyed(&[], size)
+    fn variable_blake2b(input: &[u8], key: &str, size: usize) -> Option<Vec<u8>> {
+        let mut digest: Blake2bVar = if key.is_empty() {
+            Blake2bVar::new(size).unwrap()
         } else {
-            VarBlake2b::new_keyed(&hex::decode(key).unwrap(), size)
+            // We don't handle test cases with a key.
+            // Currently there does not seem to exist an easy solution to create
+            // [`Blake2bVar`] with a key. See:
+            // https://github.com/RustCrypto/hashes/issues/360
+            return None;
         };
         let mut output: Vec<u8> = vec![0; size];
         digest.update(input);
-        digest.finalize_variable(|bytes| output.copy_from_slice(bytes));
-        output
+        digest.finalize_variable(&mut output).unwrap();
+        Some(output)
     }
 
     #[test]
@@ -42,21 +46,27 @@ mod test {
         for vector in test_vectors.iter() {
             test_num += 1;
             let input = hex::decode(&vector.input).unwrap();
-            assert_eq!(
-                hex::decode(vector.out.clone()).unwrap(),
-                variable_blake2b(&input, &vector.key, 64),
-            );
-            if vector.key.is_empty() && vector.out_256.is_some() {
+            if let Some(test_vec) = variable_blake2b(&input, &vector.key, 64) {
                 assert_eq!(
-                    hex::decode(vector.out_256.as_ref().unwrap()).unwrap(),
-                    variable_blake2b(&input, &vector.key, 32),
+                    hex::decode(vector.out.clone()).unwrap(),
+                    test_vec,
                 );
             }
+            if vector.key.is_empty() && vector.out_256.is_some() {
+                if let Some(test_vec) = variable_blake2b(&input, &vector.key, 32) {
+                    assert_eq!(
+                        hex::decode(vector.out_256.as_ref().unwrap()).unwrap(),
+                        test_vec,
+                    );
+                }
+            }
             if vector.key.is_empty() && vector.out_160.is_some() {
-                assert_eq!(
-                    hex::decode(vector.out_160.as_ref().unwrap()).unwrap(),
-                    variable_blake2b(&input, &vector.key, 20),
-                );
+                if let Some(test_vec) = variable_blake2b(&input, &vector.key, 20) {
+                    assert_eq!(
+                        hex::decode(vector.out_160.as_ref().unwrap()).unwrap(),
+                        test_vec,
+                    );
+                }
             }
         }
         assert_eq!(512, test_num);
