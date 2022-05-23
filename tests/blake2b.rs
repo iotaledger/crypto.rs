@@ -47,25 +47,16 @@ mod test {
             test_num += 1;
             let input = hex::decode(&vector.input).unwrap();
             if let Some(test_vec) = variable_blake2b(&input, &vector.key, 64) {
-                assert_eq!(
-                    hex::decode(vector.out.clone()).unwrap(),
-                    test_vec,
-                );
+                assert_eq!(hex::decode(vector.out.clone()).unwrap(), test_vec,);
             }
             if vector.key.is_empty() && vector.out_256.is_some() {
                 if let Some(test_vec) = variable_blake2b(&input, &vector.key, 32) {
-                    assert_eq!(
-                        hex::decode(vector.out_256.as_ref().unwrap()).unwrap(),
-                        test_vec,
-                    );
+                    assert_eq!(hex::decode(vector.out_256.as_ref().unwrap()).unwrap(), test_vec,);
                 }
             }
             if vector.key.is_empty() && vector.out_160.is_some() {
                 if let Some(test_vec) = variable_blake2b(&input, &vector.key, 20) {
-                    assert_eq!(
-                        hex::decode(vector.out_160.as_ref().unwrap()).unwrap(),
-                        test_vec,
-                    );
+                    assert_eq!(hex::decode(vector.out_160.as_ref().unwrap()).unwrap(), test_vec,);
                 }
             }
         }

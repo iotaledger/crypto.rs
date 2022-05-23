@@ -3,9 +3,8 @@
 
 use blake2::{Blake2b, Digest};
 use digest::{
-    FixedOutput,
     generic_array::typenum::{U20, U32},
-    HashMarker, Reset, Update, Output, OutputSizeUser
+    FixedOutput, HashMarker, Output, OutputSizeUser, Reset, Update,
 };
 
 // blake2 has [`Blake2s256`] instance but not for 160 bits.
