@@ -6,10 +6,6 @@
 //! The documentation found here was copied from <https://github.com/iotaledger/iota.go/blob/legacy/curl/transform.go>.
 use super::{u256::U256, HASH_LENGTH};
 
-use lazy_static::lazy_static;
-
-use core::convert::TryInto;
-
 const NUM_ROUNDS: usize = 81;
 const ROTATION_OFFSET: usize = 364;
 const STATE_SIZE: usize = HASH_LENGTH * 3;
@@ -23,22 +19,32 @@ struct StateRotation {
     shift: u8,
 }
 
-lazy_static! {
-    static ref STATE_ROTATIONS: [StateRotation; NUM_ROUNDS] = {
-        let mut rotation = ROTATION_OFFSET;
+const STATE_ROTATIONS: [StateRotation; NUM_ROUNDS] = {
+    let mut rotation = ROTATION_OFFSET;
 
-        let mut state_rotations = [StateRotation { offset: 0, shift: 0 }; NUM_ROUNDS];
+    let mut state_rotations = [StateRotation { offset: 0, shift: 0 }; NUM_ROUNDS];
 
-        for state_rotation in &mut state_rotations {
-            state_rotation.offset = rotation / HASH_LENGTH;
-            // This is fine since `HASH_LENGTH <= u8::MAX`.
-            state_rotation.shift = (rotation % HASH_LENGTH).try_into().unwrap();
-            rotation = (rotation * ROTATION_OFFSET) % STATE_SIZE;
-        }
+    let mut i = 0;
 
-        state_rotations
-    };
-}
+    while i < NUM_ROUNDS {
+        state_rotations[i].offset = rotation / HASH_LENGTH;
+        state_rotations[i].shift = {
+            let shift = rotation % HASH_LENGTH;
+
+            if shift > 255 {
+                panic!("shift is too large");
+            } else {
+                shift as u8
+            }
+        };
+
+        rotation = (rotation * ROTATION_OFFSET) % STATE_SIZE;
+
+        i += 1;
+    }
+
+    state_rotations
+};
 
 /// Performs the Curl transformation.
 ///
