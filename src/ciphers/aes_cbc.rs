@@ -105,10 +105,10 @@ where
         let mut hmac: Hmac<Digest> =
             Hmac::new_from_slice(&key[..KeyLen::USIZE]).map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
 
-        Mac::update(&mut hmac, associated_data);
-        Mac::update(&mut hmac, nonce);
-        Mac::update(&mut hmac, ciphertext);
-        Mac::update(&mut hmac, &((associated_data.len() as u64) * 8).to_be_bytes());
+        hmac.update(associated_data);
+        hmac.update(nonce);
+        hmac.update(ciphertext);
+        hmac.update(&((associated_data.len() as u64) * 8).to_be_bytes());
 
         Ok(Split::split(hmac.finalize().into_bytes()).0)
     }

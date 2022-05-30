@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use blake2::{Blake2b, Digest};
+use blake2::Blake2b;
 use digest::{
     generic_array::typenum::{U20, U32},
     FixedOutput, HashMarker, Output, OutputSizeUser, Reset, Update,
@@ -15,7 +15,7 @@ pub struct Blake2b256(Blake2b<U32>);
 impl Blake2b256 {
     /// Creates a new [`Blake2b256`] instance.
     pub fn new() -> Self {
-        Self(Blake2b::new())
+        Self(Blake2b::default())
     }
 }
 
@@ -31,19 +31,19 @@ impl OutputSizeUser for Blake2b256 {
 
 impl FixedOutput for Blake2b256 {
     fn finalize_into(self, out: &mut Output<Self>) {
-        FixedOutput::finalize_into(self.0, out);
+        self.0.finalize_into(out);
     }
 }
 
 impl Reset for Blake2b256 {
     fn reset(&mut self) {
-        Reset::reset(&mut self.0);
+        self.0.reset();
     }
 }
 
 impl Update for Blake2b256 {
     fn update(&mut self, data: &[u8]) {
-        Update::update(&mut self.0, data);
+        self.0.update(data);
     }
 }
 
@@ -56,7 +56,7 @@ pub struct Blake2b160(Blake2b<U20>);
 impl Blake2b160 {
     /// Creates a new [`Blake2b160`] instance.
     pub fn new() -> Self {
-        Self(Blake2b::new())
+        Self(Blake2b::default())
     }
 }
 
@@ -72,19 +72,19 @@ impl OutputSizeUser for Blake2b160 {
 
 impl FixedOutput for Blake2b160 {
     fn finalize_into(self, out: &mut Output<Self>) {
-        FixedOutput::finalize_into(self.0, out);
+        self.0.finalize_into(out);
     }
 }
 
 impl Reset for Blake2b160 {
     fn reset(&mut self) {
-        Reset::reset(&mut self.0);
+        self.0.reset();
     }
 }
 
 impl Update for Blake2b160 {
     fn update(&mut self, data: &[u8]) {
-        Update::update(&mut self.0, data);
+        self.0.update(data);
     }
 }
 
