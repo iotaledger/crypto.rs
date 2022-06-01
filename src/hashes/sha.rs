@@ -3,14 +3,14 @@
 
 #![allow(non_snake_case)]
 
-use digest::{generic_array::typenum::Unsigned, Digest};
+use digest::{generic_array::typenum::Unsigned, Digest, OutputSizeUser};
 
 #[doc(inline)]
 pub use sha2::{Sha256, Sha384, Sha512};
 
-pub const SHA256_LEN: usize = <Sha256 as Digest>::OutputSize::USIZE;
-pub const SHA384_LEN: usize = <Sha384 as Digest>::OutputSize::USIZE;
-pub const SHA512_LEN: usize = <Sha512 as Digest>::OutputSize::USIZE;
+pub const SHA256_LEN: usize = <Sha256 as OutputSizeUser>::OutputSize::USIZE;
+pub const SHA384_LEN: usize = <Sha384 as OutputSizeUser>::OutputSize::USIZE;
+pub const SHA512_LEN: usize = <Sha512 as OutputSizeUser>::OutputSize::USIZE;
 
 pub fn SHA256(msg: &[u8], digest: &mut [u8; SHA256_LEN]) {
     digest.copy_from_slice(&Sha256::digest(msg))
