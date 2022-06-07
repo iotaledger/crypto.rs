@@ -3,12 +3,12 @@
 
 #![allow(clippy::from_over_into)]
 
+extern crate alloc;
+
+pub use super::bip44::*;
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
-use core::{convert::TryFrom, default::Default};
-
-use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
+use core::convert::TryFrom;
 
 use alloc::vec::Vec;
 
@@ -16,7 +16,7 @@ use alloc::vec::Vec;
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug)]
 pub enum Curve {
     Ed25519,
 }
@@ -57,7 +57,7 @@ impl Seed {
 
 pub type ChainCode = [u8; 32];
 
-#[derive(Clone, Copy, Debug, Zeroize)]
+#[derive(Copy, Clone, Debug)]
 pub struct Key([u8; 64]);
 
 impl Key {
@@ -74,7 +74,7 @@ impl Key {
     }
 
     pub fn child_key(&self, segment: &Segment) -> crate::Result<Key> {
-        if !segment.hardened {
+        if !segment.hardened() {
             return Err(crate::Error::InvalidArgumentError {
                 alg: "SLIP10",
                 expected: "hardened key",
@@ -83,7 +83,7 @@ impl Key {
 
         let mut data = [0u8; 1 + 32 + 4];
         data[1..1 + 32].copy_from_slice(&self.0[..32]); // ser256(k_par) = ser256(parse256(il)) = il
-        data[1 + 32..1 + 32 + 4].copy_from_slice(&segment.bs); // ser32(i)
+        data[1 + 32..1 + 32 + 4].copy_from_slice(&segment.bs()); // ser32(i)
 
         let mut i = [0; 64];
         HMAC_SHA512(&data, &self.0[32..], &mut i);
@@ -115,70 +115,6 @@ impl TryFrom<&[u8]> for Key {
         let mut ds = [0; 64];
         ds.copy_from_slice(bs);
         Ok(Self(ds))
-    }
-}
-
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct Segment {
-    hardened: bool,
-    bs: [u8; 4],
-}
-
-impl Segment {
-    pub fn from_u32(i: u32) -> Self {
-        Self {
-            hardened: i >= Self::HARDEN_MASK,
-            bs: i.to_be_bytes(), // ser32(i)
-        }
-    }
-
-    pub fn hardened(&self) -> bool {
-        self.hardened
-    }
-
-    pub fn bs(&self) -> [u8; 4] {
-        self.bs
-    }
-
-    pub const HARDEN_MASK: u32 = 1 << 31;
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct Chain(Vec<Segment>);
-
-impl Chain {
-    pub fn empty() -> Self {
-        Self(Vec::new())
-    }
-
-    pub fn from_u32<I: IntoIterator<Item = u32>>(is: I) -> Self {
-        Self(is.into_iter().map(Segment::from_u32).collect())
-    }
-
-    pub fn from_u32_hardened<I: IntoIterator<Item = u32>>(is: I) -> Self {
-        Self::from_u32(is.into_iter().map(|i| Segment::HARDEN_MASK | i))
-    }
-
-    pub fn join<O: AsRef<Chain>>(&self, o: O) -> Self {
-        let mut ss = self.0.clone();
-        ss.extend_from_slice(&o.as_ref().0);
-        Self(ss)
-    }
-
-    pub fn segments(&self) -> Vec<Segment> {
-        self.0.clone()
-    }
-}
-
-impl Default for Chain {
-    fn default() -> Self {
-        Chain::empty()
-    }
-}
-
-impl AsRef<Chain> for Chain {
-    fn as_ref(&self) -> &Self {
-        self
     }
 }
 

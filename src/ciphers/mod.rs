@@ -9,13 +9,9 @@ mod macros;
 #[cfg_attr(docsrs, doc(cfg(feature = "chacha")))]
 pub mod chacha;
 
-#[cfg(feature = "aes-gcm")]
-#[cfg_attr(docsrs, doc(cfg(feature = "aes-gcm")))]
-pub mod aes_gcm;
-
-#[cfg(feature = "aes-cbc")]
-#[cfg_attr(docsrs, doc(cfg(feature = "aes-cbc")))]
-pub mod aes_cbc;
+#[cfg(feature = "aes")]
+#[cfg_attr(docsrs, doc(cfg(feature = "aes")))]
+pub mod aes;
 
 #[cfg(feature = "aes-kw")]
 #[cfg_attr(docsrs, doc(cfg(feature = "aes-kw")))]
