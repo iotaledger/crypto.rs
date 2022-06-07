@@ -124,6 +124,7 @@ fn test_eq_ord() -> crypto::Result<()> {
     assert!(pk == pk_eq);
     assert!(pk != pk_diff);
     assert!(pk > pk_diff);
+    assert!(!(pk > pk_eq));
 
     Ok(())
 }

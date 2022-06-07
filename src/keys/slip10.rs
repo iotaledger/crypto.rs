@@ -3,12 +3,13 @@
 
 #![allow(clippy::from_over_into)]
 
+extern crate alloc;
+
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
 use core::{convert::TryFrom, default::Default};
 
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
 
 use alloc::vec::Vec;
 
@@ -16,7 +17,7 @@ use alloc::vec::Vec;
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug)]
 pub enum Curve {
     Ed25519,
 }
@@ -57,7 +58,7 @@ impl Seed {
 
 pub type ChainCode = [u8; 32];
 
-#[derive(Clone, Copy, Debug, Zeroize)]
+#[derive(Copy, Clone, Debug)]
 pub struct Key([u8; 64]);
 
 impl Key {
@@ -118,7 +119,7 @@ impl TryFrom<&[u8]> for Key {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Segment {
     hardened: bool,
     bs: [u8; 4],
@@ -143,7 +144,7 @@ impl Segment {
     pub const HARDEN_MASK: u32 = 1 << 31;
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Chain(Vec<Segment>);
 
 impl Chain {

@@ -9,6 +9,7 @@ type Mnemonic = str;
 type Passphrase = str;
 type Seed = [u8; 64];
 
+extern crate alloc;
 use alloc::string::{String, ToString};
 
 use unicode_normalization::UnicodeNormalization;

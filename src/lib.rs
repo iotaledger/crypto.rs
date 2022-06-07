@@ -17,6 +17,7 @@ pub mod utils;
 
 pub use self::error::{Error, Result};
 
+#[cfg(test)]
 #[macro_use]
 #[allow(unused_imports)]
 extern crate alloc;

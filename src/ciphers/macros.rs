@@ -1,7 +1,6 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#[allow(unused_macros)]
 macro_rules! impl_aead {
     ($impl:ident, $name:expr, $key_len:ident, $nonce_len:ident, $tag_len:ident) => {
         impl $crate::ciphers::traits::Aead for $impl {
