@@ -20,6 +20,7 @@ exclude = [ "/tests", "/bindings", "/.github", "/.changes" ]
 all-features = true
 rustdoc-args = [ "--cfg", "docsrs" ]
 
+
 [lib]
 name = "crypto"
 
