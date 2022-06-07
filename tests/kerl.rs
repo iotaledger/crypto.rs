@@ -36,7 +36,7 @@ fn digest_into(input: &str, output: &str) {
     let output_len = expected_hash.as_trits().len();
     let mut calculated_hash = TritBuf::<T1B1Buf>::zeros(output_len);
 
-    kerl.digest_into(input_trit_buf.as_slice(), &mut calculated_hash.as_slice_mut())
+    kerl.digest_into(input_trit_buf.as_slice(), calculated_hash.as_slice_mut())
         .unwrap();
 
     let calculated_hash = calculated_hash.encode::<T3B1Buf>();

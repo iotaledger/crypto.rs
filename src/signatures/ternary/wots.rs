@@ -4,8 +4,6 @@
 //! Winternitz One Time Signature scheme.
 //! https://eprint.iacr.org/2011/191.pdf.
 
-extern crate alloc;
-
 use crate::{
     hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::wots::WotsSecurityLevel,
