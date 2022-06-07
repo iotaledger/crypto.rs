@@ -139,6 +139,3 @@ Apache 2.0
 [BIP39-TEST]: https://github.com/bip32JP/bip32JP.github.io/blob/master/test_JP_BIP39.json
 
 [SLIP10-RFC]: https://github.com/satoshilabs/slips/blob/master/slip-0010.md
-
-
-[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Fiotaledger%2Fcrypto.rs.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Fiotaledger%2Fcrypto.rs?ref=badge_large)
