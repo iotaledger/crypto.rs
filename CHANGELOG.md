@@ -1,5 +1,48 @@
 # Changelog
 
+## \[0.11.0]
+
+- Add AES-CBC algorithms (`Aes128CbcHmac256`, `Aes192CbcHmac384`, `Aes256CbcHmac512`).
+  - [8454c9b](https://www.github.com/iotaledger/crypto.rs/commit/8454c9b8279bd40ef4e5b20b8dad496b21a269fc) Add AES-CBC ([#41](https://www.github.com/iotaledger/crypto.rs/pull/41)) on 2022-05-12
+
+## \[0.10.0]
+
+- Bump version minor to fix https://github.com/iotaledger/bee/issues/1360
+  - [95662a7](https://www.github.com/iotaledger/crypto.rs/commit/95662a79448907cc9bf572595fc178b4fbc61531) Bump version minor ([#134](https://www.github.com/iotaledger/crypto.rs/pull/134)) on 2022-05-04
+
+## \[0.9.2]
+
+- Bump version of `bee-ternary` to `v0.6.0`
+  - [bbb25e4](https://www.github.com/iotaledger/crypto.rs/commit/bbb25e45fd8482ef30d1d913622a875251c95f48) Add change file ([#131](https://www.github.com/iotaledger/crypto.rs/pull/131)) on 2022-04-25
+
+## \[0.9.1]
+
+- Make `iota-crypto` `no_std`.
+  - [6b7b524](https://www.github.com/iotaledger/crypto.rs/commit/6b7b524bf90a08af40752b5cecf3d04ac0f30098) Make curl_p module no_std ([#118](https://www.github.com/iotaledger/crypto.rs/pull/118)) on 2021-11-19
+
+## \[0.9.0]
+
+- Replace Curl implementation with an unrolled version for better performance.
+  Add a batched version of Curl.
+  - [18ab209](https://www.github.com/iotaledger/crypto.rs/commit/18ab209cd6c842b310ff614af840ebf3f1c70022) Add unrolled curl and batched curl ([#116](https://www.github.com/iotaledger/crypto.rs/pull/116)) on 2021-11-19
+
+## \[0.8.0]
+
+- Support for the Blake2b hashing function to 160 bits
+
+- Wrapper around VarBlake2b for 160 bits hash
+
+- New tests for 160 bits copied from blake2b-256
+
+- Generate new test vector created with b2sum using the inputs of blake2b-256 test vector
+
+- Update list of supported algorithms
+
+- [dd055a4](https://www.github.com/iotaledger/crypto.rs/commit/dd055a4a1df8866228334086c8f13d1a05096bce) Add Blake2b-160 ([#111](https://www.github.com/iotaledger/crypto.rs/pull/111)) on 2021-10-27
+
+- Update bee-ternary requirement from 0.4.2-alpha to 0.5.0
+  - [5f3c9d2](https://www.github.com/iotaledger/crypto.rs/commit/5f3c9d2770760eaaf32880322f45d57518d24fd0) Add .changes file for bee-ternary bump ([#115](https://www.github.com/iotaledger/crypto.rs/pull/115)) on 2021-11-11
+
 ## \[0.7.0]
 
 - - Enabled to access the `Segment` vector in `Chain`.

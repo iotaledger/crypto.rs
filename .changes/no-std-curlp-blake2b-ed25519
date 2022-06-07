@@ -1,0 +1,5 @@
+---
+"iota-crypto": minor
+---
+
+Make `ed25519`, `blake2b` and `curl-p` features `no_std` compatible.
