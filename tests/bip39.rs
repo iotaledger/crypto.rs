@@ -5,6 +5,9 @@
 
 mod utils;
 
+extern crate alloc;
+
+// use alloc::vec::Vec;
 use rand::{rngs::OsRng, RngCore};
 use unicode_normalization::UnicodeNormalization;
 
