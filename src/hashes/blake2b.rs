@@ -4,7 +4,7 @@
 use blake2::Blake2b;
 use digest::{
     generic_array::typenum::{U20, U32},
-    FixedOutput, HashMarker, Output, OutputSizeUser, Reset, Update,
+    FixedOutput, FixedOutputReset, HashMarker, Output, OutputSizeUser, Reset, Update,
 };
 
 // blake2 has [`Blake2s256`] instance but not for 160 bits.
@@ -29,15 +29,21 @@ impl OutputSizeUser for Blake2b256 {
     type OutputSize = U32;
 }
 
+impl Reset for Blake2b256 {
+    fn reset(&mut self) {
+        self.0.reset();
+    }
+}
+
 impl FixedOutput for Blake2b256 {
     fn finalize_into(self, out: &mut Output<Self>) {
         self.0.finalize_into(out);
     }
 }
 
-impl Reset for Blake2b256 {
-    fn reset(&mut self) {
-        self.0.reset();
+impl FixedOutputReset for Blake2b256 {
+    fn finalize_into_reset(&mut self, out: &mut Output<Self>) {
+        self.0.finalize_into_reset(out);
     }
 }
 
@@ -70,15 +76,21 @@ impl OutputSizeUser for Blake2b160 {
     type OutputSize = U20;
 }
 
+impl Reset for Blake2b160 {
+    fn reset(&mut self) {
+        self.0.reset();
+    }
+}
+
 impl FixedOutput for Blake2b160 {
     fn finalize_into(self, out: &mut Output<Self>) {
         self.0.finalize_into(out);
     }
 }
 
-impl Reset for Blake2b160 {
-    fn reset(&mut self) {
-        self.0.reset();
+impl FixedOutputReset for Blake2b160 {
+    fn finalize_into_reset(&mut self, out: &mut Output<Self>) {
+        self.0.finalize_into_reset(out);
     }
 }
 
