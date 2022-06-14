@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.12.1]
+
+- Impl missing `FixedOutputReset` for `Blake2b256` and `Blake2b160`.
+  - [6560139](https://www.github.com/iotaledger/crypto.rs/commit/6560139fad4b8a50cf2f6b5285366468466406ff) Impl missing `FixedOutputReset` for `Blake2b256` and `Blake2b160` ([#148](https://www.github.com/iotaledger/crypto.rs/pull/148)) on 2022-06-14
+
 ## \[0.12.0]
 
 - Derive more traits for `Curve`, `Key`, `Segment` and `Chain`.
