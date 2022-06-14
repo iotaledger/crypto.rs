@@ -1,5 +1,26 @@
 # Changelog
 
+## \[0.12.0]
+
+- Derive more traits for `Curve`, `Key`, `Segment` and `Chain`.
+  - [c61d292](https://www.github.com/iotaledger/crypto.rs/commit/c61d29253930105d0d589e54829b639427061e81) Derive traits for Curve, Key, Segment and Chain ([#139](https://www.github.com/iotaledger/crypto.rs/pull/139)) on 2022-05-23
+
+- Update to digest-0.10
+
+- digest: 0.9 -> 0.10
+
+- blake2: 0.9 -> 0.10
+
+- hmac: 0.11 -> 0.12
+
+- pbkdf2: 0.8 -> 0.11
+
+- sha2: 0.9 -> 0.10
+
+- sha3: 0.9 -> 0.10
+
+- [1e419b2](https://www.github.com/iotaledger/crypto.rs/commit/1e419b2a9f6299b873d04646c911c79c3537040b) Upgrade digest to 0.10 and dependent packages ([#142](https://www.github.com/iotaledger/crypto.rs/pull/142)) on 2022-06-01
+
 ## \[0.11.0]
 
 - Add AES-CBC algorithms (`Aes128CbcHmac256`, `Aes192CbcHmac384`, `Aes256CbcHmac512`).
