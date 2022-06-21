@@ -7,6 +7,11 @@ use crypto::hashes::ternary::curl_p::CurlP;
 
 use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
 
+use std::{
+    fs::File,
+    io::{prelude::*, BufReader},
+};
+
 fn digest(input: &str, output: &str) {
     let mut curl = CurlP::new();
 
@@ -26,7 +31,7 @@ fn digest_into(input: &str, output: &str) {
     let output_len = expected_hash.as_trits().len();
     let mut calculated_hash = TritBuf::<T1B1Buf>::zeros(output_len);
 
-    curl.digest_into(input_trit_buf.as_slice(), &mut calculated_hash.as_slice_mut());
+    curl.digest_into(input_trit_buf.as_slice(), calculated_hash.as_slice_mut());
 
     let calculated_hash = calculated_hash.encode::<T3B1Buf>();
 
@@ -86,5 +91,32 @@ fn curl_p_input_6561_output_243() {
 
     for test in tests.iter() {
         digest_into(test.0, test.1);
+    }
+}
+
+#[test]
+fn curl_p_input_8019_output_243() {
+    let tests = include!("fixtures/curl_p/input_8019_output_243.rs");
+
+    for test in tests.iter() {
+        digest_into(test.0, test.1);
+    }
+}
+
+#[test]
+fn curl_p_iota_go_json() {
+    let mut reader = BufReader::new(File::open("tests/fixtures/curl_p/curlp81-iota-go.json").unwrap());
+    let mut data = String::new();
+
+    reader.read_to_string(&mut data).unwrap();
+
+    let json: serde_json::Value = serde_json::from_str(&data).unwrap();
+    let cases = json.as_array().unwrap();
+
+    for case in cases.iter() {
+        let object = case.as_object().unwrap();
+        let input = object["in"].as_str().unwrap();
+        let output = object["hash"].as_str().unwrap();
+        digest_into(input, output);
     }
 }
