@@ -20,3 +20,5 @@ pub mod slip10;
 #[cfg(feature = "x25519")]
 #[cfg_attr(docsrs, doc(cfg(feature = "x25519")))]
 pub mod x25519;
+
+pub mod bip44;

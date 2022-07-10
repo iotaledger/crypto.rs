@@ -7,8 +7,8 @@ use core::default::Default;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Segment {
-    hardened: bool,
-    i: u32,
+    pub hardened: bool,
+    pub i: u32,
 }
 
 impl Segment {
@@ -35,7 +35,7 @@ impl Segment {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Chain(pub(crate) Vec<Segment>);
+pub struct Chain(pub Vec<Segment>);
 
 impl Chain {
     pub fn empty() -> Self {

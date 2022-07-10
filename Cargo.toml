@@ -69,7 +69,7 @@ pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
-slip10 = [ "hmac", "sha", "ed25519", "random", "serde", "zeroize" ]
+slip10 = [ "hmac", "sha", "ed25519", "random", "serde", "zeroize", "secp256k1" ]
 cipher = [ "aead", "generic-array" ]
 secp256k1 = [ "libsecp256k1", "hmac", "sha", "serde" ]
 

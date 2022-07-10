@@ -33,8 +33,8 @@ pub struct RecoveryId(libsecp256k1::RecoveryId);
 
 /// ExtendedPrivateKey is used for child key derivation.
 pub struct ExtendedPrivateKey {
-    secret_key: SecretKey,
-    chain_code: Vec<u8>,
+    pub secret_key: SecretKey,
+    pub chain_code: Vec<u8>,
 }
 
 impl ExtendedPrivateKey {
