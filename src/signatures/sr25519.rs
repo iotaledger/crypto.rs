@@ -146,6 +146,21 @@ impl PublicKey {
 }
 
 impl KeyPair {
+    #[cfg(feature = "random")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
+    pub fn generate() -> crate::Result<Self> {
+        let mut bs = [0u8; 32];
+        crate::utils::rand::fill(&mut bs)?;
+        Ok(Self::from_seed(&bs))
+    }
+
+    #[cfg(feature = "rand")]
+    pub fn generate_with<R: rand::CryptoRng + rand::RngCore>(rng: &mut R) -> Self {
+        let mut bs = [0_u8; 32];
+        rng.fill_bytes(&mut bs);
+        Self::from_seed(&bs)
+    }
+
     /// Returns the KeyPair from the English BIP39 mnemonic or seed, or an error if it’s invalid.
     pub fn from_string(s: &str, password: Option<&str>) -> Result<Self> {
         let pair = Pair::from_string(s, password).map_err(|_| Error::InvalidArgumentError {

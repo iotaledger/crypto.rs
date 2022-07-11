@@ -96,6 +96,21 @@ impl Seed {
 }
 
 impl SecretKey {
+    #[cfg(feature = "random")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
+    pub fn generate() -> crate::Result<Self> {
+        let mut bs = [0u8; SECRET_KEY_LENGTH];
+        crate::utils::rand::fill(&mut bs)?;
+        Self::from_bytes(&bs)
+    }
+
+    #[cfg(feature = "rand")]
+    pub fn generate_with<R: rand::CryptoRng + rand::RngCore>(rng: &mut R) -> crate::Result<Self> {
+        let mut bs = [0_u8; SECRET_KEY_LENGTH];
+        rng.fill_bytes(&mut bs);
+        Self::from_bytes(&bs)
+    }
+
     pub fn inner(&self) -> &libsecp256k1::SecretKey {
         &self.0
     }
