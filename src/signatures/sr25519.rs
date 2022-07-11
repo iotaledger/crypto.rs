@@ -195,3 +195,9 @@ impl KeyPair {
         Self(Pair::from_seed_slice(seed).expect("invalid seed length"))
     }
 }
+
+impl From<PublicKey> for [u8; 32] {
+    fn from(x: PublicKey) -> [u8; 32] {
+        <[u8; 32]>::from(x.0)
+    }
+}
