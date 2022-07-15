@@ -65,6 +65,7 @@ fn test_x25519_rfc7748() -> crypto::Result<()> {
 #[test]
 fn test_x25519_from_ed25519() -> crypto::Result<()> {
     use core::convert::TryInto;
+
     use crypto::signatures::ed25519;
 
     let sk1 = ed25519::SecretKey::from_bytes([1_u8; 32]);

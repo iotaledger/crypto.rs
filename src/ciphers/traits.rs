@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::num::NonZeroUsize;
+
 use generic_array::{typenum::Unsigned, ArrayLength, GenericArray};
 
 pub mod consts {
@@ -37,9 +38,23 @@ pub type Tag<T> = GenericArray<u8, <T as Aead>::TagLength>;
 /// let key: Key<Aes256Gcm> = Default::default();
 /// let nonce: Nonce<Aes256Gcm> = Aes256Gcm::random_nonce()?;
 ///
-/// Aes256Gcm::try_encrypt(&key, &nonce, associated_data, plaintext, &mut encrypted, &mut tag)?;
+/// Aes256Gcm::try_encrypt(
+///     &key,
+///     &nonce,
+///     associated_data,
+///     plaintext,
+///     &mut encrypted,
+///     &mut tag,
+/// )?;
 ///
-/// Aes256Gcm::try_decrypt(&key, &nonce, associated_data, &mut decrypted, &encrypted, &tag)?;
+/// Aes256Gcm::try_decrypt(
+///     &key,
+///     &nonce,
+///     associated_data,
+///     &mut decrypted,
+///     &encrypted,
+///     &tag,
+/// )?;
 ///
 /// assert_eq!(decrypted, plaintext);
 ///

@@ -9,10 +9,9 @@
 // scalar/u  secret/public
 // X25519    Curve25519
 
-use core::convert::TryInto;
-
 #[cfg(feature = "ed25519")]
 use core::convert::TryFrom;
+use core::convert::TryInto;
 
 #[cfg(feature = "ed25519")]
 use crate::signatures::ed25519;

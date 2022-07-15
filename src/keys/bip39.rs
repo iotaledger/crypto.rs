@@ -27,8 +27,9 @@ pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) {
 }
 
 pub mod wordlist {
-    use super::*;
     use alloc::vec::Vec;
+
+    use super::*;
 
     pub struct Wordlist<'a> {
         pub words: &'a [&'a str; 2048],

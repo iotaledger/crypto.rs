@@ -3,14 +3,13 @@
 
 #![cfg(feature = "curl-p")]
 
-use crypto::hashes::ternary::curl_p::CurlP;
-
-use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
-
 use std::{
     fs::File,
     io::{prelude::*, BufReader},
 };
+
+use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
+use crypto::hashes::ternary::curl_p::CurlP;
 
 fn digest(input: &str, output: &str) {
     let mut curl = CurlP::new();

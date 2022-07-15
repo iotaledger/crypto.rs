@@ -1,10 +1,11 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::{convert::TryInto as _, marker::PhantomData, mem};
+
 use aes_crate::{
     cipher::generic_array::typenum::Unsigned as _, Aes128, Aes192, Aes256, BlockDecrypt, BlockEncrypt, NewBlockCipher,
 };
-use core::{convert::TryInto as _, marker::PhantomData, mem};
 
 use crate::{Error, Result};
 

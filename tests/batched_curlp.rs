@@ -3,19 +3,18 @@
 
 #![cfg(feature = "curl-p")]
 
-use crypto::hashes::ternary::{
-    curl_p::{CurlPBatchHasher, BATCH_SIZE},
-    HASH_LENGTH,
+use std::{
+    fs::File,
+    io::{prelude::*, BufReader},
 };
 
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
     Btrit, T1B1Buf, T5B1Buf, TryteBuf, T1B1, T5B1,
 };
-
-use std::{
-    fs::File,
-    io::{prelude::*, BufReader},
+use crypto::hashes::ternary::{
+    curl_p::{CurlPBatchHasher, BATCH_SIZE},
+    HASH_LENGTH,
 };
 
 /// Repeats the input and hashes it `BATCH_SIZE` times.

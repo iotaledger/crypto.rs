@@ -4,6 +4,17 @@
 //! Winternitz One Time Signature scheme.
 //! https://eprint.iacr.org/2011/191.pdf.
 
+use alloc::string::String;
+use core::{
+    convert::TryFrom,
+    fmt::{self, Display, Formatter},
+    marker::PhantomData,
+};
+
+use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
+use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
+use zeroize::Zeroize;
+
 use crate::{
     hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::wots::WotsSecurityLevel,
@@ -11,18 +22,6 @@ use crate::{
         PrivateKey, PublicKey, RecoverableSignature, Signature, MESSAGE_FRAGMENT_LENGTH_TRITS,
         MESSAGE_FRAGMENT_LENGTH_TRYTES, NUM_MESSAGE_FRAGMENTS, SIGNATURE_FRAGMENT_LENGTH,
     },
-};
-
-use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
-use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
-
-use zeroize::Zeroize;
-
-use alloc::string::String;
-use core::{
-    convert::TryFrom,
-    fmt::{self, Display, Formatter},
-    marker::PhantomData,
 };
 
 /// Errors occuring during WOTS operations.

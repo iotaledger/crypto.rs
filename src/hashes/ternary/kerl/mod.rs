@@ -5,10 +5,8 @@ use crate::hashes::ternary::{Sponge, HASH_LENGTH};
 
 pub mod bigint;
 
-use bigint::{binary_representation::U8Repr, endianness::BigEndian, error::Error as ConversionError, I384, T242, T243};
-
 use bee_ternary::{Btrit, Trits, T1B1};
-
+use bigint::{binary_representation::U8Repr, endianness::BigEndian, error::Error as ConversionError, I384, T242, T243};
 use tiny_keccak::{Hasher, Keccak};
 
 /// State of the ternary cryptographic function `Kerl`.

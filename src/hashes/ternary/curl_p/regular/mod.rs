@@ -4,11 +4,10 @@
 mod transform;
 mod u256;
 
+use bee_ternary::{Btrit, TritBuf, Trits};
 use u256::U256;
 
 use crate::hashes::ternary::{curl_p::SpongeDirection, HASH_LENGTH};
-
-use bee_ternary::{Btrit, TritBuf, Trits};
 
 /// State of the ternary cryptographic function `CurlP`.
 pub struct CurlP {

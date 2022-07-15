@@ -4,17 +4,16 @@
 #![cfg(feature = "kerl_deprecated_do_not_use")]
 #![allow(deprecated)]
 
-use crypto::{
-    hashes::ternary::{kerl::Kerl, Sponge},
-    keys::ternary::seed::{Error as SeedError, Seed},
-};
-
-use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
-
 use std::{
     fs::File,
     io::{prelude::*, BufReader},
     str::FromStr,
+};
+
+use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
+use crypto::{
+    hashes::ternary::{kerl::Kerl, Sponge},
+    keys::ternary::seed::{Error as SeedError, Seed},
 };
 
 fn digest(input: &str, output: &str) {
