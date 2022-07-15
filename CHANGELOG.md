@@ -1,5 +1,12 @@
 # Changelog
 
+## \[0.13.0]
+
+- Bump `bee-ternary` to `1.0.0-alpha.1`
+  - [bbb25e4](https://www.github.com/iotaledger/crypto.rs/commit/bbb25e45fd8482ef30d1d913622a875251c95f48) Add change file ([#131](https://www.github.com/iotaledger/crypto.rs/pull/131)) on 2022-04-25
+  - [864f3a0](https://www.github.com/iotaledger/crypto.rs/commit/864f3a03f1efa362b325663627060d78dae881b4) apply version updates ([#132](https://www.github.com/iotaledger/crypto.rs/pull/132)) on 2022-04-25
+  - [85361aa](https://www.github.com/iotaledger/crypto.rs/commit/85361aa7248f1febe764bf9721b14dd8c90b29bd) Update format and bump bee-ternary ([#150](https://www.github.com/iotaledger/crypto.rs/pull/150)) on 2022-07-15
+
 ## \[0.12.1]
 
 - Impl missing `FixedOutputReset` for `Blake2b256` and `Blake2b160`.
