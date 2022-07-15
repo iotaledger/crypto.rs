@@ -1,6 +1,10 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::marker::PhantomData;
+
+use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
+
 use crate::{
     hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::{
@@ -9,10 +13,6 @@ use crate::{
     },
     signatures::ternary::{wots::WotsPrivateKey, SIGNATURE_FRAGMENT_LENGTH},
 };
-
-use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
-
-use core::marker::PhantomData;
 
 /// Sponge-based Winternitz One Time Signature private key generator builder.
 #[derive(Default)]

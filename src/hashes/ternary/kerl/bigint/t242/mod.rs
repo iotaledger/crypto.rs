@@ -11,6 +11,12 @@
 
 mod constants;
 
+use core::{
+    cmp::Ordering,
+    convert::{TryFrom, TryInto},
+};
+
+use bee_ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit};
 pub use constants::{
     BTRIT_0, BTRIT_1, BTRIT_MAX, BTRIT_MIN, BTRIT_NEG_1, UTRIT_0, UTRIT_1, UTRIT_2, UTRIT_U384_MAX, UTRIT_U384_MAX_HALF,
 };
@@ -20,13 +26,6 @@ use crate::hashes::ternary::kerl::bigint::{
     endianness::{BigEndian, LittleEndian},
     error::Error,
     u384, I384, T243, U384,
-};
-
-use bee_ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit};
-
-use core::{
-    cmp::Ordering,
-    convert::{TryFrom, TryInto},
 };
 
 def_and_impl_ternary!(T242, 242);

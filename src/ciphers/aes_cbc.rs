@@ -1,14 +1,14 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use aes_crate::{Aes128, Aes192, Aes256, BlockCipher, NewBlockCipher};
-use block_modes::{block_padding::Pkcs7, BlockMode, Cbc};
-
 use core::{
     marker::PhantomData,
     num::NonZeroUsize,
     ops::{Shl, Sub},
 };
+
+use aes_crate::{Aes128, Aes192, Aes256, BlockCipher, NewBlockCipher};
+use block_modes::{block_padding::Pkcs7, BlockMode, Cbc};
 use generic_array::{
     sequence::Split,
     typenum::{Double, Unsigned, B1, U16, U24, U32},

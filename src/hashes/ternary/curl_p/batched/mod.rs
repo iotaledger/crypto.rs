@@ -6,17 +6,16 @@
 mod bct;
 mod bct_curlp;
 
-use crate::hashes::ternary::HASH_LENGTH;
+use alloc::vec::Vec;
 
 use bct::{BcTrit, BcTritArr, BcTritBuf};
 use bct_curlp::BctCurlP;
-
 use bee_ternary::{
     raw::{RawEncoding, RawEncodingBuf},
     Btrit, TritBuf,
 };
 
-use alloc::vec::Vec;
+use crate::hashes::ternary::HASH_LENGTH;
 
 /// The number of inputs that can be processed in a single batch.
 pub const BATCH_SIZE: usize = 8 * core::mem::size_of::<usize>();

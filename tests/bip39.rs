@@ -5,10 +5,9 @@
 
 mod utils;
 
+use crypto::keys::bip39::*;
 use rand::{rngs::OsRng, RngCore};
 use unicode_normalization::UnicodeNormalization;
-
-use crypto::keys::bip39::*;
 
 struct TestVector {
     wordlist: wordlist::Wordlist<'static>,

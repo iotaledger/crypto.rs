@@ -4,7 +4,6 @@
 #![allow(non_snake_case)]
 
 use digest::{generic_array::typenum::Unsigned, Digest, OutputSizeUser};
-
 #[doc(inline)]
 pub use sha2::{Sha256, Sha384, Sha512};
 

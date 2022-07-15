@@ -9,9 +9,9 @@ pub mod seed;
 #[cfg_attr(not(test), deprecated)]
 pub mod wots;
 
-use crate::{keys::ternary::seed::Seed, signatures::ternary::PrivateKey};
-
 use bee_ternary::{Trits, T1B1};
+
+use crate::{keys::ternary::seed::Seed, signatures::ternary::PrivateKey};
 
 /// Generates a ternary private key.
 pub trait PrivateKeyGenerator {

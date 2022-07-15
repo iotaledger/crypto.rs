@@ -1,19 +1,17 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::convert::TryFrom;
+
+use bee_ternary::Utrit;
+use lazy_static::lazy_static;
+
+use super::U384;
 use crate::hashes::ternary::kerl::bigint::{
     binary_representation::{U32Repr, U8Repr},
     endianness::{BigEndian, LittleEndian},
     T242, T243,
 };
-
-use super::U384;
-
-use bee_ternary::Utrit;
-
-use lazy_static::lazy_static;
-
-use core::convert::TryFrom;
 
 lazy_static! {
     /// U384 big-endian `u32` represented half of maximum value.

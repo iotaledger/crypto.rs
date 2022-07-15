@@ -5,6 +5,13 @@
 #![allow(deprecated)]
 #![allow(clippy::needless_range_loop)]
 
+use std::{
+    fs::File,
+    io::{prelude::*, BufReader},
+    str::FromStr,
+};
+
+use bee_ternary::{T1B1Buf, TryteBuf};
 use crypto::{
     hashes::ternary::{kerl::Kerl, Sponge},
     keys::ternary::{
@@ -19,14 +26,6 @@ use crypto::{
         wots::{normalize, Error, WotsPrivateKey, WotsPublicKey, WotsSignature},
         PrivateKey, PublicKey, RecoverableSignature, Signature,
     },
-};
-
-use bee_ternary::{T1B1Buf, TryteBuf};
-
-use std::{
-    fs::File,
-    io::{prelude::*, BufReader},
-    str::FromStr,
 };
 
 #[test]

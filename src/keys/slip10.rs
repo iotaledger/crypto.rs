@@ -3,14 +3,13 @@
 
 #![allow(clippy::from_over_into)]
 
-use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
-
+use alloc::vec::Vec;
 use core::{convert::TryFrom, default::Default};
 
 use serde::{Deserialize, Serialize};
 use zeroize::Zeroize;
 
-use alloc::vec::Vec;
+use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
 // https://github.com/satoshilabs/slips/blob/master/slip-0010.md
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki

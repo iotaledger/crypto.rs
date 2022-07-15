@@ -76,8 +76,9 @@ fn test_aead_all<A: Aead>(tvs: &[TestVector]) -> crypto::Result<()> {
 
 #[cfg(feature = "aes-gcm")]
 mod aes {
-    use super::{test_aead_all, TestVector};
     use crypto::ciphers::aes_gcm::Aes256Gcm;
+
+    use super::{test_aead_all, TestVector};
 
     #[test]
     fn test_vectors_aes_256_gcm() {
@@ -87,8 +88,9 @@ mod aes {
 
 #[cfg(feature = "aes-cbc")]
 mod aes_cbc {
-    use super::{test_aead_all, TestVector};
     use crypto::ciphers::aes_cbc::{Aes128CbcHmac256, Aes192CbcHmac384, Aes256CbcHmac512};
+
+    use super::{test_aead_all, TestVector};
 
     #[test]
     fn test_vectors_aes_128_cbc_hmac_256() {
@@ -108,8 +110,9 @@ mod aes_cbc {
 
 #[cfg(feature = "chacha")]
 mod chacha {
-    use super::{test_aead_all, TestVector};
     use crypto::ciphers::chacha::XChaCha20Poly1305;
+
+    use super::{test_aead_all, TestVector};
 
     #[test]
     fn test_vectors_xchacha20_poly1305() {
