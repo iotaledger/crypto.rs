@@ -70,7 +70,7 @@ macro_rules! impl_aead {
             }
         }
 
-        pub fn aead_encrypt(key: &$crate::ciphers::traits::Key<$impl>, plaintext: &[u8]) -> crate::Result<Vec<u8>> {
+        pub fn aead_encrypt(key: &[u8], plaintext: &[u8]) -> crate::Result<Vec<u8>> {
             let mut nonce = [0; <$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH];
             let mut tag = vec![0; <$impl as $crate::ciphers::traits::Aead>::TAG_LENGTH];
             let mut ciphertext = vec![0; plaintext.len()];
@@ -78,7 +78,7 @@ macro_rules! impl_aead {
             crate::utils::rand::fill(&mut nonce)?;
 
             <$impl as $crate::ciphers::traits::Aead>::encrypt(
-                key,
+                $crate::ciphers::traits::Key::<$impl>::from_slice(&key),
                 $crate::ciphers::traits::Nonce::<$impl>::from_slice(&nonce),
                 &[],
                 plaintext,
@@ -93,7 +93,7 @@ macro_rules! impl_aead {
             Ok(ret)
         }
 
-        pub fn aead_decrypt(key: &$crate::ciphers::traits::Key<$impl>, ciphertext: &[u8]) -> crate::Result<Vec<u8>> {
+        pub fn aead_decrypt(key: &[u8], ciphertext: &[u8]) -> crate::Result<Vec<u8>> {
             let nonce = &ciphertext[..<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH];
             let tag = &ciphertext[<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
                 ..<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
@@ -103,7 +103,7 @@ macro_rules! impl_aead {
             let mut plaintext = vec![0u8; ciphertext.len()];
 
             <$impl as $crate::ciphers::traits::Aead>::decrypt(
-                key,
+                $crate::ciphers::traits::Key::<$impl>::from_slice(&key),
                 $crate::ciphers::traits::Nonce::<$impl>::from_slice(&nonce),
                 &[],
                 &mut plaintext,
