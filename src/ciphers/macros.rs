@@ -6,9 +6,7 @@ macro_rules! impl_aead {
     ($impl:ident, $name:expr, $key_len:ident, $nonce_len:ident, $tag_len:ident) => {
         impl $crate::ciphers::traits::Aead for $impl {
             type KeyLength = $key_len;
-
             type NonceLength = $nonce_len;
-
             type TagLength = $tag_len;
 
             const NAME: &'static str = $name;
@@ -70,6 +68,50 @@ macro_rules! impl_aead {
 
                 Ok(ciphertext.len())
             }
+        }
+
+        pub fn aead_encrypt(key: &$crate::ciphers::traits::Key<$impl>, plaintext: &[u8]) -> crate::Result<Vec<u8>> {
+            let mut nonce = [0; <$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH];
+            let mut tag = vec![0; <$impl as $crate::ciphers::traits::Aead>::TAG_LENGTH];
+            let mut ciphertext = vec![0; plaintext.len()];
+
+            crate::utils::rand::fill(&mut nonce)?;
+
+            <$impl as $crate::ciphers::traits::Aead>::encrypt(
+                key,
+                $crate::ciphers::traits::Nonce::<$impl>::from_slice(&nonce),
+                &[],
+                plaintext,
+                &mut ciphertext,
+                $crate::ciphers::traits::Tag::<$impl>::from_mut_slice(&mut tag),
+            )?;
+
+            let mut ret = nonce.to_vec();
+            ret.append(&mut tag);
+            ret.append(&mut ciphertext);
+
+            Ok(ret)
+        }
+
+        pub fn aead_decrypt(key: &$crate::ciphers::traits::Key<$impl>, ciphertext: &[u8]) -> crate::Result<Vec<u8>> {
+            let nonce = &ciphertext[..<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH];
+            let tag = &ciphertext[<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
+                ..<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
+                    + <$impl as $crate::ciphers::traits::Aead>::TAG_LENGTH];
+            let ciphertext = &ciphertext[<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
+                + <$impl as $crate::ciphers::traits::Aead>::TAG_LENGTH..];
+            let mut plaintext = vec![0u8; ciphertext.len()];
+
+            <$impl as $crate::ciphers::traits::Aead>::decrypt(
+                key,
+                $crate::ciphers::traits::Nonce::<$impl>::from_slice(&nonce),
+                &[],
+                &mut plaintext,
+                ciphertext,
+                $crate::ciphers::traits::Tag::<$impl>::from_slice(&tag),
+            )?;
+
+            Ok(plaintext)
         }
     };
 }
