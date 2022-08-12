@@ -44,7 +44,7 @@ pub mod wordlist {
     #[cfg_attr(docsrs, doc(cfg(feature = "bip39-jp")))]
     include!("bip39.jp.rs");
 
-    #[derive(Debug, PartialEq)]
+    #[derive(Debug, PartialEq, Eq)]
     pub enum Error {
         InvalidEntropyCount(usize),
         NoSuchWord(String),
