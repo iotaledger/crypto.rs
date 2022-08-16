@@ -25,7 +25,7 @@ use crate::{
 };
 
 /// Errors occuring during WOTS operations.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Missing security level in generator.
     MissingSecurityLevel,

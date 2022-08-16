@@ -6,7 +6,7 @@ use core::fmt::{Display, Formatter, Result as FmtResult};
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// Error type of crypto.rs
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Buffer Error
     BufferSize {

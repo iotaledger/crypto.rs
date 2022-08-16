@@ -13,7 +13,7 @@ use zeroize::Zeroize;
 use crate::hashes::ternary::{kerl::Kerl, Sponge, HASH_LENGTH};
 
 /// Errors occuring when handling a `Seed`.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Invalid seed length.
     InvalidLength(usize),
