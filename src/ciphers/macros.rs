@@ -70,6 +70,9 @@ macro_rules! impl_aead {
             }
         }
 
+        /// A helper function to encrypt `plaintext` with `key`.
+        /// The return value is arbitrarily chosen as `nonce || tag || ciphertext` for historic reasons, mainly compatibility with out wallet libraries.
+        /// The nonce is randomly chosen.
         pub fn aead_encrypt(key: &[u8], plaintext: &[u8]) -> crate::Result<Vec<u8>> {
             if key.len() != <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH {
                 return Err($crate::Error::BufferSize {
@@ -101,6 +104,8 @@ macro_rules! impl_aead {
             Ok(ret)
         }
 
+        /// A helper function to decrypt `ciphertext` with `key`.
+        /// The input value is assumed to be `nonce || tag || ciphertext` for historic reason, mainly compatibility with out wallet libraries.
         pub fn aead_decrypt(key: &[u8], ciphertext: &[u8]) -> crate::Result<Vec<u8>> {
             if key.len() != <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH {
                 return Err($crate::Error::BufferSize {
