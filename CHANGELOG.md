@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.14.0]
+
+- Add aead_encrypt and aead_decrypt convenience functions
+  - [1910a54](https://www.github.com/iotaledger/crypto.rs/commit/1910a549b4946cb9aaafc13ea52a73f5423c495d) Add aead_encrypt and aead_decrypt convenience functions ([#155](https://www.github.com/iotaledger/crypto.rs/pull/155)) on 2022-08-19
+
 ## \[0.13.0]
 
 - Bump `bee-ternary` to `1.0.0-alpha.1`
