@@ -6,9 +6,7 @@ macro_rules! impl_aead {
     ($impl:ident, $name:expr, $key_len:ident, $nonce_len:ident, $tag_len:ident) => {
         impl $crate::ciphers::traits::Aead for $impl {
             type KeyLength = $key_len;
-
             type NonceLength = $nonce_len;
-
             type TagLength = $tag_len;
 
             const NAME: &'static str = $name;
@@ -70,6 +68,72 @@ macro_rules! impl_aead {
 
                 Ok(ciphertext.len())
             }
+        }
+
+        /// A helper function to encrypt `plaintext` with `key`.
+        /// The return value is arbitrarily chosen as `nonce || tag || ciphertext` for historic reasons, mainly
+        /// compatibility with out wallet libraries. The nonce is randomly chosen.
+        pub fn aead_encrypt(key: &[u8], plaintext: &[u8]) -> crate::Result<Vec<u8>> {
+            if key.len() != <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH {
+                return Err($crate::Error::BufferSize {
+                    name: "key",
+                    needs: <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH,
+                    has: key.len(),
+                });
+            }
+
+            let mut nonce = [0; <$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH];
+            let mut tag = vec![0; <$impl as $crate::ciphers::traits::Aead>::TAG_LENGTH];
+            let mut ciphertext = vec![0; plaintext.len()];
+
+            crate::utils::rand::fill(&mut nonce)?;
+
+            <$impl as $crate::ciphers::traits::Aead>::encrypt(
+                $crate::ciphers::traits::Key::<$impl>::from_slice(&key),
+                $crate::ciphers::traits::Nonce::<$impl>::from_slice(&nonce),
+                &[],
+                plaintext,
+                &mut ciphertext,
+                $crate::ciphers::traits::Tag::<$impl>::from_mut_slice(&mut tag),
+            )?;
+
+            let mut ret = nonce.to_vec();
+            ret.append(&mut tag);
+            ret.append(&mut ciphertext);
+
+            Ok(ret)
+        }
+
+        /// A helper function to decrypt `ciphertext` with `key`.
+        /// The input value is assumed to be `nonce || tag || ciphertext` for historic reason, mainly compatibility with
+        /// out wallet libraries.
+        pub fn aead_decrypt(key: &[u8], ciphertext: &[u8]) -> crate::Result<Vec<u8>> {
+            if key.len() != <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH {
+                return Err($crate::Error::BufferSize {
+                    name: "key",
+                    needs: <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH,
+                    has: key.len(),
+                });
+            }
+
+            let nonce = &ciphertext[..<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH];
+            let tag = &ciphertext[<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
+                ..<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
+                    + <$impl as $crate::ciphers::traits::Aead>::TAG_LENGTH];
+            let ciphertext = &ciphertext[<$impl as $crate::ciphers::traits::Aead>::NONCE_LENGTH
+                + <$impl as $crate::ciphers::traits::Aead>::TAG_LENGTH..];
+            let mut plaintext = vec![0u8; ciphertext.len()];
+
+            <$impl as $crate::ciphers::traits::Aead>::decrypt(
+                $crate::ciphers::traits::Key::<$impl>::from_slice(&key),
+                $crate::ciphers::traits::Nonce::<$impl>::from_slice(&nonce),
+                &[],
+                &mut plaintext,
+                ciphertext,
+                $crate::ciphers::traits::Tag::<$impl>::from_slice(&tag),
+            )?;
+
+            Ok(plaintext)
         }
     };
 }
