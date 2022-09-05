@@ -35,11 +35,11 @@ aes-cbc = [
 ]
 aes-kw = [ "aes-crate" ]
 aes-gcm = [ "aes-gcm-crate", "cipher" ]
-chacha = [ "chacha20poly1305", "cipher" ]
-ed25519 = [ "ed25519-zebra" ]
+chacha = [ "chacha20poly1305", "cipher", "dep:cpufeatures" ]
+ed25519 = [ "ed25519-zebra", "dep:cpufeatures"  ]
 x25519 = [ "x25519-dalek", "curve25519-dalek" ]
 random = [ "getrandom" ]
-aes = [ "aes-cbc", "aes-gcm", "aes-kw" ]
+aes = [ "aes-cbc", "aes-gcm", "aes-kw", "dep:cpufeatures" ]
 blake2b = [ "blake2", "digest" ]
 ternary_hashes = [ ]
 curl-p = [ "ternary_hashes", "bee-ternary" ]
@@ -61,7 +61,7 @@ wots_deprecated_do_not_use = [
   "rand",
   "bee-common-derive"
 ]
-sha = [ "sha2", "digest" ]
+sha = [ "sha2", "digest", "dep:cpufeatures"  ]
 hmac = [ "hmac_" ]
 pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
@@ -97,6 +97,11 @@ unicode-normalization = { version = "0.1", optional = true, default-features = f
 curve25519-dalek = { version = "3", optional = true, default-features = false, features = [ "u64_backend" ] }
 x25519-dalek = { version = "1.1", optional = true, default-features = false, features = [ "u64_backend" ] }
 zeroize = { version = "1.3", optional = true, default-features = false, features = [ "zeroize_derive" ] }
+
+# Lower versions of `cpufeatures` have been yanked.
+# This addition is temporary to force the use of this specific version.
+# It should be properly handled by upgrading the other dependencies.
+cpufeatures = { version = "0.2.5", optional = true, default-features = false }
 
 [dev-dependencies]
 hex = { version = "0.4", default-features = false, features = [ "alloc" ] }
