@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.14.1]
+
+- Forces the use of `cpufeatures@0.2.5` since all previous `0.2` versions have been yanked.
+  - [54ddf21](https://www.github.com/iotaledger/crypto.rs/commit/54ddf215954aff72701d50997fe73068f4e480cb) Address `cpufeatures` being yanked ([#158](https://www.github.com/iotaledger/crypto.rs/pull/158)) on 2022-09-05
+
 ## \[0.14.0]
 
 - Add aead_encrypt and aead_decrypt convenience functions
