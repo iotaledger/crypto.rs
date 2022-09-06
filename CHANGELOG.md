@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.14.2]
+
+- Remove `cpufeatures` dependency from `wasm` builds.
+  - [43196de](https://www.github.com/iotaledger/crypto.rs/commit/43196de5cdf320b000963165c0da252ee738f190) Fix wasm compilation ([#160](https://www.github.com/iotaledger/crypto.rs/pull/160)) on 2022-09-06
+
 ## \[0.14.1]
 
 - Forces the use of `cpufeatures@0.2.5` since all previous `0.2` versions have been yanked.
