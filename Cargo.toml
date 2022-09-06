@@ -35,11 +35,11 @@ aes-cbc = [
 ]
 aes-kw = [ "aes-crate" ]
 aes-gcm = [ "aes-gcm-crate", "cipher" ]
-chacha = [ "chacha20poly1305", "cipher", "dep:cpufeatures" ]
-ed25519 = [ "ed25519-zebra", "dep:cpufeatures" ]
+chacha = [ "chacha20poly1305", "cipher" ]
+ed25519 = [ "ed25519-zebra" ]
 x25519 = [ "x25519-dalek", "curve25519-dalek" ]
 random = [ "getrandom" ]
-aes = [ "aes-cbc", "aes-gcm", "aes-kw", "dep:cpufeatures" ]
+aes = [ "aes-cbc", "aes-gcm", "aes-kw" ]
 blake2b = [ "blake2", "digest" ]
 ternary_hashes = [ ]
 curl-p = [ "ternary_hashes", "bee-ternary" ]
@@ -61,7 +61,7 @@ wots_deprecated_do_not_use = [
   "rand",
   "bee-common-derive"
 ]
-sha = [ "sha2", "digest", "dep:cpufeatures" ]
+sha = [ "sha2", "digest" ]
 hmac = [ "hmac_" ]
 pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
