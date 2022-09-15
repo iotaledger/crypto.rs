@@ -1,0 +1,28 @@
+name: Wasm support
+
+on:
+  push:
+    branches:
+      - dev
+  pull_request:
+    branches:
+      - dev
+
+jobs:
+  wasm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Install stable
+      uses: actions-rs/toolchain@v1
+      with:
+        toolchain: stable
+        target: wasm32-unknown-unknown
+        override: true
+
+    - name: Check
+      uses: actions-rs/cargo@v1
+      with:
+        command: check
+        args: --release --target=wasm32-unknown-unknown --manifest-path Cargo.toml --all-features
