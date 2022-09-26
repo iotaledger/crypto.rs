@@ -1,5 +1,14 @@
 # Changelog
 
+## \[0.14.3]
+
+- Bump `bee-ternary` dependency to `1.0.0`.
+  - [bbb25e4](https://www.github.com/iotaledger/crypto.rs/commit/bbb25e45fd8482ef30d1d913622a875251c95f48) Add change file ([#131](https://www.github.com/iotaledger/crypto.rs/pull/131)) on 2022-04-25
+  - [864f3a0](https://www.github.com/iotaledger/crypto.rs/commit/864f3a03f1efa362b325663627060d78dae881b4) apply version updates ([#132](https://www.github.com/iotaledger/crypto.rs/pull/132)) on 2022-04-25
+  - [85361aa](https://www.github.com/iotaledger/crypto.rs/commit/85361aa7248f1febe764bf9721b14dd8c90b29bd) Update format and bump bee-ternary ([#150](https://www.github.com/iotaledger/crypto.rs/pull/150)) on 2022-07-15
+  - [94158f1](https://www.github.com/iotaledger/crypto.rs/commit/94158f1d01d31d7c0d5250ef29200c239f4c4e68) apply version updates ([#151](https://www.github.com/iotaledger/crypto.rs/pull/151)) on 2022-07-15
+  - [6f969df](https://www.github.com/iotaledger/crypto.rs/commit/6f969df237e0ca217737de150b79ea4030080346) Bump bee-ternary dependency on 2022-09-26
+
 ## \[0.14.2]
 
 - Remove `cpufeatures` dependency from `wasm` builds.
