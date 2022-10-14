@@ -19,7 +19,7 @@ pub const HASH_LENGTH_TRYTES: usize = 243 / 3;
 
 use core::ops::DerefMut;
 
-use bee_ternary::{raw::RawEncoding, Btrit, TritBuf, Trits, T1B1};
+use crate::encoding::ternary::{raw::RawEncoding, Btrit, TritBuf, Trits, T1B1};
 
 /// The common interface of ternary cryptographic hash functions that follow the sponge construction.
 pub trait Sponge {

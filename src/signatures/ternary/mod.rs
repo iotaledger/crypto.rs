@@ -8,10 +8,12 @@
 #[cfg_attr(not(test), deprecated)]
 pub mod wots;
 
-use bee_ternary::{T1B1Buf, TritBuf, Trits, T1B1};
 use zeroize::Zeroize;
 
-use crate::hashes::ternary::{HASH_LENGTH, HASH_LENGTH_TRYTES};
+use crate::{
+    encoding::ternary::{T1B1Buf, TritBuf, Trits, T1B1},
+    hashes::ternary::{HASH_LENGTH, HASH_LENGTH_TRYTES},
+};
 
 /// Length of a message fragment in trytes.
 pub const MESSAGE_FRAGMENT_LENGTH_TRYTES: usize = 27;

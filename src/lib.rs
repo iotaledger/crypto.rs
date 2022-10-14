@@ -8,6 +8,7 @@
 mod macros;
 
 pub mod ciphers;
+pub mod encoding;
 pub mod error;
 pub mod hashes;
 pub mod keys;

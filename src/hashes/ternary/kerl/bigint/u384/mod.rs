@@ -13,7 +13,6 @@ use core::{
     ops::{Deref, DerefMut},
 };
 
-use bee_ternary::Utrit;
 use byteorder::{self, ByteOrder};
 pub use constants::{
     BE_U32_0, BE_U32_1, BE_U32_2, BE_U32_HALF_MAX, BE_U32_HALF_MAX_T242, BE_U32_MAX, BE_U8_0, BE_U8_1, BE_U8_2,
@@ -21,13 +20,16 @@ pub use constants::{
     LE_U32_NEG_HALF_MAX_T242, LE_U32_ONLY_T243_OCCUPIED, LE_U8_0, LE_U8_1, LE_U8_2, LE_U8_MAX,
 };
 
-use crate::hashes::ternary::kerl::bigint::{
-    binary_representation::{BinaryRepresentation, U32Repr, U8Repr},
-    endianness::{BigEndian, LittleEndian},
-    error::Error,
-    overflowing_add::OverflowingAdd,
-    split_integer::SplitInteger,
-    t243, I384, T242, T243,
+use crate::{
+    encoding::ternary::Utrit,
+    hashes::ternary::kerl::bigint::{
+        binary_representation::{BinaryRepresentation, U32Repr, U8Repr},
+        endianness::{BigEndian, LittleEndian},
+        error::Error,
+        overflowing_add::OverflowingAdd,
+        split_integer::SplitInteger,
+        t243, I384, T242, T243,
+    },
 };
 
 /// A big integer encoding an unsigned integer with 384 bits.

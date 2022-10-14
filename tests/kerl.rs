@@ -10,8 +10,8 @@ use std::{
     str::FromStr,
 };
 
-use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
 use crypto::{
+    encoding::ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf},
     hashes::ternary::{kerl::Kerl, Sponge},
     keys::ternary::seed::{Error as SeedError, Seed},
 };

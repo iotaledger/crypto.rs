@@ -3,14 +3,16 @@
 
 use core::convert::TryFrom;
 
-use bee_ternary::Utrit;
 use lazy_static::lazy_static;
 
 use super::U384;
-use crate::hashes::ternary::kerl::bigint::{
-    binary_representation::{U32Repr, U8Repr},
-    endianness::{BigEndian, LittleEndian},
-    T242, T243,
+use crate::{
+    encoding::ternary::Utrit,
+    hashes::ternary::kerl::bigint::{
+        binary_representation::{U32Repr, U8Repr},
+        endianness::{BigEndian, LittleEndian},
+        T242, T243,
+    },
 };
 
 lazy_static! {

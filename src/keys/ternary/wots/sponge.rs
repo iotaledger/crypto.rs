@@ -3,9 +3,8 @@
 
 use core::marker::PhantomData;
 
-use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
-
 use crate::{
+    encoding::ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1},
     hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::{
         wots::{Error, WotsSecurityLevel},

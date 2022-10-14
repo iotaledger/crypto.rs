@@ -13,13 +13,15 @@ mod constants;
 
 use core::cmp::Ordering;
 
-use bee_ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit};
 pub use constants::{BTRIT_0, BTRIT_1, BTRIT_NEG_1, UTRIT_0, UTRIT_1, UTRIT_2, UTRIT_U384_MAX, UTRIT_U384_MAX_HALF};
 
-use crate::hashes::ternary::kerl::bigint::{
-    binary_representation::{U32Repr, U8Repr},
-    endianness::{BigEndian, LittleEndian},
-    I384, T242, U384,
+use crate::{
+    encoding::ternary::{Btrit, ShiftTernary, T1B1Buf, Trit, TritBuf, Utrit},
+    hashes::ternary::kerl::bigint::{
+        binary_representation::{U32Repr, U8Repr},
+        endianness::{BigEndian, LittleEndian},
+        I384, T242, U384,
+    },
 };
 
 def_and_impl_ternary!(T243, 243);

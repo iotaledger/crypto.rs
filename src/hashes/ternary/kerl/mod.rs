@@ -1,13 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use crate::hashes::ternary::{Sponge, HASH_LENGTH};
-
 pub mod bigint;
 
-use bee_ternary::{Btrit, Trits, T1B1};
 use bigint::{binary_representation::U8Repr, endianness::BigEndian, error::Error as ConversionError, I384, T242, T243};
 use tiny_keccak::{Hasher, Keccak};
+
+use crate::{
+    encoding::ternary::{Btrit, Trits, T1B1},
+    hashes::ternary::{Sponge, HASH_LENGTH},
+};
 
 /// State of the ternary cryptographic function `Kerl`.
 #[derive(Clone)]
