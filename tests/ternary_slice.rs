@@ -1,10 +1,14 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg(feature = "ternary_encoding")]
+
 mod common;
 
+use std::convert::{TryFrom, TryInto};
+
 use common::{fuzz, gen_buf_balanced, gen_buf_unbalanced};
-use iota_crypto::encoding::*;
+use crypto::encoding::ternary::*;
 use rand::{thread_rng, Rng};
 
 fn get_generic<T: raw::RawEncodingBuf + Clone>() {

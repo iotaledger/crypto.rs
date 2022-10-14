@@ -1,12 +1,15 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+#![cfg(feature = "ternary_encoding")]
+
 use std::{
+    convert::TryFrom,
     io::{self, Write},
     time::Instant,
 };
 
-use iota_crypto::encoding::{
+use crypto::encoding::ternary::{
     convert::*,
     trit::{Btrit, Utrit},
     T1B1Buf, TritBuf,

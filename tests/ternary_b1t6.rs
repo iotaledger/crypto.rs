@@ -1,7 +1,9 @@
 // Copyright 2020-2021 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-use iota_crypto::encoding::ternary::{b1t6, T1B1Buf};
+#![cfg(feature = "ternary_encoding")]
+
+use crypto::encoding::ternary::{b1t6, T1B1Buf};
 
 // TODO factorize tests
 

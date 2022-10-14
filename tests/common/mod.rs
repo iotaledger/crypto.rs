@@ -4,9 +4,9 @@
 // Workaround for cargo/rustc unused warning bug
 #![allow(dead_code)]
 
-use std::ops::Range;
+use std::{convert::TryFrom, ops::Range};
 
-use iota_crypto::encoding::ternary::*;
+use crypto::encoding::ternary::*;
 use rand::{thread_rng, Rng};
 
 /// Generates a random balanced i8 trit.
