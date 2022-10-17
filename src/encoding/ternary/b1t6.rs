@@ -4,7 +4,7 @@
 extern crate alloc;
 
 use alloc::vec::Vec;
-use std::convert::TryFrom;
+use core::convert::TryFrom;
 
 use crate::encoding::ternary::{Btrit, RawEncoding, RawEncodingBuf, TritBuf, Trits, Tryte};
 
