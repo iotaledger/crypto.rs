@@ -12,10 +12,10 @@ use core::{
 };
 
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
-use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1};
 use zeroize::Zeroize;
 
 use crate::{
+    encoding::ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1},
     hashes::ternary::{Sponge, HASH_LENGTH},
     keys::ternary::wots::WotsSecurityLevel,
     signatures::ternary::{

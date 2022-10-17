@@ -3,13 +3,13 @@
 
 use core::marker::PhantomData;
 
-use bee_ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1};
 use sha3::{
     digest::{ExtendableOutput, Update, XofReader},
     Shake256,
 };
 
 use crate::{
+    encoding::ternary::{Btrit, T1B1Buf, TritBuf, Trits, T1B1},
     hashes::ternary::{
         kerl::bigint::{binary_representation::U8Repr, endianness::BigEndian, I384, T242, T243},
         Sponge, HASH_LENGTH,

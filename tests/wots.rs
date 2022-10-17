@@ -11,8 +11,8 @@ use std::{
     str::FromStr,
 };
 
-use bee_ternary::{T1B1Buf, TryteBuf};
 use crypto::{
+    encoding::ternary::{T1B1Buf, TryteBuf},
     hashes::ternary::{kerl::Kerl, Sponge},
     keys::ternary::{
         seed::Seed,

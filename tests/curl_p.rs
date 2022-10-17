@@ -8,8 +8,10 @@ use std::{
     io::{prelude::*, BufReader},
 };
 
-use bee_ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf};
-use crypto::hashes::ternary::curl_p::CurlP;
+use crypto::{
+    encoding::ternary::{T1B1Buf, T3B1Buf, TritBuf, TryteBuf},
+    hashes::ternary::curl_p::CurlP,
+};
 
 fn digest(input: &str, output: &str) {
     let mut curl = CurlP::new();

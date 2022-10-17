@@ -6,11 +6,13 @@
 use core::str::FromStr;
 
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
-use bee_ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1};
 // use rand::distributions::{Distribution, Uniform};
 use zeroize::Zeroize;
 
-use crate::hashes::ternary::{kerl::Kerl, Sponge, HASH_LENGTH};
+use crate::{
+    encoding::ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1},
+    hashes::ternary::{kerl::Kerl, Sponge, HASH_LENGTH},
+};
 
 /// Errors occuring when handling a `Seed`.
 #[derive(Debug, PartialEq, Eq)]
