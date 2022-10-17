@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.15.1]
+
+- Fix ternary encoding b1t6 on `no_std` compilations.
+  - [467ce65](https://www.github.com/iotaledger/crypto.rs/commit/467ce65e124e6dd6ed5f564d32480757ec50ebc1) Fix ternary encoding b1t6 on `no_std` compilations ([#167](https://www.github.com/iotaledger/crypto.rs/pull/167)) on 2022-10-17
+
 ## \[0.15.0]
 
 - Move `bee-ternary` to `crypto.rs` as `ternary` encoding module.
