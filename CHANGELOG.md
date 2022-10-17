@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.15.0]
+
+- Move `bee-ternary` to `crypto.rs` as `ternary` encoding module.
+  - [8514e92](https://www.github.com/iotaledger/crypto.rs/commit/8514e928aedbc9c80626dd5bde366675bfc2b872) Add ternary module ([#165](https://www.github.com/iotaledger/crypto.rs/pull/165)) on 2022-10-17
+
 ## \[0.14.3]
 
 - Bump `bee-ternary` dependency to `1.0.0`.
