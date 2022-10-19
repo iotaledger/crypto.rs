@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.15.2]
+
+- Downgrade `x25519-dalek` from 1.2 to 1.1 to allow using `zeroize` > 1.3.
+  - [ebec323](https://www.github.com/iotaledger/crypto.rs/commit/ebec323499a6903c93b0ca0e816b7c0371b2a417) Downgrade `x25519-dalek` from 1.2 to 1.1 to allow using `zeroize` > 1.3 ([#169](https://www.github.com/iotaledger/crypto.rs/pull/169)) on 2022-10-19
+
 ## \[0.15.1]
 
 - Fix ternary encoding b1t6 on `no_std` compilations.
