@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.15.3]
+
+- Bump `blake2` to get rid of yanked version.
+  - [a9f48de](https://www.github.com/iotaledger/crypto.rs/commit/a9f48defb70d82639e55373bfd14f34b9681fb49) Bump `blake2` to get rid of yanked version ([#171](https://www.github.com/iotaledger/crypto.rs/pull/171)) on 2022-11-15
+
 ## \[0.15.2]
 
 - Downgrade `x25519-dalek` from 1.2 to 1.1 to allow using `zeroize` > 1.3.
