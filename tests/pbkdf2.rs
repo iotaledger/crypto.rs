@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(feature = "pbkdf")]
+#![cfg(all(feature = "pbkdf", feature = "hmac", feature = "sha"))]
 
 use crypto::keys::pbkdf::{PBKDF2_HMAC_SHA256, PBKDF2_HMAC_SHA384, PBKDF2_HMAC_SHA512};
 

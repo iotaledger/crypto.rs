@@ -63,13 +63,14 @@ wots_deprecated_do_not_use = [
 ]
 sha = [ "sha2", "digest" ]
 hmac = [ "hmac_" ]
-pbkdf = [ "pbkdf2" ]
+pbkdf = [ "pbkdf2", "scrypt" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
 slip10 = [ "hmac", "sha", "ed25519", "random", "serde", "zeroize" ]
 cipher = [ "aead", "generic-array" ]
 ternary_encoding = [ "serde", "num-traits" ]
+age = [ "aead", "base64", "chacha20poly1305", "hkdf", "hmac_", "scrypt", "sha2", "zeroize" ]
 
 [dependencies]
 block-modes = { version = "0.8", optional = true, default-features = false }
@@ -98,6 +99,9 @@ unicode-normalization = { version = "0.1", optional = true, default-features = f
 curve25519-dalek = { version = "3.2", optional = true, default-features = false, features = [ "u64_backend" ] }
 x25519-dalek = { version = "1.1", optional = true, default-features = false, features = [ "u64_backend" ] }
 zeroize = { version = "1.5", optional = true, default-features = false, features = [ "zeroize_derive" ] }
+scrypt = { version = "0.10", optional = true, default-features = false }
+hkdf = { version = "0.12", optional = true, default-features = false }
+base64 = { version = "0.21", optional = true, default-features = false }
 
 [target."cfg(not(target_family = \"wasm\"))".dependencies]
 cpufeatures = { version = "0.2", optional = true, default-features = false }
@@ -110,6 +114,7 @@ hex = { version = "0.4", default-features = false, features = [ "alloc", "std" ]
 rand = { version = "0.8", default-features = false, features = [ "std", "std_rng", "min_const_gen" ] }
 serde = { version = "1.0", default-features = false, features = [ "derive" ] }
 serde_json = { version = "1.0", default-features = false, features = [ "alloc", "std" ] }
+age = { version = "0.9", default-features = false }
 
 [profile.dev]
 split-debuginfo = "unpacked"
