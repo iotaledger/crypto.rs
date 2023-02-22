@@ -41,6 +41,9 @@ pub fn PBKDF2_HMAC_SHA512(password: &[u8], salt: &[u8], count: usize, buffer: &m
 #[cfg(feature = "scrypt")]
 #[cfg_attr(docsrs, doc(cfg(feature = "scrypt")))]
 pub fn scrypt(password: &[u8], salt: &[u8], buffer: &mut [u8]) -> crate::Result<()> {
-    scrypt::scrypt(password, salt, &scrypt::Params::default(), buffer)
-        .map_err(|_| crate::error::Error::BufferSize { name: "scrypt", needs: (1<<32 - 1) * 32, has: buffer.len() })
+    scrypt::scrypt(password, salt, &scrypt::Params::default(), buffer).map_err(|_| crate::error::Error::BufferSize {
+        name: "scrypt",
+        needs: ((1 << 32) - 1) * 32,
+        has: buffer.len(),
+    })
 }

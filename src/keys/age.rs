@@ -4,12 +4,12 @@
 // https://age-encryption.org/v1
 
 use aead::NewAead;
-use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine as _, };
-use chacha20poly1305::{ChaCha20Poly1305, aead::AeadInPlace, };
+use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine as _};
+use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305};
 
 use hkdf::Hkdf;
-use hmac_::{Hmac, Mac, };
-use scrypt::{Params as ScryptParams, scrypt, };
+use hmac_::{Hmac, Mac};
+use scrypt::{scrypt, Params as ScryptParams};
 use sha2::Sha256;
 
 use zeroize::Zeroize;
@@ -36,28 +36,34 @@ fn derive_wrap_key(password: &[u8], salt: &[u8; 16], work_factor: u8, wrap_key: 
     let mut scrypt_salt = [0_u8; SALT_LABEL.len() + 16];
     scrypt_salt[..SALT_LABEL.len()].copy_from_slice(SALT_LABEL);
     scrypt_salt[SALT_LABEL.len()..].copy_from_slice(&salt[..]);
-    scrypt(password, &scrypt_salt[..], &params, &mut wrap_key[..])
-        .expect("wrap_key is the correct length");
+    scrypt(password, &scrypt_salt[..], &params, &mut wrap_key[..]).expect("wrap_key is the correct length");
     scrypt_salt.zeroize();
 }
 
 /// File key is encrypted with wrap key via ChaCha20-Poly1305 with zero nonce and empty aad.
 /// Body contains encrypted file key and authentication tag.
-fn enc_file_key(password: &[u8], salt: &[u8; 16], work_factor: u8, file_key: &[u8; 16], body: &mut [u8; 16+16]) {
+fn enc_file_key(password: &[u8], salt: &[u8; 16], work_factor: u8, file_key: &[u8; 16], body: &mut [u8; 16 + 16]) {
     let mut wrap_key = [0_u8; 32];
     derive_wrap_key(password, salt, work_factor, &mut wrap_key);
     // body+tag = ChaCha20-Poly1305(key = wrap key, plaintext = file key)
     let c = ChaCha20Poly1305::new(&wrap_key.into());
     wrap_key.zeroize();
     body[..16].copy_from_slice(&file_key[..]);
-    let tag = c.encrypt_in_place_detached(&[0; 12].into(), &[], &mut body[..16])
+    let tag = c
+        .encrypt_in_place_detached(&[0; 12].into(), &[], &mut body[..16])
         .expect("the ChaCha20 block counter doesn't overflow");
     body[16..].copy_from_slice(&tag);
 }
 
 /// Body contains encrypted file key and authentication tag.
 /// Encrypted file key is decrypted with wrap key via ChaCha20-Poly1305 with zero nonce and empty aad.
-fn dec_file_key(password: &[u8], salt: &[u8; 16], work_factor: u8, body: &[u8], file_key: &mut [u8; 16]) -> Result<(), Error> {
+fn dec_file_key(
+    password: &[u8],
+    salt: &[u8; 16],
+    work_factor: u8,
+    body: &[u8],
+    file_key: &mut [u8; 16],
+) -> Result<(), Error> {
     let mut wrap_key = [0_u8; 32];
     derive_wrap_key(password, salt, work_factor, &mut wrap_key);
     // body+tag = ChaCha20-Poly1305(key = wrap key, plaintext = file key)
@@ -66,7 +72,8 @@ fn dec_file_key(password: &[u8], salt: &[u8; 16], work_factor: u8, body: &[u8], 
     file_key.copy_from_slice(&body[..16]);
     let mut tag = [0_u8; 16];
     tag.copy_from_slice(&body[16..32]);
-    let r = c.decrypt_in_place_detached(&[0; 12].into(), &[], file_key, &tag.into())
+    let r = c
+        .decrypt_in_place_detached(&[0; 12].into(), &[], file_key, &tag.into())
         .map_err(|_| Error::BadFileKey);
     if r.is_err() {
         file_key.zeroize();
@@ -97,7 +104,7 @@ fn derive_payload_key(file_key: &[u8; 16], nonce: &[u8; 16], payload_key: &mut [
 fn mac_header(file_key: &[u8; 16], header: &[u8], mac: &mut [u8; 32]) {
     let mut hmac_key = [0_u8; 32];
     derive_hmac_key(file_key, &mut hmac_key);
-    let mut hmac = <Hmac::<Sha256> as Mac>::new_from_slice(&hmac_key[..]).unwrap();
+    let mut hmac = <Hmac<Sha256> as Mac>::new_from_slice(&hmac_key[..]).unwrap();
     hmac_key.zeroize();
     // exclude the last ' ' after '---'
     hmac.update(header);
@@ -108,7 +115,7 @@ fn mac_header(file_key: &[u8; 16], header: &[u8], mac: &mut [u8; 32]) {
 fn verify_mac_header(file_key: &[u8; 16], header: &[u8], mac: &[u8]) -> Result<(), Error> {
     let mut hmac_key = [0_u8; 32];
     derive_hmac_key(file_key, &mut hmac_key);
-    let mut hmac = <Hmac::<Sha256> as Mac>::new_from_slice(&hmac_key[..]).unwrap();
+    let mut hmac = <Hmac<Sha256> as Mac>::new_from_slice(&hmac_key[..]).unwrap();
     hmac_key.zeroize();
     // exclude the last ' ' after '---'
     hmac.update(header);
@@ -142,7 +149,7 @@ fn enc_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor
     // 2. version
     // 3. scrypt recipient stanza
     let b = b"age-encryption.org/v1\n-> scrypt ";
-    header[i..i+b.len()].copy_from_slice(b);
+    header[i..i + b.len()].copy_from_slice(b);
     i += b.len();
 
     // 4. scrypt base64-encoded salt
@@ -173,16 +180,16 @@ fn enc_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor
 
     // 7. final delimiter before MAC
     let b = b"\n--- ";
-    header[i..i+b.len()].copy_from_slice(b);
+    header[i..i + b.len()].copy_from_slice(b);
     i += b.len();
 
     // MAC computed over the entire header up to and including '---'
     let mut mac = [0_u8; 32];
     // exclude the last ' ' after '---'
-    mac_header(file_key, &header[..i-1], &mut mac);
+    mac_header(file_key, &header[..i - 1], &mut mac);
 
     // 8. base64-encoded MAC
-    let b = BASE64.encode_slice(&mac, &mut header[i..]).unwrap();
+    let b = BASE64.encode_slice(mac, &mut header[i..]).unwrap();
     assert_eq!(MAC_BASE64_LEN, b);
     i += b;
 
@@ -213,24 +220,24 @@ fn dec_header(password: &[u8], header: &[u8], file_key: &mut [u8; 16]) -> Result
 
     // 1. AGE prefix
     let b = b"age-encryption.org/";
-    guard(header[i..i+b.len()] == b[..], Error::UnknownFormat)?;
+    guard(header[i..i + b.len()] == b[..], Error::UnknownFormat)?;
     i += b.len();
 
     // 2. version
     let b = b"v1\n";
-    guard(header[i..i+b.len()] == b[..], Error::UnsupportedAgeVersion)?;
+    guard(header[i..i + b.len()] == b[..], Error::UnsupportedAgeVersion)?;
     i += b.len();
 
     // 3. scrypt recipient stanza
     let b = b"-> scrypt ";
-    guard(header[i..i+b.len()] == b[..], Error::UnsupportedAgeRecipient)?;
+    guard(header[i..i + b.len()] == b[..], Error::UnsupportedAgeRecipient)?;
     i += b.len();
 
     // 4. scrypt base64-encoded salt
     // extra 2 bytes for base64 decoding
     let mut salt2 = [0_u8; 16 + 2];
-    let b = BASE64.decode_slice(
-        &header[i..i+SALT_BASE64_LEN], &mut salt2)
+    let b = BASE64
+        .decode_slice(&header[i..i + SALT_BASE64_LEN], &mut salt2)
         .map_err(|_| Error::BadAgeFormat)?;
     assert_eq!(16, b);
     i += SALT_BASE64_LEN;
@@ -241,10 +248,10 @@ fn dec_header(password: &[u8], header: &[u8], file_key: &mut [u8; 16]) -> Result
     let mut work_factor;
     guard(header[i] == b' ', Error::BadAgeFormat)?;
     i += 1;
-    guard(char::from(header[i]).is_digit(10), Error::BadAgeFormat)?;
+    guard(char::from(header[i]).is_ascii_digit(), Error::BadAgeFormat)?;
     work_factor = header[i] - b'0';
     i += 1;
-    if char::from(header[i]).is_digit(10) {
+    if char::from(header[i]).is_ascii_digit() {
         guard(header.len() >= SCRYPT_MAX_HEADER_LEN, Error::BufferTooSmall)?;
 
         work_factor *= 10;
@@ -257,8 +264,8 @@ fn dec_header(password: &[u8], header: &[u8], file_key: &mut [u8; 16]) -> Result
     // 6. base64-encoded encrypted file key
     // extra 2 bytes for base64 decoding
     let mut body2 = [0_u8; 16 + 16 + 2];
-    let b = BASE64.decode_slice(
-        &header[i..i+ENCRYPTED_FILE_KEY_BASE64_LEN], &mut body2[..])
+    let b = BASE64
+        .decode_slice(&header[i..i + ENCRYPTED_FILE_KEY_BASE64_LEN], &mut body2[..])
         .map_err(|_| Error::BadAgeFormat)?;
     assert_eq!(16 + 16, b);
     i += ENCRYPTED_FILE_KEY_BASE64_LEN;
@@ -268,20 +275,20 @@ fn dec_header(password: &[u8], header: &[u8], file_key: &mut [u8; 16]) -> Result
 
     // 7. final delimiter before MAC
     let b = b"\n--- ";
-    guard(header[i..i+b.len()] == b[..], Error::BadAgeFormat)?;
+    guard(header[i..i + b.len()] == b[..], Error::BadAgeFormat)?;
     i += b.len();
 
     // 8. base64-encoded MAC
     // extra 2 bytes for base64 decoding
     let mut mac2 = [0_u8; 32 + 2];
-    let b = BASE64.decode_slice(
-        &header[i..i+MAC_BASE64_LEN], &mut mac2)
+    let b = BASE64
+        .decode_slice(&header[i..i + MAC_BASE64_LEN], &mut mac2)
         .map_err(|_| Error::BadAgeFormat)?;
     assert_eq!(32, b);
 
     // MAC computed over the entire header up to and including '---'
     // exclude the last ' ' after '---'
-    verify_mac_header(file_key, &header[..i-1], &mac2)?;
+    verify_mac_header(file_key, &header[..i - 1], &mac2)?;
     i += MAC_BASE64_LEN;
 
     // 9. final new-line
@@ -320,7 +327,9 @@ pub enum Error {
 fn inc_nonce(nonce: &mut [u8; 12]) {
     for n in nonce[..11].iter_mut().rev() {
         *n = n.wrapping_add(1);
-        if *n != 0 { break; }
+        if *n != 0 {
+            break;
+        }
     }
 }
 
@@ -330,8 +339,9 @@ fn enc_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], plain_chunk: &[u8], cipher_
     assert!(plain_chunk.len() <= 64 * 1024);
 
     // cipher chunk = ChaCha20-Poly1305(key = payload key, plaintext = plain chunk)
-    cipher_chunk[..plain_chunk.len()].copy_from_slice(&plain_chunk[..]);
-    let tag = c.encrypt_in_place_detached(nonce.into(), &[], &mut cipher_chunk[..plain_chunk.len()])
+    cipher_chunk[..plain_chunk.len()].copy_from_slice(plain_chunk);
+    let tag = c
+        .encrypt_in_place_detached(nonce.into(), &[], &mut cipher_chunk[..plain_chunk.len()])
         .expect("the ChaCha20 block counter doesn't overflow");
     cipher_chunk[plain_chunk.len()..].copy_from_slice(&tag);
 }
@@ -345,7 +355,8 @@ fn dec_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], cipher_chunk: &[u8], plain_
     plain_chunk.copy_from_slice(&cipher_chunk[..plain_chunk.len()]);
     let mut tag = [0_u8; 16];
     tag.copy_from_slice(&cipher_chunk[plain_chunk.len()..]);
-    let r = c.decrypt_in_place_detached(nonce.into(), &[], plain_chunk, &tag.into())
+    let r = c
+        .decrypt_in_place_detached(nonce.into(), &[], plain_chunk, &tag.into())
         .map_err(|_| Error::BadChunk);
     if r.is_err() {
         plain_chunk.zeroize();
@@ -373,6 +384,7 @@ pub const fn dec_payload_len(ciphertext_len: usize) -> Option<usize> {
     } else {
         let r = (ciphertext_len - 16) % (64 * 1024 + 16);
         let q = (ciphertext_len - 16) / (64 * 1024 + 16);
+        #[deny(clippy::if_same_then_else)]
         if (0 == q || 0 < r) && r < 16 {
             // no 16-byte tag in the last chunk
             None
@@ -394,7 +406,7 @@ fn enc_payload(file_key: &[u8; 16], nonce: &[u8; 16], mut plaintext: &[u8], ciph
 
     assert_eq!(enc_payload_len(plaintext.len()), ciphertext.len());
 
-    ciphertext[i..i+16].copy_from_slice(nonce);
+    ciphertext[i..i + 16].copy_from_slice(nonce);
     i += 16;
 
     let mut payload_key = [0_u8; 32];
@@ -410,7 +422,7 @@ fn enc_payload(file_key: &[u8; 16], nonce: &[u8; 16], mut plaintext: &[u8], ciph
         if plaintext.len() == s {
             nonce[11] = 0x01;
         }
-        enc_chunk(&c, &nonce, &plaintext[..s], &mut ciphertext[i..i+s+16]);
+        enc_chunk(&c, &nonce, &plaintext[..s], &mut ciphertext[i..i + s + 16]);
         plaintext = &plaintext[s..];
         i += s + 16;
         if plaintext.is_empty() {
@@ -451,12 +463,12 @@ fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8])
         if ciphertext.len() == s {
             nonce[11] = 0x01;
         }
-        let r = dec_chunk(&c, &nonce, &ciphertext[..s], &mut plaintext[i..i+s-16]);
+        let r = dec_chunk(&c, &nonce, &ciphertext[..s], &mut plaintext[i..i + s - 16]);
         if r.is_err() {
             break r;
         }
         ciphertext = &ciphertext[s..];
-        i += s-16;
+        i += s - 16;
         if ciphertext.is_empty() {
             break Ok(());
         }
@@ -477,7 +489,15 @@ pub const fn enc_len(work_factor: u8, plaintext_len: usize) -> usize {
 
 /// Encode header and encrypt payload given all the secrets and random inputs.
 /// The length of the output can be be computed with `enc_len`.
-pub fn enc(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u8, nonce: &[u8; 16], plaintext: &[u8], age: &mut [u8]) {
+pub fn enc(
+    password: &[u8],
+    salt: &[u8; 16],
+    file_key: &[u8; 16],
+    work_factor: u8,
+    nonce: &[u8; 16],
+    plaintext: &[u8],
+    age: &mut [u8],
+) {
     assert_eq!(enc_len(work_factor, plaintext.len()), age.len());
     let h = header_len(work_factor);
     enc_header(password, salt, file_key, work_factor, &mut age[..h]);
@@ -486,7 +506,14 @@ pub fn enc(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u
 
 /// Encode header and encrypt payload given all the secrets and random inputs producing a vector.
 #[cfg(feature = "std")]
-pub fn enc_vec(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u8, nonce: &[u8; 16], plaintext: &[u8]) -> Vec<u8> {
+pub fn enc_vec(
+    password: &[u8],
+    salt: &[u8; 16],
+    file_key: &[u8; 16],
+    work_factor: u8,
+    nonce: &[u8; 16],
+    plaintext: &[u8],
+) -> Vec<u8> {
     let mut age = Vec::new();
     age.resize(enc_len(work_factor, plaintext.len()), 0_u8);
     let h = enc_header(password, salt, file_key, work_factor, &mut age[..]);
@@ -547,17 +574,16 @@ pub fn decrypt(password: &[u8], age: &[u8], plaintext: &mut [u8]) -> Result<usiz
 #[cfg(feature = "std")]
 pub fn decrypt_vec(password: &[u8], age: &[u8]) -> Result<Vec<u8>, Error> {
     let mut file_key = [0_u8; 16];
-    let r = dec_header(password, age, &mut file_key)
-        .and_then(|header_len| {
-            if let Some(plaintext_len) = dec_payload_len(age.len() - header_len) {
-                let mut plaintext = Vec::new();
-                plaintext.resize(plaintext_len, 0_u8);
-                let _ = dec_payload(&file_key, &age[header_len..], &mut plaintext[..])?;
-                Ok(plaintext)
-            } else {
-                Err(Error::BufferBadLength)
-            }
-        });
+    let r = dec_header(password, age, &mut file_key).and_then(|header_len| {
+        if let Some(plaintext_len) = dec_payload_len(age.len() - header_len) {
+            let mut plaintext = Vec::new();
+            plaintext.resize(plaintext_len, 0_u8);
+            let _ = dec_payload(&file_key, &age[header_len..], &mut plaintext[..])?;
+            Ok(plaintext)
+        } else {
+            Err(Error::BufferBadLength)
+        }
+    });
     file_key.zeroize();
     r
 }
@@ -565,7 +591,20 @@ pub fn decrypt_vec(password: &[u8], age: &[u8]) -> Result<Vec<u8>, Error> {
 #[cfg(test)]
 mod tests {
     const K64: usize = 64 * 1024;
-    const TEST_LENS: [usize; 12] = [0, 1, K64-16, K64-1, K64, K64+1, K64+16, 2*K64-16, 2*K64-1, 2*K64, 2*K64+1, 2*K64+16, ];
+    const TEST_LENS: [usize; 12] = [
+        0,
+        1,
+        K64 - 16,
+        K64 - 1,
+        K64,
+        K64 + 1,
+        K64 + 16,
+        2 * K64 - 16,
+        2 * K64 - 1,
+        2 * K64,
+        2 * K64 + 1,
+        2 * K64 + 16,
+    ];
 
     #[test]
     fn test_payload_len() {
@@ -578,15 +617,15 @@ mod tests {
         assert_eq!(None, super::dec_payload_len(31));
         assert_eq!(Some(0), super::dec_payload_len(32));
 
-        assert_eq!(Some(K64), super::dec_payload_len(16+K64+16));
-        assert_eq!(None, super::dec_payload_len(16+K64+16+1));
-        assert_eq!(None, super::dec_payload_len(16+K64+16+16));
-        assert_eq!(Some(K64+1), super::dec_payload_len(16+K64+16+17));
+        assert_eq!(Some(K64), super::dec_payload_len(16 + K64 + 16));
+        assert_eq!(None, super::dec_payload_len(16 + K64 + 16 + 1));
+        assert_eq!(None, super::dec_payload_len(16 + K64 + 16 + 16));
+        assert_eq!(Some(K64 + 1), super::dec_payload_len(16 + K64 + 16 + 17));
 
-        assert_eq!(Some(2*K64), super::dec_payload_len(16+2*(K64+16)));
-        assert_eq!(None, super::dec_payload_len(16+2*(K64+16)+1));
-        assert_eq!(None, super::dec_payload_len(16+2*(K64+16)+16));
-        assert_eq!(Some(2*K64+1), super::dec_payload_len(16+2*(K64+16)+17));
+        assert_eq!(Some(2 * K64), super::dec_payload_len(16 + 2 * (K64 + 16)));
+        assert_eq!(None, super::dec_payload_len(16 + 2 * (K64 + 16) + 1));
+        assert_eq!(None, super::dec_payload_len(16 + 2 * (K64 + 16) + 16));
+        assert_eq!(Some(2 * K64 + 1), super::dec_payload_len(16 + 2 * (K64 + 16) + 17));
     }
 
     #[test]
@@ -600,7 +639,13 @@ mod tests {
 
     fn run_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u8) -> Result<(), super::Error> {
         let mut header = [0_u8; super::SCRYPT_MAX_HEADER_LEN];
-        let h = super::enc_header(password, salt, file_key, work_factor, &mut header[..super::header_len(work_factor)]);
+        let h = super::enc_header(
+            password,
+            salt,
+            file_key,
+            work_factor,
+            &mut header[..super::header_len(work_factor)],
+        );
         let mut dec_file_key = [0_u8; 16];
         let r = super::dec_header(password, &header, &mut dec_file_key);
         if r.is_ok() {
@@ -635,8 +680,7 @@ mod tests {
         let salt = [0x11_u8; 16];
         let file_key = [0x22_u8; 16];
         let nonce = [0x33_u8; 16];
-        let age = super::enc_vec(password, &salt, &file_key, work_factor, &nonce, &plaintext[..]);
-        age
+        super::enc_vec(password, &salt, &file_key, work_factor, &nonce, &plaintext[..])
     }
 
     #[cfg(feature = "std")]
@@ -647,7 +691,7 @@ mod tests {
         let mut writer = age::Encryptor::with_user_passphrase(password)
             .wrap_output(&mut age)
             .unwrap();
-        writer.write(&plaintext[..]).unwrap();
+        writer.write_all(&plaintext[..]).unwrap();
         writer.finish().unwrap();
         age
     }
@@ -673,7 +717,7 @@ mod tests {
     #[cfg(feature = "std")]
     #[test]
     fn test_rage_rage() {
-        for text_len in [0, 1, ] {
+        for text_len in [0, 1] {
             let mut plaintext = Vec::new();
             plaintext.resize(text_len, 0xaa_u8);
             let decrypted = dec_rage(&enc_rage(&plaintext));
@@ -706,7 +750,7 @@ mod tests {
     #[cfg(feature = "std")]
     #[test]
     fn test_rage_crate() {
-        for text_len in [0, 1, 64*1024+1, ] {
+        for text_len in [0, 1, 64 * 1024 + 1] {
             let mut plaintext = Vec::new();
             plaintext.resize(text_len, 0xaa_u8);
             let decrypted = dec_crate(&enc_rage(&plaintext));
