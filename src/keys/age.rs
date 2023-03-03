@@ -556,14 +556,14 @@ pub fn encrypt(password: &[u8], work_factor: u8, plaintext: &[u8], age: &mut [u8
 
 /// Generate random salt, file key, and nonce and use them to protect plaintext in age format producing a vector.
 #[cfg(all(feature = "random", feature = "std"))]
-pub fn encrypt_vec(password: &[u8], plaintext: &[u8]) -> Vec<u8> {
+pub fn encrypt_vec(password: &[u8], work_factor: u8, plaintext: &[u8]) -> Vec<u8> {
     let mut salt = [0_u8; 16];
     let mut file_key = [0_u8; 16];
     let mut nonce = [0_u8; 16];
     crate::utils::rand::fill(&mut salt[..]).unwrap();
     crate::utils::rand::fill(&mut file_key[..]).unwrap();
     crate::utils::rand::fill(&mut nonce[..]).unwrap();
-    let age = enc_vec(password, &salt, &file_key, DEFAULT_WORK_FACTOR, &nonce, plaintext);
+    let age = enc_vec(password, &salt, &file_key, work_factor, &nonce, plaintext);
     nonce.zeroize();
     file_key.zeroize();
     salt.zeroize();
