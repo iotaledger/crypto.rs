@@ -91,7 +91,7 @@ pub fn normalize(message: &Trits<T1B1>) -> Result<TritBuf<T1B1Buf>, Error> {
 
         while sum > 0 {
             for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH_TRYTES..(i + 1) * MESSAGE_FRAGMENT_LENGTH_TRYTES] {
-                if (*t as i8) > Tryte::MIN_VALUE as i8 {
+                if *t > Tryte::MIN_VALUE as i8 {
                     *t -= 1;
                     break;
                 }
@@ -101,7 +101,7 @@ pub fn normalize(message: &Trits<T1B1>) -> Result<TritBuf<T1B1Buf>, Error> {
 
         while sum < 0 {
             for t in &mut normalized[i * MESSAGE_FRAGMENT_LENGTH_TRYTES..(i + 1) * MESSAGE_FRAGMENT_LENGTH_TRYTES] {
-                if (*t as i8) < Tryte::MAX_VALUE as i8 {
+                if *t < Tryte::MAX_VALUE as i8 {
                     *t += 1;
                     break;
                 }

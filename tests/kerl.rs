@@ -86,7 +86,7 @@ fn kerl_generate_trytes_and_multi_squeeze() {
     }
 }
 
-fn subseed_generic<S: Sponge + Default>(seed_string: &str, subseed_strings: &[&str]) {
+fn subseed_generic(seed_string: &str, subseed_strings: &[&str]) {
     let seed = Seed::from_str(seed_string).unwrap();
 
     for (i, subseed_string) in subseed_strings.iter().enumerate() {
@@ -104,7 +104,7 @@ fn subseed_generic<S: Sponge + Default>(seed_string: &str, subseed_strings: &[&s
 fn subseed_kerl() {
     const SEED: &str = "ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9ABCDEFGHIJKLMNOPQRSTUVWXYZ9";
 
-    subseed_generic::<Kerl>(
+    subseed_generic(
         SEED,
         &[
             "APSNZAPLANAGSXGZMZYCSXROJ9KUX9HVOPODQHMWNJOCGBKRIOOQKYGPFAIQBYNIODMIWMFKJGKRWFFPY",

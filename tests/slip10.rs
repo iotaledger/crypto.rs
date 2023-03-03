@@ -30,22 +30,22 @@ mod test {
 
             let m = seed.to_master_key(Curve::Ed25519);
             let mut expected_master_chain_code = [0u8; 32];
-            hex::decode_to_slice(&tv.master_chain_code, &mut expected_master_chain_code as &mut [u8]).unwrap();
+            hex::decode_to_slice(tv.master_chain_code, &mut expected_master_chain_code as &mut [u8]).unwrap();
             assert_eq!(expected_master_chain_code, m.chain_code());
 
             let mut expected_master_private_key = [0u8; 32];
-            hex::decode_to_slice(&tv.master_private_key, &mut expected_master_private_key as &mut [u8]).unwrap();
+            hex::decode_to_slice(tv.master_private_key, &mut expected_master_private_key as &mut [u8]).unwrap();
             assert_eq!(expected_master_private_key, m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
                 let ck = seed.derive(Curve::Ed25519, &c.chain)?;
 
                 let mut expected_chain_code = [0u8; 32];
-                hex::decode_to_slice(&c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
+                hex::decode_to_slice(c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
                 assert_eq!(expected_chain_code, ck.chain_code());
 
                 let mut expected_private_key = [0u8; 32];
-                hex::decode_to_slice(&c.private_key, &mut expected_private_key as &mut [u8]).unwrap();
+                hex::decode_to_slice(c.private_key, &mut expected_private_key as &mut [u8]).unwrap();
                 assert_eq!(expected_private_key, ck.secret_key().to_bytes());
             }
         }

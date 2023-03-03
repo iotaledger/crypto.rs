@@ -4,7 +4,7 @@
 pub mod shake;
 pub mod sponge;
 
-/// Errors occuring during WOTS operations.
+/// Errors occurring during WOTS operations.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Missing security level in generator.
@@ -31,19 +31,14 @@ impl core::fmt::Display for Error {
 }
 
 /// Available WOTS security levels.
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Default)]
 #[repr(u8)]
 pub enum WotsSecurityLevel {
     /// Low security.
     Low = 1,
     /// Medium security.
+    #[default]
     Medium = 2,
     /// High security.
     High = 3,
-}
-
-impl Default for WotsSecurityLevel {
-    fn default() -> Self {
-        WotsSecurityLevel::Medium
-    }
 }

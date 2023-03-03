@@ -45,7 +45,7 @@ impl BctCurlP {
         let mut scratch_pad_index = 0;
 
         // All the unchecked accesses here are guaranteed to be safe by the assertion inside `new`.
-        for _round in 0..NUM_ROUNDS as usize {
+        for _round in 0..NUM_ROUNDS {
             core::mem::swap(&mut self.state, &mut self.state_copy);
 
             let BcTrit(mut lo, mut hi) = unsafe { *self.state_copy.get_unchecked(scratch_pad_index) };
