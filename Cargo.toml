@@ -63,7 +63,7 @@ wots_deprecated_do_not_use = [
 ]
 sha = [ "sha2", "digest" ]
 hmac = [ "hmac_" ]
-pbkdf = [ "pbkdf2", "scrypt" ]
+pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
