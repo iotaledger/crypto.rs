@@ -492,7 +492,10 @@ pub struct WorkFactor(u8);
 
 impl WorkFactor {
     pub const fn new(work_factor: u8) -> Self {
-        assert!((work_factor as usize) < core::mem::size_of::<usize>() * 8, "incorrect age work factor");
+        assert!(
+            (work_factor as usize) < core::mem::size_of::<usize>() * 8,
+            "incorrect age work factor"
+        );
         Self(work_factor)
     }
 }
