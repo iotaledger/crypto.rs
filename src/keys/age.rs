@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 // https://age-encryption.org/v1
@@ -214,7 +214,7 @@ fn guard<E>(expr: bool, err: E) -> Result<(), E> {
 
 /// Decode header given password and decrypt file key.
 /// Length of decoded header is returned, or error.
-fn dec_header(password: &[u8], header: &[u8], file_key: &mut [u8; 16]) -> Result<usize, Error> {
+fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mut [u8; 16]) -> Result<usize, Error> {
     let mut i = 0_usize;
     guard(header.len() >= SCRYPT_MIN_HEADER_LEN, Error::BufferTooSmall)?;
 
@@ -260,6 +260,7 @@ fn dec_header(password: &[u8], header: &[u8], file_key: &mut [u8; 16]) -> Result
     }
     guard(header[i] == b'\n', Error::BadAgeFormat)?;
     i += 1;
+    guard(work_factor <= max_work_factor, Error::WorkFactorTooBig)?;
 
     // 6. base64-encoded encrypted file key
     // extra 2 bytes for base64 decoding
@@ -321,6 +322,8 @@ pub enum Error {
     BufferTooSmall,
     /// Input/output buffer incorrect (unexpected) length
     BufferBadLength,
+    /// Work factor during decryption exceeds maximum threshold value
+    WorkFactorTooBig,
 }
 
 /// Nonce increment. Will never overflow in practice.
@@ -489,6 +492,12 @@ pub const fn enc_len(work_factor: u8, plaintext_len: usize) -> usize {
 
 /// Encode header and encrypt payload given all the secrets and random inputs.
 /// The length of the output can be be computed with `enc_len`.
+///
+/// The crucial security parameter (besides password strength) is `work_factor`.
+/// Too small work factor (<15) will result in weak key derivation.
+/// Too large work factor (>25) will take too long to derive key.
+/// Recommended minimal value is `RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR`.
+/// `work_factor` must be <64.
 pub fn enc(
     password: &[u8],
     salt: &[u8; 16],
@@ -521,24 +530,25 @@ pub fn enc_vec(
     age
 }
 
-/// The default work factor used by `encrypt`.
-const DEFAULT_WORK_FACTOR: u8 = 11;
-
-/// The length of the age with the default work factor depending on plaintext length.
-pub const fn age_len(plaintext_len: usize) -> usize {
-    enc_len(DEFAULT_WORK_FACTOR, plaintext_len)
-}
+/// The recommended minimum work factor used by `encrypt`, or roughly 1 sec on modern PC (2023).
+pub const RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR: u8 = 19;
 
 /// Generate random salt, file key, and nonce and use them to protect plaintext in age format.
+///
+/// The crucial security parameter (besides password strength) is `work_factor`.
+/// Too small work factor (<15) will result in weak key derivation.
+/// Too large work factor (>25) will take too long to derive key.
+/// Recommended minimal value is `RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR`.
+/// `work_factor` must be <64.
 #[cfg(feature = "random")]
-pub fn encrypt(password: &[u8], plaintext: &[u8], age: &mut [u8]) {
+pub fn encrypt(password: &[u8], work_factor: u8, plaintext: &[u8], age: &mut [u8]) {
     let mut salt = [0_u8; 16];
     let mut file_key = [0_u8; 16];
     let mut nonce = [0_u8; 16];
     crate::utils::rand::fill(&mut salt[..]).unwrap();
     crate::utils::rand::fill(&mut file_key[..]).unwrap();
     crate::utils::rand::fill(&mut nonce[..]).unwrap();
-    enc(password, &salt, &file_key, DEFAULT_WORK_FACTOR, &nonce, plaintext, age);
+    enc(password, &salt, &file_key, work_factor, &nonce, plaintext, age);
     nonce.zeroize();
     file_key.zeroize();
     salt.zeroize();
@@ -560,21 +570,30 @@ pub fn encrypt_vec(password: &[u8], plaintext: &[u8]) -> Vec<u8> {
     age
 }
 
+/// The recommended maximum work factor used by `decrypt`, or roughly 45 sec on modern PC (2023).
+pub const RECOMMENDED_MAXIMUM_DECRYPT_WORK_FACTOR: u8 = 23;
+
 /// Decrypt age format.
 /// The length of the plaintext depends on the header (work factor) and can be approximated as `dec_payload_len(age.len() - header_len(10)).unwrap()`.
-pub fn decrypt(password: &[u8], age: &[u8], plaintext: &mut [u8]) -> Result<usize, Error> {
+///
+/// `max_work_factor` parameter limits the amount of computation that the decryptor is willing to spend.
+/// Too large values of work factor in the protected input age can result in DoS.
+pub fn decrypt(password: &[u8], max_work_factor: u8, age: &[u8], plaintext: &mut [u8]) -> Result<usize, Error> {
     let mut file_key = [0_u8; 16];
-    let r = dec_header(password, age, &mut file_key)
+    let r = dec_header(password, max_work_factor, age, &mut file_key)
         .and_then(|header_len| dec_payload(&file_key, &age[header_len..], plaintext));
     file_key.zeroize();
     r
 }
 
 /// Decrypt age format producing a vector.
+///
+/// `max_work_factor` parameter limits the amount of computation that the decryptor is willing to spend.
+/// Too large values of work factor in the protected input age can result in DoS.
 #[cfg(feature = "std")]
-pub fn decrypt_vec(password: &[u8], age: &[u8]) -> Result<Vec<u8>, Error> {
+pub fn decrypt_vec(password: &[u8], max_work_factor: u8, age: &[u8]) -> Result<Vec<u8>, Error> {
     let mut file_key = [0_u8; 16];
-    let r = dec_header(password, age, &mut file_key).and_then(|header_len| {
+    let r = dec_header(password, max_work_factor, age, &mut file_key).and_then(|header_len| {
         if let Some(plaintext_len) = dec_payload_len(age.len() - header_len) {
             let mut plaintext = Vec::new();
             plaintext.resize(plaintext_len, 0_u8);
@@ -637,7 +656,7 @@ mod tests {
         }
     }
 
-    fn run_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u8) -> Result<(), super::Error> {
+    fn run_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u8, max_work_factor: u8) -> Result<(), super::Error> {
         let mut header = [0_u8; super::SCRYPT_MAX_HEADER_LEN];
         let h = super::enc_header(
             password,
@@ -647,7 +666,7 @@ mod tests {
             &mut header[..super::header_len(work_factor)],
         );
         let mut dec_file_key = [0_u8; 16];
-        let r = super::dec_header(password, &header, &mut dec_file_key);
+        let r = super::dec_header(password, max_work_factor, &header, &mut dec_file_key);
         if r.is_ok() {
             assert_eq!(h, r.unwrap());
             assert_eq!(file_key, &dec_file_key);
@@ -666,7 +685,7 @@ mod tests {
         for pwd_len in pwd_lens {
             for salt in bits {
                 for file_key in bits {
-                    let r = run_header(&password[..pwd_len], &salt, &file_key, work_factor);
+                    let r = run_header(&password[..pwd_len], &salt, &file_key, work_factor, work_factor);
                     assert!(r.is_ok());
                 }
             }
@@ -697,8 +716,8 @@ mod tests {
     }
 
     #[cfg(feature = "std")]
-    fn dec_crate(age: &Vec<u8>) -> Option<Vec<u8>> {
-        super::decrypt_vec("password".as_bytes(), &age[..]).ok()
+    fn dec_crate(age: &Vec<u8>, max_work_factor: u8) -> Option<Vec<u8>> {
+        super::decrypt_vec("password".as_bytes(), max_work_factor, &age[..]).ok()
     }
 
     #[cfg(feature = "std")]
@@ -712,17 +731,6 @@ mod tests {
         let mut decrypted = Vec::new();
         reader.read_to_end(&mut decrypted).ok()?;
         Some(decrypted)
-    }
-
-    #[cfg(feature = "std")]
-    #[test]
-    fn test_rage_rage() {
-        for text_len in [0, 1] {
-            let mut plaintext = Vec::new();
-            plaintext.resize(text_len, 0xaa_u8);
-            let decrypted = dec_rage(&enc_rage(&plaintext));
-            assert_eq!(Some(plaintext), decrypted);
-        }
     }
 
     #[cfg(feature = "std")]
@@ -742,7 +750,7 @@ mod tests {
         for text_len in TEST_LENS {
             let mut plaintext = Vec::new();
             plaintext.resize(text_len, 0xaa_u8);
-            let decrypted = dec_crate(&enc_crate(&plaintext));
+            let decrypted = dec_crate(&enc_crate(&plaintext), 1_u8);
             assert_eq!(Some(plaintext), decrypted);
         }
     }
@@ -753,7 +761,9 @@ mod tests {
         for text_len in [0, 1, 64 * 1024 + 1] {
             let mut plaintext = Vec::new();
             plaintext.resize(text_len, 0xaa_u8);
-            let decrypted = dec_crate(&enc_rage(&plaintext));
+            let max_work_factor = 22_u8;
+            // dec_crate can fail if max_work_factor is too small
+            let decrypted = dec_crate(&enc_rage(&plaintext), max_work_factor);
             assert_eq!(Some(plaintext), decrypted);
         }
     }
@@ -769,13 +779,14 @@ mod tests {
         let nonce = [0x33_u8; 16];
         super::enc(b"password", &salt, &file_key, 1_u8, &nonce, &plain, &mut age);
 
-        assert!(super::decrypt(b"password", &age, &mut decrypted).is_ok());
+        assert!(super::decrypt(b"password", 1_u8, &age, &mut decrypted).is_ok());
         assert_eq!(&plain, &decrypted);
+        assert!(super::decrypt(b"password", 0_u8, &age, &mut decrypted).is_err());
 
-        assert!(super::decrypt(b"passphrase", &age, &mut decrypted).is_err());
+        assert!(super::decrypt(b"passphrase", 1_u8, &age, &mut decrypted).is_err());
         for i in 0..age.len() {
             age[i] ^= 1;
-            assert!(super::decrypt(b"password", &age, &mut decrypted).is_err());
+            assert!(super::decrypt(b"password", 2_u8, &age, &mut decrypted).is_err());
             age[i] ^= 1;
         }
     }
