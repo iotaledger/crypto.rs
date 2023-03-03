@@ -13,7 +13,7 @@ categories = [ "security" ]
 description = "The canonical source of cryptographic ground-truth for all IOTA Rust projects"
 homepage = "https://iota.org"
 repository = "https://github.com/iotaledger/crypto.rs"
-exclude = [ "/tests", "/bindings", "/.github", "/.changes" ]
+exclude = [ "/tests", "/.github", "/.changes" ]
 
 [package.metadata.docs.rs]
 all-features = true
