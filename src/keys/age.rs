@@ -656,7 +656,13 @@ mod tests {
         }
     }
 
-    fn run_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u8, max_work_factor: u8) -> Result<(), super::Error> {
+    fn run_header(
+        password: &[u8],
+        salt: &[u8; 16],
+        file_key: &[u8; 16],
+        work_factor: u8,
+        max_work_factor: u8,
+    ) -> Result<(), super::Error> {
         let mut header = [0_u8; super::SCRYPT_MAX_HEADER_LEN];
         let h = super::enc_header(
             password,
