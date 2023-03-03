@@ -111,11 +111,6 @@ cargo test --lib --all --all-features --tests
 ### Doctest
 We aim to supply at least one docstest for every interface, so to see real world usage consult the rustdocs.
 
-
-## Bindings
-Generally speaking, consuming libraries of this crate are responsible for providing their own bindings and may, if they chose, decide to expose this crates functionality.
-
-
 ## License
 Apache 2.0
 

@@ -92,7 +92,7 @@ impl Hash {
 
     /// Interpret the `Hash` as a trit slice.
     pub fn as_trits(&self) -> &Trits<T1B1> {
-        &**self
+        self
     }
 
     /// Interpret the `Hash` as a mutable trit slice.
