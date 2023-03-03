@@ -389,11 +389,8 @@ pub const fn dec_payload_len(ciphertext_len: usize) -> Option<usize> {
     } else {
         let r = (ciphertext_len - 16) % (64 * 1024 + 16);
         let q = (ciphertext_len - 16) / (64 * 1024 + 16);
-        #[deny(clippy::if_same_then_else)]
-        if (0 == q || 0 < r) && r < 16 {
-            // no 16-byte tag in the last chunk
-            None
-        } else if 0 < q && r == 16 {
+        if ((0 == q || 0 < r) && r < 16) || (0 < q && r == 16) {
+            // no 16-byte tag in the last chunk, or
             // no empty last block allowed except for the first one
             None
         } else {
