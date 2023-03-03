@@ -6,12 +6,11 @@
 use aead::NewAead;
 use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine as _};
 use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305};
-
+use core::convert::TryFrom;
 use hkdf::Hkdf;
 use hmac_::{Hmac, Mac};
 use scrypt::{scrypt, Params as ScryptParams};
 use sha2::Sha256;
-
 use zeroize::Zeroize;
 
 // header with 1-digit work factor
@@ -126,8 +125,7 @@ fn verify_mac_header(file_key: &[u8; 16], header: &[u8], mac: &[u8]) -> Result<(
 /// The rest of the header is fixed-length.
 const fn header_len(work_factor: u8) -> usize {
     // with 10 <= work_factor < 64 the header is fixed-length -- 150 bytes
-    // assert!(10 <= work_factor && work_factor < 64);
-    assert!(work_factor < 64);
+    debug_assert!(work_factor < 64);
     SCRYPT_MIN_HEADER_LEN + if work_factor < 10 { 0 } else { 1 }
 }
 
@@ -143,7 +141,7 @@ const fn header_len(work_factor: u8) -> usize {
 /// * Length of the encoded header.
 fn enc_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor: u8, header: &mut [u8]) -> usize {
     let mut i = 0_usize;
-    assert!(header_len(work_factor) <= header.len());
+    debug_assert!(header_len(work_factor) <= header.len());
 
     // 1. AGE prefix
     // 2. version
@@ -154,7 +152,7 @@ fn enc_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor
 
     // 4. scrypt base64-encoded salt
     let b = BASE64.encode_slice(salt, &mut header[i..]).unwrap();
-    assert_eq!(SALT_BASE64_LEN, b);
+    debug_assert_eq!(SALT_BASE64_LEN, b);
     i += b;
 
     // 5. 1 or 2 decimal digit work factor
@@ -175,7 +173,7 @@ fn enc_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor
 
     // 6. base64-encoded encrypted file key
     let b = BASE64.encode_slice(body, &mut header[i..]).unwrap();
-    assert_eq!(ENCRYPTED_FILE_KEY_BASE64_LEN, b);
+    debug_assert_eq!(ENCRYPTED_FILE_KEY_BASE64_LEN, b);
     i += b;
 
     // 7. final delimiter before MAC
@@ -190,7 +188,7 @@ fn enc_header(password: &[u8], salt: &[u8; 16], file_key: &[u8; 16], work_factor
 
     // 8. base64-encoded MAC
     let b = BASE64.encode_slice(mac, &mut header[i..]).unwrap();
-    assert_eq!(MAC_BASE64_LEN, b);
+    debug_assert_eq!(MAC_BASE64_LEN, b);
     i += b;
 
     // 9. final new-line
@@ -239,7 +237,7 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     let b = BASE64
         .decode_slice(&header[i..i + SALT_BASE64_LEN], &mut salt2)
         .map_err(|_| Error::BadAgeFormat)?;
-    assert_eq!(16, b);
+    guard(16 == b, Error::BadAgeFormat)?;
     i += SALT_BASE64_LEN;
     let mut salt = [0_u8; 16];
     salt.copy_from_slice(&salt2[..16]);
@@ -268,7 +266,7 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     let b = BASE64
         .decode_slice(&header[i..i + ENCRYPTED_FILE_KEY_BASE64_LEN], &mut body2[..])
         .map_err(|_| Error::BadAgeFormat)?;
-    assert_eq!(16 + 16, b);
+    guard(16 + 16 == b, Error::BadAgeFormat)?;
     i += ENCRYPTED_FILE_KEY_BASE64_LEN;
 
     // decrypt file key
@@ -285,7 +283,7 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     let b = BASE64
         .decode_slice(&header[i..i + MAC_BASE64_LEN], &mut mac2)
         .map_err(|_| Error::BadAgeFormat)?;
-    assert_eq!(32, b);
+    guard(32 == b, Error::BadAgeFormat)?;
 
     // MAC computed over the entire header up to and including '---'
     // exclude the last ' ' after '---'
@@ -324,6 +322,10 @@ pub enum Error {
     BufferBadLength,
     /// Work factor during decryption exceeds maximum threshold value
     WorkFactorTooBig,
+    /// Work factor representation is incorrect (>=64)
+    IncorrectWorkFactor,
+    /// Randomness generation failed
+    RngFailed,
 }
 
 /// Nonce increment. Will never overflow in practice.
@@ -338,8 +340,8 @@ fn inc_nonce(nonce: &mut [u8; 12]) {
 
 /// Encrypt payload chunk with payload key & nonce via ChaCha20-Poly1305.
 fn enc_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], plain_chunk: &[u8], cipher_chunk: &mut [u8]) {
-    assert_eq!(plain_chunk.len() + 16, cipher_chunk.len());
-    assert!(plain_chunk.len() <= 64 * 1024);
+    debug_assert_eq!(plain_chunk.len() + 16, cipher_chunk.len());
+    debug_assert!(plain_chunk.len() <= 64 * 1024);
 
     // cipher chunk = ChaCha20-Poly1305(key = payload key, plaintext = plain chunk)
     cipher_chunk[..plain_chunk.len()].copy_from_slice(plain_chunk);
@@ -351,8 +353,8 @@ fn enc_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], plain_chunk: &[u8], cipher_
 
 /// Decrypt and verify payload chunk with payload key & nonce via ChaCha20-Poly1305.
 fn dec_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], cipher_chunk: &[u8], plain_chunk: &mut [u8]) -> Result<(), Error> {
-    assert!(plain_chunk.len() <= 64 * 1024);
-    assert_eq!(plain_chunk.len() + 16, cipher_chunk.len());
+    debug_assert!(plain_chunk.len() <= 64 * 1024);
+    debug_assert_eq!(plain_chunk.len() + 16, cipher_chunk.len());
 
     // cipher chunk = ChaCha20-Poly1305(key = payload key, plaintext = plain chunk)
     plain_chunk.copy_from_slice(&cipher_chunk[..plain_chunk.len()]);
@@ -407,7 +409,7 @@ pub const fn dec_payload_len(ciphertext_len: usize) -> Option<usize> {
 fn enc_payload(file_key: &[u8; 16], nonce: &[u8; 16], mut plaintext: &[u8], ciphertext: &mut [u8]) {
     let mut i = 0_usize;
 
-    assert_eq!(enc_payload_len(plaintext.len()), ciphertext.len());
+    debug_assert_eq!(enc_payload_len(plaintext.len()), ciphertext.len());
 
     ciphertext[i..i + 16].copy_from_slice(nonce);
     i += 16;
@@ -445,7 +447,7 @@ fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8])
 
     if let Some(plaintext_len) = dec_payload_len(ciphertext.len()) {
         guard(plaintext_len <= plaintext.len(), Error::BufferTooSmall)?;
-        assert_eq!(enc_payload_len(plaintext_len), ciphertext.len());
+        debug_assert_eq!(enc_payload_len(plaintext_len), ciphertext.len());
     } else {
         guard(false, Error::BufferBadLength)?;
     }
@@ -485,9 +487,36 @@ fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8])
     r.map(|_| i)
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct WorkFactor(u8);
+
+impl WorkFactor {
+    pub const fn new(work_factor: u8) -> Self {
+        assert!((work_factor as usize) < core::mem::size_of::<usize>() * 8, "incorrect age work factor");
+        Self(work_factor)
+    }
+}
+
+impl TryFrom<u8> for WorkFactor {
+    type Error = Error;
+    fn try_from(work_factor: u8) -> Result<Self, Error> {
+        if (work_factor as usize) < core::mem::size_of::<usize>() * 8 {
+            Ok(Self(work_factor))
+        } else {
+            Err(Error::IncorrectWorkFactor)
+        }
+    }
+}
+
+impl From<WorkFactor> for u8 {
+    fn from(work_factor: WorkFactor) -> u8 {
+        work_factor.0
+    }
+}
+
 /// The total age length including header and body depending on work factor and plaintext length.
-pub const fn enc_len(work_factor: u8, plaintext_len: usize) -> usize {
-    header_len(work_factor) + enc_payload_len(plaintext_len)
+pub const fn enc_len(work_factor: WorkFactor, plaintext_len: usize) -> usize {
+    header_len(work_factor.0) + enc_payload_len(plaintext_len)
 }
 
 /// Encode header and encrypt payload given all the secrets and random inputs.
@@ -502,30 +531,38 @@ pub fn enc(
     password: &[u8],
     salt: &[u8; 16],
     file_key: &[u8; 16],
-    work_factor: u8,
+    work_factor: WorkFactor,
     nonce: &[u8; 16],
     plaintext: &[u8],
     age: &mut [u8],
-) {
-    assert_eq!(enc_len(work_factor, plaintext.len()), age.len());
-    let h = header_len(work_factor);
-    enc_header(password, salt, file_key, work_factor, &mut age[..h]);
-    enc_payload(file_key, nonce, plaintext, &mut age[h..]);
+) -> Result<usize, Error> {
+    let age_len = enc_len(work_factor, plaintext.len());
+    guard(age_len <= age.len(), Error::BufferTooSmall)?;
+    let h = header_len(work_factor.0);
+    enc_header(password, salt, file_key, work_factor.0, &mut age[..h]);
+    enc_payload(file_key, nonce, plaintext, &mut age[h..age_len]);
+    Ok(age_len)
 }
 
 /// Encode header and encrypt payload given all the secrets and random inputs producing a vector.
+///
+/// The crucial security parameter (besides password strength) is `work_factor`.
+/// Too small work factor (<15) will result in weak key derivation.
+/// Too large work factor (>25) will take too long to derive key.
+/// Recommended minimal value is `RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR`.
+/// `work_factor` must be <64.
 #[cfg(feature = "std")]
 pub fn enc_vec(
     password: &[u8],
     salt: &[u8; 16],
     file_key: &[u8; 16],
-    work_factor: u8,
+    work_factor: WorkFactor,
     nonce: &[u8; 16],
     plaintext: &[u8],
 ) -> Vec<u8> {
     let mut age = Vec::new();
     age.resize(enc_len(work_factor, plaintext.len()), 0_u8);
-    let h = enc_header(password, salt, file_key, work_factor, &mut age[..]);
+    let h = enc_header(password, salt, file_key, work_factor.0, &mut age[..]);
     enc_payload(file_key, nonce, plaintext, &mut age[h..]);
     age
 }
@@ -541,33 +578,34 @@ pub const RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR: u8 = 19;
 /// Recommended minimal value is `RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR`.
 /// `work_factor` must be <64.
 #[cfg(feature = "random")]
-pub fn encrypt(password: &[u8], work_factor: u8, plaintext: &[u8], age: &mut [u8]) {
+pub fn encrypt(password: &[u8], work_factor: WorkFactor, plaintext: &[u8], age: &mut [u8]) -> Result<usize, Error> {
     let mut salt = [0_u8; 16];
     let mut file_key = [0_u8; 16];
     let mut nonce = [0_u8; 16];
-    crate::utils::rand::fill(&mut salt[..]).unwrap();
-    crate::utils::rand::fill(&mut file_key[..]).unwrap();
-    crate::utils::rand::fill(&mut nonce[..]).unwrap();
-    enc(password, &salt, &file_key, work_factor, &nonce, plaintext, age);
+    crate::utils::rand::fill(&mut salt[..]).map_err(|_| Error::RngFailed)?;
+    crate::utils::rand::fill(&mut file_key[..]).map_err(|_| Error::RngFailed)?;
+    crate::utils::rand::fill(&mut nonce[..]).map_err(|_| Error::RngFailed)?;
+    let r = enc(password, &salt, &file_key, work_factor, &nonce, plaintext, age);
     nonce.zeroize();
     file_key.zeroize();
     salt.zeroize();
+    r
 }
 
 /// Generate random salt, file key, and nonce and use them to protect plaintext in age format producing a vector.
 #[cfg(all(feature = "random", feature = "std"))]
-pub fn encrypt_vec(password: &[u8], work_factor: u8, plaintext: &[u8]) -> Vec<u8> {
+pub fn encrypt_vec(password: &[u8], work_factor: WorkFactor, plaintext: &[u8]) -> Result<Vec<u8>, Error> {
     let mut salt = [0_u8; 16];
     let mut file_key = [0_u8; 16];
     let mut nonce = [0_u8; 16];
-    crate::utils::rand::fill(&mut salt[..]).unwrap();
-    crate::utils::rand::fill(&mut file_key[..]).unwrap();
-    crate::utils::rand::fill(&mut nonce[..]).unwrap();
+    crate::utils::rand::fill(&mut salt[..]).map_err(|_| Error::RngFailed)?;
+    crate::utils::rand::fill(&mut file_key[..]).map_err(|_| Error::RngFailed)?;
+    crate::utils::rand::fill(&mut nonce[..]).map_err(|_| Error::RngFailed)?;
     let age = enc_vec(password, &salt, &file_key, work_factor, &nonce, plaintext);
     nonce.zeroize();
     file_key.zeroize();
     salt.zeroize();
-    age
+    Ok(age)
 }
 
 /// The recommended maximum work factor used by `decrypt`, or roughly 45 sec on modern PC (2023).
@@ -700,8 +738,9 @@ mod tests {
 
     #[cfg(feature = "std")]
     fn enc_crate(plaintext: &Vec<u8>) -> Vec<u8> {
+        use core::convert::TryInto;
         let password = "password".as_bytes();
-        let work_factor = 1_u8;
+        let work_factor = 1_u8.try_into().unwrap();
         let salt = [0x11_u8; 16];
         let file_key = [0x22_u8; 16];
         let nonce = [0x33_u8; 16];
@@ -778,12 +817,13 @@ mod tests {
     fn test_fuzz() {
         let plain = [0xdd_u8; 5];
         let mut decrypted = [0_u8; 5];
-        let mut age = [0_u8; super::enc_len(1_u8, 5)];
+        const WORK_FACTOR: super::WorkFactor = super::WorkFactor::new(1_u8);
+        let mut age = [0_u8; super::enc_len(WORK_FACTOR, 5)];
 
         let salt = [0x11_u8; 16];
         let file_key = [0x22_u8; 16];
         let nonce = [0x33_u8; 16];
-        super::enc(b"password", &salt, &file_key, 1_u8, &nonce, &plain, &mut age);
+        assert!(super::enc(b"password", &salt, &file_key, WORK_FACTOR, &nonce, &plain, &mut age).is_ok());
 
         assert!(super::decrypt(b"password", 1_u8, &age, &mut decrypted).is_ok());
         assert_eq!(&plain, &decrypted);
