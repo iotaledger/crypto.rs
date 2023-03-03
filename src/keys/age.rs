@@ -3,10 +3,11 @@
 
 // https://age-encryption.org/v1
 
+use core::convert::TryFrom;
+
 use aead::NewAead;
 use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine as _};
 use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305};
-use core::convert::TryFrom;
 use hkdf::Hkdf;
 use hmac_::{Hmac, Mac};
 use scrypt::{scrypt, Params as ScryptParams};
@@ -135,7 +136,8 @@ const fn header_len(work_factor: u8) -> usize {
 /// * `password` -- secret string
 /// * `file_key` -- random 128-bit key used to derive other keys and compute MACs
 /// * `salt` -- 16-byte random salt
-/// * `work_factor` -- base-2 logarithm of scrypt work factor in decimal, `10 <= work_factor < 64`; work factor is 2-digit so that the header is fixed-length
+/// * `work_factor` -- base-2 logarithm of scrypt work factor in decimal, `10 <= work_factor < 64`; work factor is
+///   2-digit so that the header is fixed-length
 ///
 /// Return:
 /// * Length of the encoded header.
@@ -612,7 +614,8 @@ pub fn encrypt_vec(password: &[u8], work_factor: WorkFactor, plaintext: &[u8]) -
 pub const RECOMMENDED_MAXIMUM_DECRYPT_WORK_FACTOR: u8 = 23;
 
 /// Decrypt age format.
-/// The length of the plaintext depends on the header (work factor) and can be approximated as `dec_payload_len(age.len() - header_len(10)).unwrap()`.
+/// The length of the plaintext depends on the header (work factor) and can be approximated as
+/// `dec_payload_len(age.len() - header_len(10)).unwrap()`.
 ///
 /// `max_work_factor` parameter limits the amount of computation that the decryptor is willing to spend.
 /// Too large values of work factor in the protected input age can result in DoS.
@@ -737,39 +740,39 @@ mod tests {
     }
 
     #[cfg(feature = "std")]
-    fn enc_crate(plaintext: &Vec<u8>) -> Vec<u8> {
+    fn enc_crate(plaintext: &[u8]) -> Vec<u8> {
         use core::convert::TryInto;
         let password = "password".as_bytes();
         let work_factor = 1_u8.try_into().unwrap();
         let salt = [0x11_u8; 16];
         let file_key = [0x22_u8; 16];
         let nonce = [0x33_u8; 16];
-        super::enc_vec(password, &salt, &file_key, work_factor, &nonce, &plaintext[..])
+        super::enc_vec(password, &salt, &file_key, work_factor, &nonce, plaintext)
     }
 
     #[cfg(feature = "std")]
-    fn enc_rage(plaintext: &Vec<u8>) -> Vec<u8> {
+    fn enc_rage(plaintext: &[u8]) -> Vec<u8> {
         use std::io::Write;
         let password = "password".to_owned().into();
         let mut age = Vec::new();
         let mut writer = age::Encryptor::with_user_passphrase(password)
             .wrap_output(&mut age)
             .unwrap();
-        writer.write_all(&plaintext[..]).unwrap();
+        writer.write_all(plaintext).unwrap();
         writer.finish().unwrap();
         age
     }
 
     #[cfg(feature = "std")]
-    fn dec_crate(age: &Vec<u8>, max_work_factor: u8) -> Option<Vec<u8>> {
-        super::decrypt_vec("password".as_bytes(), max_work_factor, &age[..]).ok()
+    fn dec_crate(age: &[u8], max_work_factor: u8) -> Option<Vec<u8>> {
+        super::decrypt_vec("password".as_bytes(), max_work_factor, age).ok()
     }
 
     #[cfg(feature = "std")]
-    fn dec_rage(age: &Vec<u8>) -> Option<Vec<u8>> {
+    fn dec_rage(age: &[u8]) -> Option<Vec<u8>> {
         use std::io::Read;
         let pass = "password".to_owned().into();
-        let mut reader = match age::Decryptor::new(&age[..]).unwrap() {
+        let mut reader = match age::Decryptor::new(age).unwrap() {
             age::Decryptor::Recipients(_) => panic!("internal error"),
             age::Decryptor::Passphrase(d) => d.decrypt(&pass, Some(14)).unwrap(),
         };
