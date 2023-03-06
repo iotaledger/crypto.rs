@@ -5,7 +5,7 @@
 
 use core::convert::TryFrom;
 
-use aead::NewAead;
+use aead::KeyInit;
 use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine as _};
 use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305};
 use hkdf::Hkdf;

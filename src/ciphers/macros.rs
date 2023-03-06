@@ -21,7 +21,7 @@ macro_rules! impl_aead {
                 ciphertext: &mut [u8],
                 tag: &mut $crate::ciphers::traits::Tag<Self>,
             ) -> crate::Result<()> {
-                use aead::{AeadInPlace, NewAead};
+                use aead::{AeadInPlace, KeyInit};
 
                 if plaintext.len() > ciphertext.len() {
                     return Err($crate::Error::BufferSize {
@@ -50,7 +50,7 @@ macro_rules! impl_aead {
                 ciphertext: &[u8],
                 tag: &$crate::ciphers::traits::Tag<Self>,
             ) -> crate::Result<usize> {
-                use aead::{AeadInPlace, NewAead};
+                use aead::{AeadInPlace, KeyInit};
 
                 if ciphertext.len() > plaintext.len() {
                     return Err($crate::Error::BufferSize {

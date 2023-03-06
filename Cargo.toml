@@ -74,13 +74,13 @@ age = [ "aead", "base64", "chacha20poly1305", "hkdf", "hmac_", "scrypt", "sha2",
 
 [dependencies]
 block-modes = { version = "0.8", optional = true, default-features = false }
-aead = { version = "0.4", optional = true, default-features = false }
+aead = { version = "0.5", optional = true, default-features = false }
 aes-crate = { version = "0.7", optional = true, default-features = false, package = "aes" }
-aes-gcm-crate = { version = "0.9", optional = true, default-features = false, package = "aes-gcm", features = [ "aes" ] }
+aes-gcm-crate = { version = "0.10", optional = true, default-features = false, package = "aes-gcm", features = [ "aes" ] }
 bee-common-derive = { version = "0.1.1-alpha", optional = true, default-features = false }
 blake2 = { version = "0.10.5", optional = true, default-features = false }
 byteorder = { version = "1.4", optional = true, default-features = false }
-chacha20poly1305 = { version = "0.9", optional = true, default-features = false }
+chacha20poly1305 = { version = "0.10", optional = true, default-features = false }
 digest = { version = "0.10", optional = true, default-features = false }
 ed25519-zebra = { version = "3.0", optional = true, default-features = false }
 generic-array = { version = "0.14", optional = true, default-features = false }
