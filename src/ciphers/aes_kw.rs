@@ -4,8 +4,10 @@
 use core::{convert::TryInto as _, marker::PhantomData, mem};
 
 use aes::{
-    cipher::generic_array::typenum::Unsigned as _,
-    cipher::{BlockDecrypt, BlockEncrypt, KeyInit, KeySizeUser},
+    cipher::{
+        generic_array::typenum::Unsigned as _,
+        {BlockDecrypt, BlockEncrypt, KeyInit, KeySizeUser},
+    },
     Aes128, Aes192, Aes256,
 };
 

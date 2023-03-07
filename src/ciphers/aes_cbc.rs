@@ -167,9 +167,7 @@ where
         );
 
         // cbc decryptor checks padding
-        if let Ok(plaintext_slice) = cipher
-            .decrypt_padded_b2b_mut::<Pad>(ciphertext, plaintext)
-        {
+        if let Ok(plaintext_slice) = cipher.decrypt_padded_b2b_mut::<Pad>(ciphertext, plaintext) {
             Ok(plaintext_slice.len())
         } else {
             // do not leak any plaintext in case of padding error
