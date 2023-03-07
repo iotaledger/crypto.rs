@@ -23,14 +23,14 @@ pub type Tag<T> = GenericArray<u8, <T as Aead>::TagLength>;
 /// Example using [`Aes256Gcm`][`crate::ciphers::aes::Aes256Gcm`]:
 ///
 /// ```rust
-/// # #[cfg(all(feature = "random", feature = "aes-gcm"))]
-/// # {
+/// #[cfg(all(feature = "random", feature = "aes-gcm", feature = "std"))]
+/// {
 /// use crypto::ciphers::{
 ///     aes_gcm::Aes256Gcm,
 ///     traits::{Aead, Key, Nonce, Tag},
 /// };
 /// let plaintext: &[u8] = b"crypto.rs";
-/// let associated_data: &[u8] = b"stronghodl";
+/// let associated_data: &[u8] = b"stronghold";
 /// let mut encrypted: Vec<u8> = vec![0; plaintext.len()];
 /// let mut decrypted: Vec<u8> = vec![0; encrypted.len()];
 /// let mut tag: Vec<u8> = vec![0; Aes256Gcm::TAG_LENGTH];
@@ -58,10 +58,10 @@ pub type Tag<T> = GenericArray<u8, <T as Aead>::TagLength>;
 ///
 /// assert_eq!(decrypted, plaintext);
 ///
-/// # Ok::<(), crypto::Error>(())
-/// # }
-/// # #[cfg(not(feature = "random"))]
-/// # Ok::<(), crypto::Error>(())
+/// Ok::<(), crypto::Error>(())
+/// }
+/// #[cfg(not(all(feature = "random", feature = "aes-gcm", feature = "std")))]
+/// Ok::<(), crypto::Error>(())
 /// ```
 pub trait Aead {
     /// The size of the [`key`][`Key`] required by this algorithm.
