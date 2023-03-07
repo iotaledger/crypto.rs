@@ -1,27 +1,25 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 use core::{
     marker::PhantomData,
     num::NonZeroUsize,
-    ops::{Shl, Sub},
+    ops::{Shl, Shr},
 };
 
-use aes_crate::{Aes128, Aes192, Aes256, BlockCipher, NewBlockCipher};
-use block_modes::{block_padding::Pkcs7, BlockMode, Cbc};
+use aes_crate::cipher::{
+    block_padding::{Padding, Pkcs7},
+    BlockCipher, BlockDecryptMut, BlockEncryptMut, BlockSizeUser, InnerIvInit, KeyInit, KeySizeUser,
+};
+use aes_crate::{Aes128, Aes192, Aes256};
+use cbc_crate::{Decryptor as CbcDecryptor, Encryptor as CbcEncryptor};
 use generic_array::{
-    sequence::Split,
-    typenum::{Double, Unsigned, B1, U16, U24, U32},
+    typenum::{Unsigned, B1},
     ArrayLength,
 };
 use hmac_::{
-    digest::{
-        block_buffer::Eager,
-        core_api::{BlockSizeUser, BufferKindUser, CoreProxy, FixedOutputCore, UpdateCore},
-        typenum::{IsLess, Le, NonZero, U256},
-        FixedOutput, HashMarker, OutputSizeUser, Reset,
-    },
-    Hmac, Mac,
+    digest::{Digest, FixedOutput, OutputSizeUser, Update},
+    SimpleHmac,
 };
 use sha2::{Sha256, Sha384, Sha512};
 use subtle::ConstantTimeEq;
@@ -29,113 +27,52 @@ use subtle::ConstantTimeEq;
 use crate::ciphers::traits::{Aead, Key, Nonce, Tag};
 
 /// AES-CBC using 128-bit key and HMAC SHA-256.
-pub type Aes128CbcHmac256 = AesCbc<Aes128, Sha256, U16, U16>;
+pub type Aes128CbcHmac256 = CbcHmac<Aes128, Pkcs7, Sha256>;
 
 /// AES-CBC using 192-bit key and HMAC SHA-384.
-pub type Aes192CbcHmac384 = AesCbc<Aes192, Sha384, U24, U24>;
+pub type Aes192CbcHmac384 = CbcHmac<Aes192, Pkcs7, Sha384>;
 
 /// AES-CBC using 256-bit key and HMAC SHA-512.
-pub type Aes256CbcHmac512 = AesCbc<Aes256, Sha512, U32, U32>;
-
-type AesCbcPkcs7<Cipher> = Cbc<Cipher, Pkcs7>;
-
-type NonceLength = U16;
-
-type DigestOutput<Digest> = <Digest as OutputSizeUser>::OutputSize;
+pub type Aes256CbcHmac512 = CbcHmac<Aes256, Pkcs7, Sha512>;
 
 /// AES in Cipher Block Chaining mode with PKCS #7 padding and HMAC
 ///
 /// See [RFC7518#Section-5.2](https://tools.ietf.org/html/rfc7518#section-5.2)
-#[derive(Clone, Debug, PartialEq, Eq)]
-pub struct AesCbc<Cipher, Digest, KeyLen, TagLen> {
+#[derive(Clone, Copy, Debug)]
+pub struct CbcHmac<Cipher, Pad, Hash> {
     cipher: PhantomData<Cipher>,
-    digest: PhantomData<Digest>,
-    key_len: PhantomData<KeyLen>,
-    tag_len: PhantomData<TagLen>,
+    padding: PhantomData<Pad>,
+    digest: PhantomData<Hash>,
 }
 
-impl<Cipher, Digest, KeyLen, TagLen> AesCbc<Cipher, Digest, KeyLen, TagLen>
+impl<Cipher, Pad, Hash> CbcHmac<Cipher, Pad, Hash>
 where
-    Cipher: BlockCipher + NewBlockCipher,
+    Cipher: BlockCipher,
 {
-    const BLOCK_SIZE: usize = <<Cipher as BlockCipher>::BlockSize as Unsigned>::USIZE;
+    const BLOCK_SIZE: usize = <<Cipher as BlockSizeUser>::BlockSize as Unsigned>::USIZE;
 }
 
-// Trait bounds for [`Digest`] taken from: https://github.com/RustCrypto/MACs/issues/114
-impl<Cipher, Digest, KeyLen, TagLen> AesCbc<Cipher, Digest, KeyLen, TagLen>
+impl<Cipher, Pad, Hash> Aead for CbcHmac<Cipher, Pad, Hash>
 where
-    Cipher: BlockCipher
-        + NewBlockCipher
-        + block_modes::cipher::BlockCipher
-        + block_modes::cipher::NewBlockCipher
-        + aes_crate::BlockEncrypt
-        + aes_crate::BlockDecrypt,
-    Digest: Clone + CoreProxy + Default + FixedOutput + Reset,
+    Cipher: BlockCipher + BlockDecryptMut + BlockEncryptMut + KeySizeUser + KeyInit,
 
-    Digest::Core: HashMarker + UpdateCore + FixedOutputCore + BufferKindUser<BufferKind = Eager> + Default + Clone,
-    <Digest::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<Digest::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-    <Digest::Core as OutputSizeUser>::OutputSize: Sub<TagLen, Output = TagLen>,
+    // Key contains both MAC and encryption keys
+    // This is the way to double array length
+    <Cipher as KeySizeUser>::KeySize: ArrayLength<u8> + Shl<B1>,
+    <<Cipher as KeySizeUser>::KeySize as Shl<B1>>::Output: ArrayLength<u8>,
 
-    KeyLen: ArrayLength<u8> + Shl<B1>,
-    TagLen: ArrayLength<u8>,
-    Double<KeyLen>: ArrayLength<u8>,
-    DigestOutput<Digest>: ArrayLength<u8> + Sub<TagLen, Output = TagLen>,
+    Pad: Padding<<Cipher as BlockSizeUser>::BlockSize>,
+
+    Hash: BlockSizeUser + Digest + FixedOutput,
+
+    // MAC is the hash output truncated in half
+    // This is the way to halve array length
+    <Hash as OutputSizeUser>::OutputSize: ArrayLength<u8> + Shr<B1>,
+    <<Hash as OutputSizeUser>::OutputSize as Shr<B1>>::Output: ArrayLength<u8>,
 {
-    fn compute_tag(
-        key: &Key<Self>,
-        nonce: &Nonce<Self>,
-        associated_data: &[u8],
-        ciphertext: &[u8],
-    ) -> crate::Result<Tag<Self>> {
-        // The octet string AL is equal to the number of bits in the Additional
-        // Authenticated Data A expressed as a 64-bit unsigned big-endian integer.
-        //
-        // A message Authentication Tag T is computed by applying HMAC to the
-        // following data, in order:
-        //
-        //    the Additional Authenticated Data A,
-        //    the Initialization Vector IV,
-        //    the ciphertext E computed in the previous step, and
-        //    the octet string AL defined above.
-        //
-        //  The string MAC_KEY is used as the MAC key. We denote the output
-        //  of the MAC computed in this step as M. The first T_LEN octets of
-        //  M are used as T.
-        let mut hmac: Hmac<Digest> =
-            Hmac::new_from_slice(&key[..KeyLen::USIZE]).map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
-
-        hmac.update(associated_data);
-        hmac.update(nonce);
-        hmac.update(ciphertext);
-        hmac.update(&((associated_data.len() as u64) * 8).to_be_bytes());
-
-        Ok(Split::split(hmac.finalize().into_bytes()).0)
-    }
-
-    fn cipher(key: &Key<Self>, nonce: &Nonce<Self>) -> crate::Result<AesCbcPkcs7<Cipher>> {
-        AesCbcPkcs7::new_from_slices(&key[KeyLen::USIZE..], nonce)
-            .map_err(|_| crate::Error::CipherError { alg: Self::NAME })
-    }
-}
-
-// Trait bounds for [`Digest`] taken from: https://github.com/RustCrypto/MACs/issues/114
-impl<Cipher, Digest, KeyLen, TagLen> Aead for AesCbc<Cipher, Digest, KeyLen, TagLen>
-where
-    Cipher: BlockCipher + NewBlockCipher + aes_crate::BlockEncrypt + aes_crate::BlockDecrypt,
-    Digest: CoreProxy + Clone + Default + FixedOutput + Reset,
-    Digest::Core: HashMarker + UpdateCore + FixedOutputCore + BufferKindUser<BufferKind = Eager> + Default + Clone,
-    <Digest::Core as BlockSizeUser>::BlockSize: IsLess<U256>,
-    Le<<Digest::Core as BlockSizeUser>::BlockSize, U256>: NonZero,
-    <Digest::Core as OutputSizeUser>::OutputSize: Sub<TagLen, Output = TagLen>,
-    KeyLen: ArrayLength<u8> + Shl<B1>,
-    TagLen: ArrayLength<u8>,
-    Double<KeyLen>: ArrayLength<u8>,
-    DigestOutput<Digest>: ArrayLength<u8> + Sub<TagLen, Output = TagLen>,
-{
-    type KeyLength = Double<KeyLen>;
-    type NonceLength = NonceLength;
-    type TagLength = TagLen;
+    type KeyLength = <<Cipher as KeySizeUser>::KeySize as Shl<B1>>::Output;
+    type NonceLength = <Cipher as BlockSizeUser>::BlockSize;
+    type TagLength = <<Hash as OutputSizeUser>::OutputSize as Shr<B1>>::Output;
 
     const NAME: &'static str = "AES-CBC";
 
@@ -146,9 +83,10 @@ where
         plaintext: &[u8],
         ciphertext: &mut [u8],
         tag: &mut Tag<Self>,
-    ) -> crate::Result<()> {
+    ) -> crate::Result<usize> {
+        let length: usize = plaintext.len();
         let padding: usize = Self::padsize(plaintext).map(NonZeroUsize::get).unwrap_or_default();
-        let expected: usize = plaintext.len() + padding;
+        let expected: usize = length + padding;
 
         if expected > ciphertext.len() {
             return Err(crate::Error::BufferSize {
@@ -158,18 +96,31 @@ where
             });
         }
 
-        let cipher: AesCbcPkcs7<Cipher> = Self::cipher(key, nonce)?;
-        let length: usize = plaintext.len();
+        // the second half of the key is the encryption key
+        let cipher = CbcEncryptor::<Cipher>::inner_iv_init(
+            Cipher::new_from_slice(&key.as_slice()[Self::KEY_LENGTH / 2..]).unwrap(),
+            nonce,
+        );
 
-        ciphertext[..length].copy_from_slice(plaintext);
-
-        cipher
-            .encrypt(ciphertext, length)
+        // cbc encryptor does padding
+        let cipher_slice = cipher
+            .encrypt_padded_b2b_mut::<Pad>(plaintext, ciphertext)
             .map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
+        debug_assert_eq!(expected, cipher_slice.len());
 
-        tag.copy_from_slice(&Self::compute_tag(key, nonce, associated_data, ciphertext)?);
+        // the first half of the key is the MAC key
+        let mut hmac: SimpleHmac<Hash> =
+            <SimpleHmac<Hash> as KeyInit>::new_from_slice(&key.as_slice()[..Self::KEY_LENGTH / 2]).unwrap();
 
-        Ok(())
+        hmac.update(associated_data);
+        hmac.update(nonce);
+        hmac.update(ciphertext);
+        hmac.update(&((associated_data.len() as u64) * 8).to_be_bytes());
+        let hash = hmac.finalize_fixed();
+        // the first half of HMAC output is the tag
+        tag.copy_from_slice(&hash.as_slice()[..Self::TAG_LENGTH]);
+
+        Ok(expected)
     }
 
     fn decrypt(
@@ -180,27 +131,44 @@ where
         ciphertext: &[u8],
         tag: &Tag<Self>,
     ) -> crate::Result<usize> {
-        if ciphertext.len() > plaintext.len() {
+        let length = ciphertext.len();
+        if length > plaintext.len() {
             return Err(crate::Error::BufferSize {
                 name: "plaintext",
-                needs: ciphertext.len(),
+                needs: length,
                 has: plaintext.len(),
             });
         }
 
-        let cipher: AesCbcPkcs7<Cipher> = Self::cipher(key, nonce)?;
-        let computed: Tag<Self> = Self::compute_tag(key, nonce, associated_data, ciphertext)?;
+        // the first half of the key is the MAC key
+        let mut hmac: SimpleHmac<Hash> =
+            <SimpleHmac<Hash> as KeyInit>::new_from_slice(&key.as_slice()[..Self::KEY_LENGTH / 2]).unwrap();
+
+        hmac.update(associated_data);
+        hmac.update(nonce);
+        hmac.update(ciphertext);
+        hmac.update(&((associated_data.len() as u64) * 8).to_be_bytes());
+        let hash = hmac.finalize_fixed();
+        let mut computed = Tag::<Self>::default();
+        // the first half of HMAC output is the tag
+        computed.copy_from_slice(&hash.as_slice()[..Self::TAG_LENGTH]);
 
         if !bool::from(computed.ct_eq(tag)) {
             return Err(crate::Error::CipherError { alg: Self::NAME });
         }
 
-        plaintext[..ciphertext.len()].copy_from_slice(ciphertext);
+        // the second half of the key is the encryption key
+        let cipher = CbcDecryptor::<Cipher>::inner_iv_init(
+            Cipher::new_from_slice(&key.as_slice()[Self::KEY_LENGTH / 2..]).unwrap(),
+            nonce,
+        );
 
-        cipher
-            .decrypt(plaintext)
-            .map_err(|_| crate::Error::CipherError { alg: Self::NAME })
-            .map(|output| output.len())
+        // cbc decryptor checks padding
+        let plaintext_slice = cipher
+            .decrypt_padded_b2b_mut::<Pad>(ciphertext, plaintext)
+            .map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
+
+        Ok(plaintext_slice.len())
     }
 
     fn padsize(plaintext: &[u8]) -> Option<NonZeroUsize> {

@@ -4,7 +4,9 @@
 use core::{convert::TryInto as _, marker::PhantomData, mem};
 
 use aes_crate::{
-    cipher::generic_array::typenum::Unsigned as _, Aes128, Aes192, Aes256, BlockDecrypt, BlockEncrypt, NewBlockCipher,
+    cipher::generic_array::typenum::Unsigned as _,
+    cipher::{BlockDecrypt, BlockEncrypt, KeyInit, KeySizeUser},
+    Aes128, Aes192, Aes256,
 };
 
 use crate::{Error, Result};
@@ -46,14 +48,14 @@ impl<'a, T> AesKeyWrap<'a, T> {
 
 impl<'a, T> AesKeyWrap<'a, T>
 where
-    T: NewBlockCipher,
+    T: KeyInit,
 {
-    pub const KEY_LENGTH: usize = <T as NewBlockCipher>::KeySize::USIZE;
+    pub const KEY_LENGTH: usize = <T as KeySizeUser>::KeySize::USIZE;
 }
 
 impl<'a, T> AesKeyWrap<'a, T>
 where
-    T: BlockEncrypt + BlockDecrypt + NewBlockCipher,
+    T: BlockEncrypt + BlockDecrypt + KeyInit,
 {
     /// Wraps a key using the AES Key Wrap algorithm.
     ///
