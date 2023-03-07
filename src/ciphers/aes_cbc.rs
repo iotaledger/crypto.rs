@@ -25,6 +25,7 @@ use hmac::{
 };
 use sha2::{Sha256, Sha384, Sha512};
 use subtle::ConstantTimeEq;
+use zeroize::Zeroize;
 
 use crate::ciphers::traits::{Aead, Key, Nonce, Tag};
 
@@ -166,11 +167,15 @@ where
         );
 
         // cbc decryptor checks padding
-        let plaintext_slice = cipher
+        if let Ok(plaintext_slice) = cipher
             .decrypt_padded_b2b_mut::<Pad>(ciphertext, plaintext)
-            .map_err(|_| crate::Error::CipherError { alg: Self::NAME })?;
-
-        Ok(plaintext_slice.len())
+        {
+            Ok(plaintext_slice.len())
+        } else {
+            // do not leak any plaintext in case of padding error
+            plaintext.zeroize();
+            Err(crate::Error::CipherError { alg: Self::NAME })
+        }
     }
 
     fn padsize(plaintext: &[u8]) -> Option<NonZeroUsize> {

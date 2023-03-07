@@ -28,7 +28,8 @@ aes-cbc = [
   "dep:cbc",
   "hmac",
   "sha",
-  "subtle"
+  "subtle",
+  "zeroize"
 ]
 aes-kw = [ "dep:aes" ]
 aes-gcm = [ "dep:aes-gcm", "cipher" ]
