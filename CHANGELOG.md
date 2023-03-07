@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.16.1]
+
+- Change `Error::Pbkdf2` into `Error::InvalidLength`.
+  - [7c53d2e](https://www.github.com/iotaledger/crypto.rs/commit/7c53d2e99b2c1c4c7c8b44917b742d2679379307) Put `Error::Pbkdf2` under the correct features ([#180](https://www.github.com/iotaledger/crypto.rs/pull/180)) on 2023-03-07
+
 ## \[0.16.0]
 
 - Bumped crypto dependencies to new recent versions.

@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.16.0"
+version = "0.16.1"
 license = "Apache-2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
