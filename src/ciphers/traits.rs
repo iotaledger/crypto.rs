@@ -23,45 +23,45 @@ pub type Tag<T> = GenericArray<u8, <T as Aead>::TagLength>;
 /// Example using [`Aes256Gcm`][`crate::ciphers::aes::Aes256Gcm`]:
 ///
 /// ```rust
-/// # #[cfg(all(feature = "random", feature = "aes-gcm"))]
-/// # {
-/// use crypto::ciphers::{
-///     aes_gcm::Aes256Gcm,
-///     traits::{Aead, Key, Nonce, Tag},
-/// };
-/// let plaintext: &[u8] = b"crypto.rs";
-/// let associated_data: &[u8] = b"stronghodl";
-/// let mut encrypted: Vec<u8> = vec![0; plaintext.len()];
-/// let mut decrypted: Vec<u8> = vec![0; encrypted.len()];
-/// let mut tag: Vec<u8> = vec![0; Aes256Gcm::TAG_LENGTH];
+/// #[cfg(all(feature = "random", feature = "aes-gcm", feature = "std"))]
+/// {
+///     use crypto::ciphers::{
+///         aes_gcm::Aes256Gcm,
+///         traits::{Aead, Key, Nonce, Tag},
+///     };
+///     let plaintext: &[u8] = b"crypto.rs";
+///     let associated_data: &[u8] = b"stronghold";
+///     let mut encrypted: Vec<u8> = vec![0; plaintext.len()];
+///     let mut decrypted: Vec<u8> = vec![0; encrypted.len()];
+///     let mut tag: Vec<u8> = vec![0; Aes256Gcm::TAG_LENGTH];
 ///
-/// let key: Key<Aes256Gcm> = Default::default();
-/// let nonce: Nonce<Aes256Gcm> = Aes256Gcm::random_nonce()?;
+///     let key: Key<Aes256Gcm> = Default::default();
+///     let nonce: Nonce<Aes256Gcm> = Aes256Gcm::random_nonce()?;
 ///
-/// Aes256Gcm::try_encrypt(
-///     &key,
-///     &nonce,
-///     associated_data,
-///     plaintext,
-///     &mut encrypted,
-///     &mut tag,
-/// )?;
+///     Aes256Gcm::try_encrypt(
+///         &key,
+///         &nonce,
+///         associated_data,
+///         plaintext,
+///         &mut encrypted,
+///         &mut tag,
+///     )?;
 ///
-/// Aes256Gcm::try_decrypt(
-///     &key,
-///     &nonce,
-///     associated_data,
-///     &mut decrypted,
-///     &encrypted,
-///     &tag,
-/// )?;
+///     Aes256Gcm::try_decrypt(
+///         &key,
+///         &nonce,
+///         associated_data,
+///         &mut decrypted,
+///         &encrypted,
+///         &tag,
+///     )?;
 ///
-/// assert_eq!(decrypted, plaintext);
+///     assert_eq!(decrypted, plaintext);
 ///
-/// # Ok::<(), crypto::Error>(())
-/// # }
-/// # #[cfg(not(feature = "random"))]
-/// # Ok::<(), crypto::Error>(())
+///     Ok::<(), crypto::Error>(())
+/// }
+/// #[cfg(not(all(feature = "random", feature = "aes-gcm", feature = "std")))]
+/// Ok::<(), crypto::Error>(())
 /// ```
 pub trait Aead {
     /// The size of the [`key`][`Key`] required by this algorithm.
@@ -85,7 +85,7 @@ pub trait Aead {
     /// A const version of [`Aead::TagLength`].
     const TAG_LENGTH: usize = <Self::TagLength as Unsigned>::USIZE;
 
-    /// Encrypt the given `plaintext` using `key`.
+    /// Encrypt the given `plaintext` using `key` and return the length of `ciphertext`.
     ///
     /// The output is written to the `ciphertext`/`tag` buffers.
     fn encrypt(
@@ -95,9 +95,9 @@ pub trait Aead {
         plaintext: &[u8],
         ciphertext: &mut [u8],
         tag: &mut Tag<Self>,
-    ) -> crate::Result<()>;
+    ) -> crate::Result<usize>;
 
-    /// Decrypt the given `ciphertext` using `key` and `tag`.
+    /// Decrypt the given `ciphertext` using `key` and `tag` and return the length of `plaintext`.
     ///
     /// The output is written to the `plaintext` buffer.
     fn decrypt(
@@ -109,7 +109,7 @@ pub trait Aead {
         tag: &Tag<Self>,
     ) -> crate::Result<usize>;
 
-    /// Encrypt the given `plaintext` using `key`.
+    /// Encrypt the given `plaintext` using `key` and return the length of `ciphertext`.
     ///
     /// The output is written to `ciphertext`.
     ///
@@ -121,7 +121,7 @@ pub trait Aead {
         plaintext: &[u8],
         ciphertext: &mut [u8],
         tag: &mut [u8],
-    ) -> crate::Result<()> {
+    ) -> crate::Result<usize> {
         let key: &Key<Self> = try_generic_array(key, "key")?;
         let nonce: &Nonce<Self> = try_generic_array(nonce, "nonce")?;
 
@@ -130,7 +130,7 @@ pub trait Aead {
         Self::encrypt(key, nonce, associated_data, plaintext, ciphertext, tag)
     }
 
-    /// Decrypt the given `ciphertext` using `key` and `tag`.
+    /// Decrypt the given `ciphertext` using `key` and `tag` and return the length of `plaintext`.
     ///
     /// The output is written to the `plaintext` buffer.
     ///

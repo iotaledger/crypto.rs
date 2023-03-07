@@ -20,8 +20,8 @@ macro_rules! impl_aead {
                 plaintext: &[u8],
                 ciphertext: &mut [u8],
                 tag: &mut $crate::ciphers::traits::Tag<Self>,
-            ) -> crate::Result<()> {
-                use aead::{AeadInPlace, NewAead};
+            ) -> crate::Result<usize> {
+                use aead::{AeadInPlace, KeyInit};
 
                 if plaintext.len() > ciphertext.len() {
                     return Err($crate::Error::BufferSize {
@@ -39,7 +39,7 @@ macro_rules! impl_aead {
 
                 tag.copy_from_slice(&out);
 
-                Ok(())
+                Ok(plaintext.len())
             }
 
             fn decrypt(
@@ -50,7 +50,7 @@ macro_rules! impl_aead {
                 ciphertext: &[u8],
                 tag: &$crate::ciphers::traits::Tag<Self>,
             ) -> crate::Result<usize> {
-                use aead::{AeadInPlace, NewAead};
+                use aead::{AeadInPlace, KeyInit};
 
                 if ciphertext.len() > plaintext.len() {
                     return Err($crate::Error::BufferSize {
@@ -73,6 +73,7 @@ macro_rules! impl_aead {
         /// A helper function to encrypt `plaintext` with `key`.
         /// The return value is arbitrarily chosen as `nonce || tag || ciphertext` for historic reasons, mainly
         /// compatibility with out wallet libraries. The nonce is randomly chosen.
+        #[cfg(all(feature = "random", feature = "std"))]
         pub fn aead_encrypt(key: &[u8], plaintext: &[u8]) -> crate::Result<Vec<u8>> {
             if key.len() != <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH {
                 return Err($crate::Error::BufferSize {
@@ -107,6 +108,7 @@ macro_rules! impl_aead {
         /// A helper function to decrypt `ciphertext` with `key`.
         /// The input value is assumed to be `nonce || tag || ciphertext` for historic reason, mainly compatibility with
         /// out wallet libraries.
+        #[cfg(feature = "std")]
         pub fn aead_decrypt(key: &[u8], ciphertext: &[u8]) -> crate::Result<Vec<u8>> {
             if key.len() != <$impl as $crate::ciphers::traits::Aead>::KEY_LENGTH {
                 return Err($crate::Error::BufferSize {

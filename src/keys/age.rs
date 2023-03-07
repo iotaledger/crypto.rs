@@ -5,11 +5,11 @@
 
 use core::convert::TryFrom;
 
-use aead::NewAead;
+use aead::KeyInit;
 use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine as _};
 use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305};
 use hkdf::Hkdf;
-use hmac_::{Hmac, Mac};
+use hmac::{Hmac, Mac};
 use scrypt::{scrypt, Params as ScryptParams};
 use sha2::Sha256;
 use zeroize::Zeroize;
@@ -31,7 +31,7 @@ const MAC_BASE64_LEN: usize = 43;
 fn derive_wrap_key(password: &[u8], salt: &[u8; 16], work_factor: u8, wrap_key: &mut [u8; 32]) {
     // wrap key = scrypt(N = work factor, r = 8, p = 1, dkLen = 32,
     //     S = "age-encryption.org/v1/scrypt" || salt, P = passphrase)
-    let params = ScryptParams::new(work_factor, 8, 1).unwrap();
+    let params = ScryptParams::new(work_factor, 8, 1, 32).unwrap();
     const SALT_LABEL: &[u8; 28] = b"age-encryption.org/v1/scrypt";
     let mut scrypt_salt = [0_u8; SALT_LABEL.len() + 16];
     scrypt_salt[..SALT_LABEL.len()].copy_from_slice(SALT_LABEL);
