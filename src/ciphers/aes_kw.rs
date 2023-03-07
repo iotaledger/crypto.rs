@@ -3,7 +3,7 @@
 
 use core::{convert::TryInto as _, marker::PhantomData, mem};
 
-use aes_crate::{
+use aes::{
     cipher::generic_array::typenum::Unsigned as _,
     cipher::{BlockDecrypt, BlockEncrypt, KeyInit, KeySizeUser},
     Aes128, Aes192, Aes256,

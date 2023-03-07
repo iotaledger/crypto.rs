@@ -9,7 +9,7 @@ use aead::KeyInit;
 use base64::{engine::general_purpose::STANDARD_NO_PAD as BASE64, Engine as _};
 use chacha20poly1305::{aead::AeadInPlace, ChaCha20Poly1305};
 use hkdf::Hkdf;
-use hmac_::{Hmac, Mac};
+use hmac::{Hmac, Mac};
 use scrypt::{scrypt, Params as ScryptParams};
 use sha2::Sha256;
 use zeroize::Zeroize;

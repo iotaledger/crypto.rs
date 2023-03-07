@@ -7,17 +7,19 @@ use core::{
     ops::{Shl, Shr},
 };
 
-use aes_crate::cipher::{
-    block_padding::{Padding, Pkcs7},
-    BlockCipher, BlockDecryptMut, BlockEncryptMut, BlockSizeUser, InnerIvInit, KeyInit, KeySizeUser,
+use aes::{
+    cipher::{
+        block_padding::{Padding, Pkcs7},
+        BlockCipher, BlockDecryptMut, BlockEncryptMut, BlockSizeUser, InnerIvInit, KeyInit, KeySizeUser,
+    },
+    Aes128, Aes192, Aes256,
 };
-use aes_crate::{Aes128, Aes192, Aes256};
-use cbc_crate::{Decryptor as CbcDecryptor, Encryptor as CbcEncryptor};
+use cbc::{Decryptor as CbcDecryptor, Encryptor as CbcEncryptor};
 use generic_array::{
     typenum::{Unsigned, B1},
     ArrayLength,
 };
-use hmac_::{
+use hmac::{
     digest::{Digest, FixedOutput, OutputSizeUser, Update},
     SimpleHmac,
 };

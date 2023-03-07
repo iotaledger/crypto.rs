@@ -2,10 +2,7 @@
 name = "iota-crypto"
 version = "0.15.3"
 license = "Apache-2.0"
-authors = [
-  "Gustav Behm <gustav.behm@iota.org>",
-  "Daniel Thompson-Yvetot <daniel.yvetot@iota.org>"
-]
+authors = [ "IOTA Stiftung" ]
 edition = "2018"
 readme = "README.md"
 keywords = [ "iota", "cryptography", "security" ]
@@ -26,15 +23,15 @@ name = "crypto"
 default = [ ]
 std = [ ]
 aes-cbc = [
-  "aes-crate",
+  "dep:aes",
   "cipher",
-  "cbc-crate",
+  "dep:cbc",
   "hmac",
   "sha",
   "subtle"
 ]
-aes-kw = [ "aes-crate" ]
-aes-gcm = [ "aes-gcm-crate", "cipher" ]
+aes-kw = [ "dep:aes" ]
+aes-gcm = [ "dep:aes-gcm", "cipher" ]
 chacha = [ "chacha20poly1305", "cipher" ]
 ed25519 = [ "ed25519-zebra" ]
 x25519 = [ "x25519-dalek", "curve25519-dalek" ]
@@ -62,31 +59,31 @@ wots_deprecated_do_not_use = [
   "bee-common-derive"
 ]
 sha = [ "sha2", "digest" ]
-hmac = [ "hmac_" ]
+hmac = [ "dep:hmac" ]
 pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
 slip10 = [ "hmac", "sha", "ed25519", "random", "serde", "zeroize" ]
-cipher = [ "aead", "cipher-crate", "generic-array" ]
+cipher = [ "aead", "dep:cipher", "generic-array" ]
 ternary_encoding = [ "serde", "num-traits" ]
-age = [ "aead", "base64", "chacha20poly1305", "hkdf", "hmac_", "scrypt", "sha2", "zeroize" ]
+age = [ "aead", "base64", "chacha20poly1305", "hkdf", "dep:hmac", "scrypt", "sha2", "zeroize" ]
 
 [dependencies]
 aead = { version = "0.5", optional = true, default-features = false }
-aes-crate = { version = "0.8", optional = true, default-features = false, package = "aes" }
-aes-gcm-crate = { version = "0.10", optional = true, default-features = false, package = "aes-gcm", features = [ "aes" ] }
+aes = { version = "0.8", optional = true, default-features = false }
+aes-gcm = { version = "0.10", optional = true, default-features = false, features = [ "aes" ] }
 bee-common-derive = { version = "0.1.1-alpha", optional = true, default-features = false }
 blake2 = { version = "0.10.5", optional = true, default-features = false }
 byteorder = { version = "1.4", optional = true, default-features = false }
-cbc-crate = { version = "0.1", optional = true, default-features = false, package = "cbc" }
+cbc = { version = "0.1", optional = true, default-features = false }
 chacha20poly1305 = { version = "0.10", optional = true, default-features = false }
-cipher-crate = { version = "0.4", optional = true, default-features = false, features = ["block-padding"], package = "cipher" }
+cipher = { version = "0.4", optional = true, default-features = false, features = [ "block-padding" ] }
 digest = { version = "0.10", optional = true, default-features = false }
 ed25519-zebra = { version = "3.0", optional = true, default-features = false }
 generic-array = { version = "0.14", optional = true, default-features = false }
 getrandom = { version = "0.2", optional = true, default-features = false, features = [ "js" ] }
-hmac_ = { version = "0.12", optional = true, default-features = false, package = "hmac" }
+hmac = { version = "0.12", optional = true, default-features = false }
 lazy_static = { version = "1.4", optional = true, default-features = false }
 num-traits = { version = "0.2", optional = true, default-features = false }
 pbkdf2 = { version = "0.12", optional = true, default-features = false }
