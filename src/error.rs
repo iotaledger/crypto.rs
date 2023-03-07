@@ -27,8 +27,15 @@ pub enum Error {
         call: &'static str,
         raw_os_error: Option<i32>,
     },
-    #[cfg(all(feature = "pbkdf", feature = "hmac", feature = "sha"))]
-    Pbkdf2(pbkdf2::hmac::digest::InvalidLength),
+    #[cfg(feature = "digest")]
+    InvalidLength,
+}
+
+#[cfg(feature = "digest")]
+impl From<digest::InvalidLength> for Error {
+    fn from(_: digest::InvalidLength) -> Self {
+        Error::InvalidLength
+    }
 }
 
 impl Display for Error {
@@ -49,8 +56,8 @@ impl Display for Error {
                 call,
                 raw_os_error: Some(errno),
             } => write!(f, "system error when calling {}: {}", call, errno),
-            #[cfg(all(feature = "pbkdf", feature = "hmac", feature = "sha"))]
-            Error::Pbkdf2(e) => write!(f, "pbkdf2 error {e}"),
+            #[cfg(feature = "digest")]
+            Error::InvalidLength => write!(f, "digest invalid length"),
         }
     }
 }

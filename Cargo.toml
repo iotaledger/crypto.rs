@@ -60,7 +60,7 @@ wots_deprecated_do_not_use = [
   "bee-common-derive"
 ]
 sha = [ "sha2", "digest" ]
-hmac = [ "dep:hmac", "pbkdf2/hmac" ]
+hmac = [ "dep:hmac" ]
 pbkdf = [ "pbkdf2" ]
 bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
