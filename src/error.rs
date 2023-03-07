@@ -15,20 +15,34 @@ pub enum Error {
         has: usize,
     },
     ///  Cipher Error
-    CipherError { alg: &'static str },
+    CipherError {
+        alg: &'static str,
+    },
     /// Convertion Error
-    ConvertError { from: &'static str, to: &'static str },
+    ConvertError {
+        from: &'static str,
+        to: &'static str,
+    },
     /// Private Key Error
     PrivateKeyError,
     /// InvalidArgumentError
-    InvalidArgumentError { alg: &'static str, expected: &'static str },
+    InvalidArgumentError {
+        alg: &'static str,
+        expected: &'static str,
+    },
     /// System Error
     SystemError {
         call: &'static str,
         raw_os_error: Option<i32>,
     },
-    #[cfg(feature = "pbkdf")]
-    Pbkdf2(pbkdf2::hmac::digest::InvalidLength),
+    InvalidLength,
+}
+
+#[cfg(feature = "digest")]
+impl From<digest::InvalidLength> for Error {
+    fn from(_: digest::InvalidLength) -> Self {
+        Error::InvalidLength
+    }
 }
 
 impl Display for Error {
@@ -49,8 +63,7 @@ impl Display for Error {
                 call,
                 raw_os_error: Some(errno),
             } => write!(f, "system error when calling {}: {}", call, errno),
-            #[cfg(feature = "pbkdf")]
-            Error::Pbkdf2(e) => write!(f, "pbkdf2 error {e}"),
+            Error::InvalidLength => write!(f, "invalid length"),
         }
     }
 }
