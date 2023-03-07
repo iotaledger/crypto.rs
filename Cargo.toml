@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.15.3"
+version = "0.16.0"
 license = "Apache-2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
@@ -68,7 +68,16 @@ bip39-jp = [ "bip39" ]
 slip10 = [ "hmac", "sha", "ed25519", "random", "serde", "zeroize" ]
 cipher = [ "aead", "dep:cipher", "generic-array" ]
 ternary_encoding = [ "serde", "num-traits" ]
-age = [ "aead", "base64", "chacha20poly1305", "hkdf", "dep:hmac", "scrypt", "sha2", "zeroize" ]
+age = [
+  "aead",
+  "base64",
+  "chacha20poly1305",
+  "hkdf",
+  "dep:hmac",
+  "scrypt",
+  "sha2",
+  "zeroize"
+]
 
 [dependencies]
 aead = { version = "0.5", optional = true, default-features = false }

@@ -1,5 +1,16 @@
 # Changelog
 
+## \[0.16.0]
+
+- Bumped crypto dependencies to new recent versions.
+  Rewritten/simplified AES-CBC with HMAC via SimpleHmac.
+  API change: encrypt and try_encrypt of Aead trait now return size of ciphertext.
+  - [cbada12](https://www.github.com/iotaledger/crypto.rs/commit/cbada12dfad33f8e3abf37fd3b437be58a161b16) Bump dependencies ([#178](https://www.github.com/iotaledger/crypto.rs/pull/178)) on 2023-03-07
+- Added support for age-encryption.org/v1 encrypted file format with password-based scrypt recipient stanza
+  - [c74bac4](https://www.github.com/iotaledger/crypto.rs/commit/c74bac47ac9e9f37328766eeb699646c5a555016) Add support for age -- password-based encrypted file format ([#173](https://www.github.com/iotaledger/crypto.rs/pull/173)) on 2023-03-06
+- Make use of `dep:*` in `Cargo.toml` to avoid having to rename the dependencies to `*-crate` or `*_`.
+  - [cbada12](https://www.github.com/iotaledger/crypto.rs/commit/cbada12dfad33f8e3abf37fd3b437be58a161b16) Bump dependencies ([#178](https://www.github.com/iotaledger/crypto.rs/pull/178)) on 2023-03-07
+
 ## \[0.15.3]
 
 - Bump `blake2` to get rid of yanked version.
