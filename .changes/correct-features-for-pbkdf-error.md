@@ -2,4 +2,4 @@
 "iota-crypto": patch
 ---
 
-Put `Error::Pbkdf2` under the correct features.
+Change `Error::Pbkdf2` into `Error::InvalidLength`.
