@@ -668,6 +668,8 @@ pub fn decrypt_vec(password: &[u8], max_work_factor: u8, age: &[u8]) -> Result<V
 
 #[cfg(test)]
 mod tests {
+    use super::*;
+
     const K64: usize = 64 * 1024;
     const TEST_LENS: [usize; 12] = [
         0,
@@ -687,30 +689,30 @@ mod tests {
     #[test]
     fn test_payload_len() {
         for len in TEST_LENS {
-            assert_eq!(Some(len), super::dec_payload_len(super::enc_payload_len(len)));
+            assert_eq!(Some(len), dec_payload_len(enc_payload_len(len)));
         }
-        assert_eq!(None, super::dec_payload_len(0));
-        assert_eq!(None, super::dec_payload_len(15));
-        assert_eq!(None, super::dec_payload_len(16));
-        assert_eq!(None, super::dec_payload_len(31));
-        assert_eq!(Some(0), super::dec_payload_len(32));
+        assert_eq!(None, dec_payload_len(0));
+        assert_eq!(None, dec_payload_len(15));
+        assert_eq!(None, dec_payload_len(16));
+        assert_eq!(None, dec_payload_len(31));
+        assert_eq!(Some(0), dec_payload_len(32));
 
-        assert_eq!(Some(K64), super::dec_payload_len(16 + K64 + 16));
-        assert_eq!(None, super::dec_payload_len(16 + K64 + 16 + 1));
-        assert_eq!(None, super::dec_payload_len(16 + K64 + 16 + 16));
-        assert_eq!(Some(K64 + 1), super::dec_payload_len(16 + K64 + 16 + 17));
+        assert_eq!(Some(K64), dec_payload_len(16 + K64 + 16));
+        assert_eq!(None, dec_payload_len(16 + K64 + 16 + 1));
+        assert_eq!(None, dec_payload_len(16 + K64 + 16 + 16));
+        assert_eq!(Some(K64 + 1), dec_payload_len(16 + K64 + 16 + 17));
 
-        assert_eq!(Some(2 * K64), super::dec_payload_len(16 + 2 * (K64 + 16)));
-        assert_eq!(None, super::dec_payload_len(16 + 2 * (K64 + 16) + 1));
-        assert_eq!(None, super::dec_payload_len(16 + 2 * (K64 + 16) + 16));
-        assert_eq!(Some(2 * K64 + 1), super::dec_payload_len(16 + 2 * (K64 + 16) + 17));
+        assert_eq!(Some(2 * K64), dec_payload_len(16 + 2 * (K64 + 16)));
+        assert_eq!(None, dec_payload_len(16 + 2 * (K64 + 16) + 1));
+        assert_eq!(None, dec_payload_len(16 + 2 * (K64 + 16) + 16));
+        assert_eq!(Some(2 * K64 + 1), dec_payload_len(16 + 2 * (K64 + 16) + 17));
     }
 
     #[test]
     fn test_nonce() {
         let mut nonce = [0_u8; 12];
         for i in 1_usize..258_usize {
-            super::inc_nonce(&mut nonce);
+            inc_nonce(&mut nonce);
             assert_eq!(i.to_be_bytes(), &nonce[3..11]);
         }
     }
@@ -721,17 +723,17 @@ mod tests {
         file_key: &[u8; 16],
         work_factor: u8,
         max_work_factor: u8,
-    ) -> Result<(), super::Error> {
-        let mut header = [0_u8; super::SCRYPT_MAX_HEADER_LEN];
-        let h = super::enc_header(
+    ) -> Result<(), Error> {
+        let mut header = [0_u8; SCRYPT_MAX_HEADER_LEN];
+        let h = enc_header(
             password,
             salt,
             file_key,
             work_factor,
-            &mut header[..super::header_len(work_factor)],
+            &mut header[..header_len(work_factor)],
         );
         let mut dec_file_key = [0_u8; 16];
-        let r = super::dec_header(password, max_work_factor, &header, &mut dec_file_key);
+        let r = dec_header(password, max_work_factor, &header, &mut dec_file_key);
         if r.is_ok() {
             assert_eq!(h, r.unwrap());
             assert_eq!(file_key, &dec_file_key);
@@ -765,7 +767,7 @@ mod tests {
         let salt = [0x11_u8; 16];
         let file_key = [0x22_u8; 16];
         let nonce = [0x33_u8; 16];
-        super::enc_vec(password, &salt, &file_key, work_factor, &nonce, plaintext)
+        enc_vec(password, &salt, &file_key, work_factor, &nonce, plaintext)
     }
 
     #[cfg(feature = "std")]
@@ -783,7 +785,7 @@ mod tests {
 
     #[cfg(feature = "std")]
     fn dec_crate(age: &[u8], max_work_factor: u8) -> Option<Vec<u8>> {
-        super::decrypt_vec("password".as_bytes(), max_work_factor, age).ok()
+        decrypt_vec("password".as_bytes(), max_work_factor, age).ok()
     }
 
     #[cfg(feature = "std")]
@@ -835,25 +837,87 @@ mod tests {
     }
 
     #[test]
-    fn test_fuzz() {
-        let plain = [0xdd_u8; 5];
-        let mut decrypted = [0_u8; 5];
-        const WORK_FACTOR: super::WorkFactor = super::WorkFactor::new(1_u8);
-        let mut age = [0_u8; super::enc_len(WORK_FACTOR, 5)];
+    fn test_err() {
+        const TEXT_LEN: usize = 5;
+        const TEXT_LEN1: usize = TEXT_LEN - 1;
+        let plain = [0xdd_u8; TEXT_LEN];
+        let mut decrypted = [0_u8; TEXT_LEN];
+        const WORK_FACTOR: WorkFactor = WorkFactor::new(1_u8);
+        const AGE_LEN: usize = enc_len(WORK_FACTOR, TEXT_LEN);
+        const AGE_LEN1: usize = AGE_LEN - 1;
+        let mut age = [0_u8; AGE_LEN];
 
         let salt = [0x11_u8; 16];
         let file_key = [0x22_u8; 16];
         let nonce = [0x33_u8; 16];
-        assert!(super::enc(b"password", &salt, &file_key, WORK_FACTOR, &nonce, &plain, &mut age).is_ok());
 
-        assert!(super::decrypt(b"password", 1_u8, &age, &mut decrypted).is_ok());
+        let err = enc(
+            b"password",
+            &salt,
+            &file_key,
+            WORK_FACTOR,
+            &nonce,
+            &plain,
+            &mut age[..AGE_LEN1],
+        )
+        .err()
+        .unwrap();
+        match err {
+            Error::BufferTooSmall {
+                expected: AGE_LEN,
+                provided: AGE_LEN1,
+            } => (),
+            _ => assert!(false, "wrong expected error result"),
+        }
+
+        assert_eq!(
+            AGE_LEN,
+            enc(b"password", &salt, &file_key, WORK_FACTOR, &nonce, &plain, &mut age).unwrap()
+        );
+
+        let err = decrypt(b"password", 0_u8, &age, &mut decrypted).err().unwrap();
+        match err {
+            Error::WorkFactorTooBig {
+                required: 1_u8,
+                allowed: 0_u8,
+            } => (),
+            _ => assert!(false, "wrong expected error result"),
+        }
+
+        let err = decrypt(b"password", 1_u8, &age, &mut decrypted[..TEXT_LEN1])
+            .err()
+            .unwrap();
+        match err {
+            Error::BufferTooSmall {
+                expected: TEXT_LEN,
+                provided: TEXT_LEN1,
+            } => (),
+            _ => assert!(false, "wrong expected error result"),
+        }
+
+        assert_eq!(TEXT_LEN, decrypt(b"password", 1_u8, &age, &mut decrypted).unwrap());
+    }
+
+    #[test]
+    fn test_fuzz() {
+        let plain = [0xdd_u8; 5];
+        let mut decrypted = [0_u8; 5];
+        const WORK_FACTOR: WorkFactor = WorkFactor::new(1_u8);
+        let mut age = [0_u8; enc_len(WORK_FACTOR, 5)];
+
+        let salt = [0x11_u8; 16];
+        let file_key = [0x22_u8; 16];
+        let nonce = [0x33_u8; 16];
+        assert!(enc(b"password", &salt, &file_key, WORK_FACTOR, &nonce, &plain, &mut age).is_ok());
+
+        assert!(decrypt(b"password", 1_u8, &age, &mut decrypted).is_ok());
         assert_eq!(&plain, &decrypted);
-        assert!(super::decrypt(b"password", 0_u8, &age, &mut decrypted).is_err());
+        assert!(decrypt(b"password", 0_u8, &age, &mut decrypted).is_err());
 
-        assert!(super::decrypt(b"passphrase", 1_u8, &age, &mut decrypted).is_err());
+        assert!(decrypt(b"passphrase", 1_u8, &age, &mut decrypted).is_err());
         for i in 0..age.len() {
             age[i] ^= 1;
-            assert!(super::decrypt(b"password", 2_u8, &age, &mut decrypted).is_err());
+            assert!(decrypt(b"password", 2_u8, &age, &mut decrypted).is_err());
             age[i] ^= 1;
         }
     }
