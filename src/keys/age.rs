@@ -216,7 +216,7 @@ fn guard<E>(expr: bool, err: E) -> Result<(), E> {
 /// Length of decoded header is returned, or error.
 fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mut [u8; 16]) -> Result<usize, Error> {
     let mut i = 0_usize;
-    guard(header.len() >= SCRYPT_MIN_HEADER_LEN, Error::BufferTooSmall)?;
+    guard(header.len() >= SCRYPT_MIN_HEADER_LEN, Error::BufferBadLength)?;
 
     // 1. AGE prefix
     let b = b"age-encryption.org/";
@@ -252,7 +252,7 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     work_factor = header[i] - b'0';
     i += 1;
     if char::from(header[i]).is_ascii_digit() {
-        guard(header.len() >= SCRYPT_MAX_HEADER_LEN, Error::BufferTooSmall)?;
+        guard(header.len() >= SCRYPT_MAX_HEADER_LEN, Error::BufferBadLength)?;
 
         work_factor *= 10;
         work_factor += header[i] - b'0';
@@ -260,7 +260,13 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     }
     guard(header[i] == b'\n', Error::BadAgeFormat)?;
     i += 1;
-    guard(work_factor <= max_work_factor, Error::WorkFactorTooBig)?;
+    guard(
+        work_factor <= max_work_factor,
+        Error::WorkFactorTooBig {
+            required: work_factor,
+            allowed: max_work_factor,
+        },
+    )?;
 
     // 6. base64-encoded encrypted file key
     // extra 2 bytes for base64 decoding
@@ -318,12 +324,12 @@ pub enum Error {
     BadHeaderMac,
     /// Failed to decrypt and verify payload chunk
     BadChunk,
-    /// Input/output buffer (header) too small
-    BufferTooSmall,
-    /// Input/output buffer incorrect (unexpected) length
+    /// Output buffer too small
+    BufferTooSmall { expected: usize, provided: usize },
+    /// Input buffer incorrect (unexpected, too small) length
     BufferBadLength,
     /// Work factor during decryption exceeds maximum threshold value
-    WorkFactorTooBig,
+    WorkFactorTooBig { required: u8, allowed: u8 },
     /// Work factor representation is incorrect (>=64)
     IncorrectWorkFactor,
     /// Randomness generation failed
@@ -445,7 +451,13 @@ fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8])
     let mut nonce = [0_u8; 16];
 
     if let Some(plaintext_len) = dec_payload_len(ciphertext.len()) {
-        guard(plaintext_len <= plaintext.len(), Error::BufferTooSmall)?;
+        guard(
+            plaintext_len <= plaintext.len(),
+            Error::BufferTooSmall {
+                expected: plaintext_len,
+                provided: plaintext.len(),
+            },
+        )?;
         debug_assert_eq!(enc_payload_len(plaintext_len), ciphertext.len());
     } else {
         guard(false, Error::BufferBadLength)?;
@@ -539,7 +551,13 @@ pub fn enc(
     age: &mut [u8],
 ) -> Result<usize, Error> {
     let age_len = enc_len(work_factor, plaintext.len());
-    guard(age_len <= age.len(), Error::BufferTooSmall)?;
+    guard(
+        age_len <= age.len(),
+        Error::BufferTooSmall {
+            expected: age_len,
+            provided: age.len(),
+        },
+    )?;
     let h = header_len(work_factor.0);
     enc_header(password, salt, file_key, work_factor.0, &mut age[..h]);
     enc_payload(file_key, nonce, plaintext, &mut age[h..age_len]);
