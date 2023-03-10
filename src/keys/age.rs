@@ -862,13 +862,16 @@ mod tests {
         )
         .err()
         .unwrap();
-        match err {
-            Error::BufferTooSmall {
-                expected: AGE_LEN,
-                provided: AGE_LEN1,
-            } => (),
-            _ => panic!("wrong expected error result"),
-        }
+        assert!(
+            matches!(
+                err,
+                Error::BufferTooSmall {
+                    expected: AGE_LEN,
+                    provided: AGE_LEN1,
+                }
+            ),
+            "wrong expected error result"
+        );
 
         assert_eq!(
             AGE_LEN,
@@ -876,24 +879,30 @@ mod tests {
         );
 
         let err = decrypt(b"password", 0_u8, &age, &mut decrypted).err().unwrap();
-        match err {
-            Error::WorkFactorTooBig {
-                required: 1_u8,
-                allowed: 0_u8,
-            } => (),
-            _ => panic!("wrong expected error result"),
-        }
+        assert!(
+            matches!(
+                err,
+                Error::WorkFactorTooBig {
+                    required: 1_u8,
+                    allowed: 0_u8,
+                }
+            ),
+            "wrong expected error result"
+        );
 
         let err = decrypt(b"password", 1_u8, &age, &mut decrypted[..TEXT_LEN1])
             .err()
             .unwrap();
-        match err {
-            Error::BufferTooSmall {
-                expected: TEXT_LEN,
-                provided: TEXT_LEN1,
-            } => (),
-            _ => panic!("wrong expected error result"),
-        }
+        assert!(
+            matches!(
+                err,
+                Error::BufferTooSmall {
+                    expected: TEXT_LEN,
+                    provided: TEXT_LEN1,
+                }
+            ),
+            "wrong expected error result"
+        );
 
         assert_eq!(TEXT_LEN, decrypt(b"password", 1_u8, &age, &mut decrypted).unwrap());
     }
