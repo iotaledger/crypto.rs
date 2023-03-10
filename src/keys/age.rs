@@ -867,7 +867,7 @@ mod tests {
                 expected: AGE_LEN,
                 provided: AGE_LEN1,
             } => (),
-            _ => assert!(false, "wrong expected error result"),
+            _ => panic!("wrong expected error result"),
         }
 
         assert_eq!(
@@ -881,7 +881,7 @@ mod tests {
                 required: 1_u8,
                 allowed: 0_u8,
             } => (),
-            _ => assert!(false, "wrong expected error result"),
+            _ => panic!("wrong expected error result"),
         }
 
         let err = decrypt(b"password", 1_u8, &age, &mut decrypted[..TEXT_LEN1])
@@ -892,7 +892,7 @@ mod tests {
                 expected: TEXT_LEN,
                 provided: TEXT_LEN1,
             } => (),
-            _ => assert!(false, "wrong expected error result"),
+            _ => panic!("wrong expected error result"),
         }
 
         assert_eq!(TEXT_LEN, decrypt(b"password", 1_u8, &age, &mut decrypted).unwrap());
