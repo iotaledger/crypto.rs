@@ -14,6 +14,44 @@ use scrypt::{scrypt, Params as ScryptParams};
 use sha2::Sha256;
 use zeroize::Zeroize;
 
+/// Age decode/decrypt errors.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum DecError {
+    /// Format is not `age-encryption.org`
+    UnknownFormat,
+    /// Version is not `v1`
+    UnsupportedAgeVersion,
+    /// Recipient is not `scrypt`
+    UnsupportedAgeRecipient,
+    /// Failed to parse parts of the header
+    BadAgeFormat,
+    /// Failed to decrypt file key: incorrect password or corrupt header
+    BadFileKey,
+    /// Header MAC is invalid: incorrect password or corrupt header
+    BadHeaderMac,
+    /// Failed to decrypt and verify payload chunk
+    BadChunk,
+    /// Output buffer too small
+    BufferTooSmall { expected: usize, provided: usize },
+    /// Input buffer incorrect (unexpected, too small) length
+    BufferBadLength,
+    /// Work factor during decryption exceeds maximum threshold value
+    WorkFactorTooBig { required: u8, allowed: u8 },
+}
+
+/// Age encode/encrypt errors.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum EncError {
+    /// Output buffer too small
+    BufferTooSmall { expected: usize, provided: usize },
+    /// Randomness generation failed
+    RngFailed,
+}
+
+/// Work factor representation is incorrect (>=64)
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub struct IncorrectWorkFactor;
+
 // header with 1-digit work factor
 const SCRYPT_MIN_HEADER_LEN: usize = 149;
 
@@ -63,7 +101,7 @@ fn dec_file_key(
     work_factor: u8,
     body: &[u8],
     file_key: &mut [u8; 16],
-) -> Result<(), Error> {
+) -> Result<(), DecError> {
     let mut wrap_key = [0_u8; 32];
     derive_wrap_key(password, salt, work_factor, &mut wrap_key);
     // body+tag = ChaCha20-Poly1305(key = wrap key, plaintext = file key)
@@ -74,7 +112,7 @@ fn dec_file_key(
     tag.copy_from_slice(&body[16..32]);
     let r = c
         .decrypt_in_place_detached(&[0; 12].into(), &[], file_key, &tag.into())
-        .map_err(|_| Error::BadFileKey);
+        .map_err(|_| DecError::BadFileKey);
     if r.is_err() {
         file_key.zeroize();
     }
@@ -112,14 +150,14 @@ fn mac_header(file_key: &[u8; 16], header: &[u8], mac: &mut [u8; 32]) {
 }
 
 /// Verify header MAC with mac key derived from file key.
-fn verify_mac_header(file_key: &[u8; 16], header: &[u8], mac: &[u8]) -> Result<(), Error> {
+fn verify_mac_header(file_key: &[u8; 16], header: &[u8], mac: &[u8]) -> Result<(), DecError> {
     let mut hmac_key = [0_u8; 32];
     derive_hmac_key(file_key, &mut hmac_key);
     let mut hmac = <Hmac<Sha256> as Mac>::new_from_slice(&hmac_key[..]).unwrap();
     hmac_key.zeroize();
     // exclude the last ' ' after '---'
     hmac.update(header);
-    hmac.verify_slice(&mac[..32]).map_err(|_| Error::BadHeaderMac)
+    hmac.verify_slice(&mac[..32]).map_err(|_| DecError::BadHeaderMac)
 }
 
 /// Length of header in bytes depends only on work factor.
@@ -214,23 +252,23 @@ fn guard<E>(expr: bool, err: E) -> Result<(), E> {
 
 /// Decode header given password and decrypt file key.
 /// Length of decoded header is returned, or error.
-fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mut [u8; 16]) -> Result<usize, Error> {
+fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mut [u8; 16]) -> Result<usize, DecError> {
     let mut i = 0_usize;
-    guard(header.len() >= SCRYPT_MIN_HEADER_LEN, Error::BufferBadLength)?;
+    guard(header.len() >= SCRYPT_MIN_HEADER_LEN, DecError::BufferBadLength)?;
 
     // 1. AGE prefix
     let b = b"age-encryption.org/";
-    guard(header[i..i + b.len()] == b[..], Error::UnknownFormat)?;
+    guard(header[i..i + b.len()] == b[..], DecError::UnknownFormat)?;
     i += b.len();
 
     // 2. version
     let b = b"v1\n";
-    guard(header[i..i + b.len()] == b[..], Error::UnsupportedAgeVersion)?;
+    guard(header[i..i + b.len()] == b[..], DecError::UnsupportedAgeVersion)?;
     i += b.len();
 
     // 3. scrypt recipient stanza
     let b = b"-> scrypt ";
-    guard(header[i..i + b.len()] == b[..], Error::UnsupportedAgeRecipient)?;
+    guard(header[i..i + b.len()] == b[..], DecError::UnsupportedAgeRecipient)?;
     i += b.len();
 
     // 4. scrypt base64-encoded salt
@@ -238,31 +276,31 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     let mut salt2 = [0_u8; 16 + 2];
     let b = BASE64
         .decode_slice(&header[i..i + SALT_BASE64_LEN], &mut salt2)
-        .map_err(|_| Error::BadAgeFormat)?;
-    guard(16 == b, Error::BadAgeFormat)?;
+        .map_err(|_| DecError::BadAgeFormat)?;
+    guard(16 == b, DecError::BadAgeFormat)?;
     i += SALT_BASE64_LEN;
     let mut salt = [0_u8; 16];
     salt.copy_from_slice(&salt2[..16]);
 
     // 5. 1 or 2 decimal digit work factor
     let mut work_factor;
-    guard(header[i] == b' ', Error::BadAgeFormat)?;
+    guard(header[i] == b' ', DecError::BadAgeFormat)?;
     i += 1;
-    guard(char::from(header[i]).is_ascii_digit(), Error::BadAgeFormat)?;
+    guard(char::from(header[i]).is_ascii_digit(), DecError::BadAgeFormat)?;
     work_factor = header[i] - b'0';
     i += 1;
     if char::from(header[i]).is_ascii_digit() {
-        guard(header.len() >= SCRYPT_MAX_HEADER_LEN, Error::BufferBadLength)?;
+        guard(header.len() >= SCRYPT_MAX_HEADER_LEN, DecError::BufferBadLength)?;
 
         work_factor *= 10;
         work_factor += header[i] - b'0';
         i += 1;
     }
-    guard(header[i] == b'\n', Error::BadAgeFormat)?;
+    guard(header[i] == b'\n', DecError::BadAgeFormat)?;
     i += 1;
     guard(
         work_factor <= max_work_factor,
-        Error::WorkFactorTooBig {
+        DecError::WorkFactorTooBig {
             required: work_factor,
             allowed: max_work_factor,
         },
@@ -273,8 +311,8 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     let mut body2 = [0_u8; 16 + 16 + 2];
     let b = BASE64
         .decode_slice(&header[i..i + ENCRYPTED_FILE_KEY_BASE64_LEN], &mut body2[..])
-        .map_err(|_| Error::BadAgeFormat)?;
-    guard(16 + 16 == b, Error::BadAgeFormat)?;
+        .map_err(|_| DecError::BadAgeFormat)?;
+    guard(16 + 16 == b, DecError::BadAgeFormat)?;
     i += ENCRYPTED_FILE_KEY_BASE64_LEN;
 
     // decrypt file key
@@ -282,7 +320,7 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
 
     // 7. final delimiter before MAC
     let b = b"\n--- ";
-    guard(header[i..i + b.len()] == b[..], Error::BadAgeFormat)?;
+    guard(header[i..i + b.len()] == b[..], DecError::BadAgeFormat)?;
     i += b.len();
 
     // 8. base64-encoded MAC
@@ -290,8 +328,8 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     let mut mac2 = [0_u8; 32 + 2];
     let b = BASE64
         .decode_slice(&header[i..i + MAC_BASE64_LEN], &mut mac2)
-        .map_err(|_| Error::BadAgeFormat)?;
-    guard(32 == b, Error::BadAgeFormat)?;
+        .map_err(|_| DecError::BadAgeFormat)?;
+    guard(32 == b, DecError::BadAgeFormat)?;
 
     // MAC computed over the entire header up to and including '---'
     // exclude the last ' ' after '---'
@@ -299,41 +337,12 @@ fn dec_header(password: &[u8], max_work_factor: u8, header: &[u8], file_key: &mu
     i += MAC_BASE64_LEN;
 
     // 9. final new-line
-    guard(header[i] == b'\n', Error::BadAgeFormat)?;
+    guard(header[i] == b'\n', DecError::BadAgeFormat)?;
     i += 1;
 
     // 10. binary encrypted payload
 
     Ok(i)
-}
-
-/// Age decoding errors.
-#[derive(Clone, Copy, Debug)]
-pub enum Error {
-    /// Format is not `age-encryption.org`
-    UnknownFormat,
-    /// Version is not `v1`
-    UnsupportedAgeVersion,
-    /// Recipient is not `scrypt`
-    UnsupportedAgeRecipient,
-    /// Failed to parse parts of the header
-    BadAgeFormat,
-    /// Failed to decrypt file key: incorrect password or corrupt header
-    BadFileKey,
-    /// Header MAC is invalid: incorrect password or corrupt header
-    BadHeaderMac,
-    /// Failed to decrypt and verify payload chunk
-    BadChunk,
-    /// Output buffer too small
-    BufferTooSmall { expected: usize, provided: usize },
-    /// Input buffer incorrect (unexpected, too small) length
-    BufferBadLength,
-    /// Work factor during decryption exceeds maximum threshold value
-    WorkFactorTooBig { required: u8, allowed: u8 },
-    /// Work factor representation is incorrect (>=64)
-    IncorrectWorkFactor,
-    /// Randomness generation failed
-    RngFailed,
 }
 
 /// Nonce increment. Will never overflow in practice.
@@ -360,7 +369,12 @@ fn enc_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], plain_chunk: &[u8], cipher_
 }
 
 /// Decrypt and verify payload chunk with payload key & nonce via ChaCha20-Poly1305.
-fn dec_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], cipher_chunk: &[u8], plain_chunk: &mut [u8]) -> Result<(), Error> {
+fn dec_chunk(
+    c: &ChaCha20Poly1305,
+    nonce: &[u8; 12],
+    cipher_chunk: &[u8],
+    plain_chunk: &mut [u8],
+) -> Result<(), DecError> {
     debug_assert!(plain_chunk.len() <= 64 * 1024);
     debug_assert_eq!(plain_chunk.len() + 16, cipher_chunk.len());
 
@@ -370,7 +384,7 @@ fn dec_chunk(c: &ChaCha20Poly1305, nonce: &[u8; 12], cipher_chunk: &[u8], plain_
     tag.copy_from_slice(&cipher_chunk[plain_chunk.len()..]);
     let r = c
         .decrypt_in_place_detached(nonce.into(), &[], plain_chunk, &tag.into())
-        .map_err(|_| Error::BadChunk);
+        .map_err(|_| DecError::BadChunk);
     if r.is_err() {
         plain_chunk.zeroize();
     }
@@ -445,7 +459,7 @@ fn enc_payload(file_key: &[u8; 16], nonce: &[u8; 16], mut plaintext: &[u8], ciph
 /// Decrypt the whole payload with file key and nonce.
 /// Nonce is taken from the ciphertext.
 /// Note, nonce used to encrypt payload chunks is 12-byte counter.
-fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8]) -> Result<usize, Error> {
+fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8]) -> Result<usize, DecError> {
     let mut i = 0_usize;
     // payload key derivation nonce
     let mut nonce = [0_u8; 16];
@@ -453,14 +467,14 @@ fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8])
     if let Some(plaintext_len) = dec_payload_len(ciphertext.len()) {
         guard(
             plaintext_len <= plaintext.len(),
-            Error::BufferTooSmall {
+            DecError::BufferTooSmall {
                 expected: plaintext_len,
                 provided: plaintext.len(),
             },
         )?;
         debug_assert_eq!(enc_payload_len(plaintext_len), ciphertext.len());
     } else {
-        guard(false, Error::BufferBadLength)?;
+        guard(false, DecError::BufferBadLength)?;
     }
 
     nonce.copy_from_slice(&ciphertext[..16]);
@@ -498,10 +512,12 @@ fn dec_payload(file_key: &[u8; 16], mut ciphertext: &[u8], plaintext: &mut [u8])
     r.map(|_| i)
 }
 
+/// Safety wrapper for work factor representation.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct WorkFactor(u8);
 
 impl WorkFactor {
+    /// Unchecked constructor.
     pub const fn new(work_factor: u8) -> Self {
         assert!(
             (work_factor as usize) < core::mem::size_of::<usize>() * 8,
@@ -512,12 +528,12 @@ impl WorkFactor {
 }
 
 impl TryFrom<u8> for WorkFactor {
-    type Error = Error;
-    fn try_from(work_factor: u8) -> Result<Self, Error> {
+    type Error = IncorrectWorkFactor;
+    fn try_from(work_factor: u8) -> Result<Self, Self::Error> {
         if (work_factor as usize) < core::mem::size_of::<usize>() * 8 {
             Ok(Self(work_factor))
         } else {
-            Err(Error::IncorrectWorkFactor)
+            Err(IncorrectWorkFactor)
         }
     }
 }
@@ -549,11 +565,11 @@ pub fn enc(
     nonce: &[u8; 16],
     plaintext: &[u8],
     age: &mut [u8],
-) -> Result<usize, Error> {
+) -> Result<usize, EncError> {
     let age_len = enc_len(work_factor, plaintext.len());
     guard(
         age_len <= age.len(),
-        Error::BufferTooSmall {
+        EncError::BufferTooSmall {
             expected: age_len,
             provided: age.len(),
         },
@@ -598,13 +614,13 @@ pub const RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR: u8 = 19;
 /// Recommended minimal value is `RECOMMENDED_MINIMUM_ENCRYPT_WORK_FACTOR`.
 /// `work_factor` must be <64.
 #[cfg(feature = "random")]
-pub fn encrypt(password: &[u8], work_factor: WorkFactor, plaintext: &[u8], age: &mut [u8]) -> Result<usize, Error> {
+pub fn encrypt(password: &[u8], work_factor: WorkFactor, plaintext: &[u8], age: &mut [u8]) -> Result<usize, EncError> {
     let mut salt = [0_u8; 16];
     let mut file_key = [0_u8; 16];
     let mut nonce = [0_u8; 16];
-    crate::utils::rand::fill(&mut salt[..]).map_err(|_| Error::RngFailed)?;
-    crate::utils::rand::fill(&mut file_key[..]).map_err(|_| Error::RngFailed)?;
-    crate::utils::rand::fill(&mut nonce[..]).map_err(|_| Error::RngFailed)?;
+    crate::utils::rand::fill(&mut salt[..]).map_err(|_| EncError::RngFailed)?;
+    crate::utils::rand::fill(&mut file_key[..]).map_err(|_| EncError::RngFailed)?;
+    crate::utils::rand::fill(&mut nonce[..]).map_err(|_| EncError::RngFailed)?;
     let r = enc(password, &salt, &file_key, work_factor, &nonce, plaintext, age);
     nonce.zeroize();
     file_key.zeroize();
@@ -614,13 +630,13 @@ pub fn encrypt(password: &[u8], work_factor: WorkFactor, plaintext: &[u8], age: 
 
 /// Generate random salt, file key, and nonce and use them to protect plaintext in age format producing a vector.
 #[cfg(all(feature = "random", feature = "std"))]
-pub fn encrypt_vec(password: &[u8], work_factor: WorkFactor, plaintext: &[u8]) -> Result<Vec<u8>, Error> {
+pub fn encrypt_vec(password: &[u8], work_factor: WorkFactor, plaintext: &[u8]) -> Result<Vec<u8>, EncError> {
     let mut salt = [0_u8; 16];
     let mut file_key = [0_u8; 16];
     let mut nonce = [0_u8; 16];
-    crate::utils::rand::fill(&mut salt[..]).map_err(|_| Error::RngFailed)?;
-    crate::utils::rand::fill(&mut file_key[..]).map_err(|_| Error::RngFailed)?;
-    crate::utils::rand::fill(&mut nonce[..]).map_err(|_| Error::RngFailed)?;
+    crate::utils::rand::fill(&mut salt[..]).map_err(|_| EncError::RngFailed)?;
+    crate::utils::rand::fill(&mut file_key[..]).map_err(|_| EncError::RngFailed)?;
+    crate::utils::rand::fill(&mut nonce[..]).map_err(|_| EncError::RngFailed)?;
     let age = enc_vec(password, &salt, &file_key, work_factor, &nonce, plaintext);
     nonce.zeroize();
     file_key.zeroize();
@@ -637,7 +653,7 @@ pub const RECOMMENDED_MAXIMUM_DECRYPT_WORK_FACTOR: u8 = 23;
 ///
 /// `max_work_factor` parameter limits the amount of computation that the decryptor is willing to spend.
 /// Too large values of work factor in the protected input age can result in DoS.
-pub fn decrypt(password: &[u8], max_work_factor: u8, age: &[u8], plaintext: &mut [u8]) -> Result<usize, Error> {
+pub fn decrypt(password: &[u8], max_work_factor: u8, age: &[u8], plaintext: &mut [u8]) -> Result<usize, DecError> {
     let mut file_key = [0_u8; 16];
     let r = dec_header(password, max_work_factor, age, &mut file_key)
         .and_then(|header_len| dec_payload(&file_key, &age[header_len..], plaintext));
@@ -650,7 +666,7 @@ pub fn decrypt(password: &[u8], max_work_factor: u8, age: &[u8], plaintext: &mut
 /// `max_work_factor` parameter limits the amount of computation that the decryptor is willing to spend.
 /// Too large values of work factor in the protected input age can result in DoS.
 #[cfg(feature = "std")]
-pub fn decrypt_vec(password: &[u8], max_work_factor: u8, age: &[u8]) -> Result<Vec<u8>, Error> {
+pub fn decrypt_vec(password: &[u8], max_work_factor: u8, age: &[u8]) -> Result<Vec<u8>, DecError> {
     let mut file_key = [0_u8; 16];
     let r = dec_header(password, max_work_factor, age, &mut file_key).and_then(|header_len| {
         if let Some(plaintext_len) = dec_payload_len(age.len() - header_len) {
@@ -659,7 +675,7 @@ pub fn decrypt_vec(password: &[u8], max_work_factor: u8, age: &[u8]) -> Result<V
             let _ = dec_payload(&file_key, &age[header_len..], &mut plaintext[..])?;
             Ok(plaintext)
         } else {
-            Err(Error::BufferBadLength)
+            Err(DecError::BufferBadLength)
         }
     });
     file_key.zeroize();
@@ -723,7 +739,7 @@ mod tests {
         file_key: &[u8; 16],
         work_factor: u8,
         max_work_factor: u8,
-    ) -> Result<(), Error> {
+    ) -> Result<(), DecError> {
         let mut header = [0_u8; SCRYPT_MAX_HEADER_LEN];
         let h = enc_header(
             password,
@@ -865,7 +881,7 @@ mod tests {
         assert!(
             matches!(
                 err,
-                Error::BufferTooSmall {
+                EncError::BufferTooSmall {
                     expected: AGE_LEN,
                     provided: AGE_LEN1,
                 }
@@ -882,7 +898,7 @@ mod tests {
         assert!(
             matches!(
                 err,
-                Error::WorkFactorTooBig {
+                DecError::WorkFactorTooBig {
                     required: 1_u8,
                     allowed: 0_u8,
                 }
@@ -896,7 +912,7 @@ mod tests {
         assert!(
             matches!(
                 err,
-                Error::BufferTooSmall {
+                DecError::BufferTooSmall {
                     expected: TEXT_LEN,
                     provided: TEXT_LEN1,
                 }
