@@ -5,8 +5,8 @@
 #[cfg_attr(docsrs, doc(cfg(feature = "ternary_keys")))]
 pub mod ternary;
 
-#[cfg(feature = "pbkdf")]
-#[cfg_attr(docsrs, doc(cfg(feature = "pbkdf")))]
+#[cfg(feature = "pbkdf2")]
+#[cfg_attr(docsrs, doc(cfg(feature = "pbkdf2")))]
 pub mod pbkdf;
 
 #[cfg(feature = "bip39")]

@@ -59,10 +59,10 @@ wots_deprecated_do_not_use = [
   "rand",
   "bee-common-derive"
 ]
-sha = [ "sha2", "digest" ]
+sha = [ "dep:sha2", "digest" ]
 hmac = [ "dep:hmac" ]
-pbkdf = [ "pbkdf2" ]
-bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
+pbkdf2 = [ "dep:pbkdf2", "pbkdf2/hmac", "dep:sha2" ]
+bip39 = [ "pbkdf2", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
 slip10 = [ "hmac", "sha", "ed25519", "random", "serde", "zeroize" ]
@@ -72,10 +72,10 @@ age = [
   "aead",
   "base64",
   "chacha20poly1305",
-  "hkdf",
+  "dep:hkdf",
   "dep:hmac",
-  "scrypt",
-  "sha2",
+  "dep:scrypt",
+  "dep:sha2",
   "zeroize"
 ]
 
