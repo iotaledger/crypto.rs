@@ -8,6 +8,11 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 /// Error type of crypto.rs
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
+    #[cfg(feature = "age")]
+    /// Age Format Error
+    AgeFormatError {
+        inner: crate::keys::age::DecError,
+    },
     /// Buffer Error
     BufferSize {
         name: &'static str,
@@ -48,6 +53,7 @@ impl From<digest::InvalidLength> for Error {
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
+            Error::AgeFormatError { inner } => write!(f, "failed to decode/decrypt age format: {inner:?}"),
             Error::BufferSize { name, needs, has } => {
                 write!(f, "{} buffer needs {} bytes, but it only has {}", name, needs, has)
             }

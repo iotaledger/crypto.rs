@@ -39,6 +39,12 @@ pub enum DecError {
     WorkFactorTooBig { required: u8, allowed: u8 },
 }
 
+impl From<DecError> for crate::Error {
+    fn from(inner: DecError) -> Self {
+        crate::Error::AgeFormatError { inner }
+    }
+}
+
 /// Age encode/encrypt errors.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum EncError {
@@ -48,9 +54,36 @@ pub enum EncError {
     RngFailed,
 }
 
+impl From<EncError> for crate::Error {
+    fn from(err: EncError) -> Self {
+        match err {
+            EncError::BufferTooSmall { expected, provided } => Self::BufferSize {
+                name: "age",
+                needs: expected,
+                has: provided,
+            },
+            EncError::RngFailed => Self::SystemError {
+                call: "getrandom::getrandom",
+                raw_os_error: None,
+            },
+        }
+    }
+}
+
 /// Work factor representation is incorrect (>=64)
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct IncorrectWorkFactor;
+
+impl From<IncorrectWorkFactor> for crate::Error {
+    fn from(_: IncorrectWorkFactor) -> Self {
+        Self::ConvertError {
+            from: "u8",
+            to: "WorkFactor",
+        }
+    }
+}
+
+const WORK_FACTOR_MAX_VALUE: usize = core::mem::size_of::<usize>() * 8;
 
 // header with 1-digit work factor
 const SCRYPT_MIN_HEADER_LEN: usize = 149;
@@ -520,7 +553,7 @@ impl WorkFactor {
     /// Unchecked constructor.
     pub const fn new(work_factor: u8) -> Self {
         assert!(
-            (work_factor as usize) < core::mem::size_of::<usize>() * 8,
+            (work_factor as usize) < WORK_FACTOR_MAX_VALUE,
             "incorrect age work factor"
         );
         Self(work_factor)
@@ -530,7 +563,7 @@ impl WorkFactor {
 impl TryFrom<u8> for WorkFactor {
     type Error = IncorrectWorkFactor;
     fn try_from(work_factor: u8) -> Result<Self, Self::Error> {
-        if (work_factor as usize) < core::mem::size_of::<usize>() * 8 {
+        if (work_factor as usize) < WORK_FACTOR_MAX_VALUE {
             Ok(Self(work_factor))
         } else {
             Err(IncorrectWorkFactor)
