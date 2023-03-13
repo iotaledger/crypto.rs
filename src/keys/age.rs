@@ -41,7 +41,7 @@ pub enum DecError {
 
 impl From<DecError> for crate::Error {
     fn from(inner: DecError) -> Self {
-        crate::Error::AgeFormatError { inner }
+        crate::Error::AgeFormatError(inner)
     }
 }
 
