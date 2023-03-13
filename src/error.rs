@@ -10,9 +10,7 @@ pub type Result<T, E = Error> = core::result::Result<T, E>;
 pub enum Error {
     #[cfg(feature = "age")]
     /// Age Format Error
-    AgeFormatError {
-        inner: crate::keys::age::DecError,
-    },
+    AgeFormatError { inner: crate::keys::age::DecError },
     /// Buffer Error
     BufferSize {
         name: &'static str,
@@ -20,39 +18,24 @@ pub enum Error {
         has: usize,
     },
     ///  Cipher Error
-    CipherError {
-        alg: &'static str,
-    },
+    CipherError { alg: &'static str },
     /// Convertion Error
-    ConvertError {
-        from: &'static str,
-        to: &'static str,
-    },
+    ConvertError { from: &'static str, to: &'static str },
     /// Private Key Error
     PrivateKeyError,
     /// InvalidArgumentError
-    InvalidArgumentError {
-        alg: &'static str,
-        expected: &'static str,
-    },
+    InvalidArgumentError { alg: &'static str, expected: &'static str },
     /// System Error
     SystemError {
         call: &'static str,
         raw_os_error: Option<i32>,
     },
-    InvalidLength,
-}
-
-#[cfg(feature = "digest")]
-impl From<digest::InvalidLength> for Error {
-    fn from(_: digest::InvalidLength) -> Self {
-        Error::InvalidLength
-    }
 }
 
 impl Display for Error {
     fn fmt(&self, f: &mut Formatter<'_>) -> FmtResult {
         match self {
+            #[cfg(feature = "age")]
             Error::AgeFormatError { inner } => write!(f, "failed to decode/decrypt age format: {inner:?}"),
             Error::BufferSize { name, needs, has } => {
                 write!(f, "{} buffer needs {} bytes, but it only has {}", name, needs, has)
@@ -69,7 +52,6 @@ impl Display for Error {
                 call,
                 raw_os_error: Some(errno),
             } => write!(f, "system error when calling {}: {}", call, errno),
-            Error::InvalidLength => write!(f, "invalid length"),
         }
     }
 }

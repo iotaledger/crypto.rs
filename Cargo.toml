@@ -62,7 +62,7 @@ wots_deprecated_do_not_use = [
 sha = [ "sha2", "digest" ]
 hmac = [ "dep:hmac" ]
 pbkdf = [ "pbkdf2" ]
-bip39 = [ "pbkdf", "hmac", "sha", "pbkdf", "unicode-normalization" ]
+bip39 = [ "pbkdf", "hmac", "sha", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
 slip10 = [ "hmac", "sha", "ed25519", "random", "serde", "zeroize" ]
@@ -96,7 +96,7 @@ getrandom = { version = "0.2", optional = true, default-features = false, featur
 hmac = { version = "0.12", optional = true, default-features = false }
 lazy_static = { version = "1.4", optional = true, default-features = false }
 num-traits = { version = "0.2", optional = true, default-features = false }
-pbkdf2 = { version = "0.12", optional = true, default-features = false }
+pbkdf2 = { version = "0.12", optional = true, default-features = false, features = ["hmac"] }
 rand = { version = "0.8", optional = true, default-features = false }
 subtle = { version = "2.4", default-features = false, optional = true }
 sha2 = { version = "0.10", optional = true, default-features = false }
