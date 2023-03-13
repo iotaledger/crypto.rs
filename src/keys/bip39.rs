@@ -21,9 +21,8 @@ pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) {
     salt.push_str(p);
     let salt = salt.nfkd().collect::<String>();
 
-    // unwrapping here is safe since PBKDF2_HMAC_SHA512 is only expected to fail when iteration
-    // count is zero
-    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), 2048, s).unwrap();
+    const ROUNDS: core::num::NonZeroU32 = unsafe { core::num::NonZeroU32::new_unchecked(2048) };
+    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), ROUNDS, s);
 }
 
 pub mod wordlist {
