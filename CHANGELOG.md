@@ -1,5 +1,13 @@
 # Changelog
 
+## \[0.17.0]
+
+- More informative errors in age module.
+  - [2aea377](https://www.github.com/iotaledger/crypto.rs/commit/2aea37709b71b6682907cdb561018ac75987c34d) Age better errors ([#182](https://www.github.com/iotaledger/crypto.rs/pull/182)) on 2023-03-10
+- Age errors split into different types.
+  PBKDF2 prototype simplified.
+  - [16b7b1e](https://www.github.com/iotaledger/crypto.rs/commit/16b7b1e9efdc84a39743991964c334d23bab071e) Crypto better errors in age and pbkdf2 ([#184](https://www.github.com/iotaledger/crypto.rs/pull/184)) on 2023-03-13
+
 ## \[0.16.1]
 
 - Change `Error::Pbkdf2` into `Error::InvalidLength`.
