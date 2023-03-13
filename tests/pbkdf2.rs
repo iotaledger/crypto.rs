@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(all(feature = "pbkdf", feature = "hmac", feature = "sha"))]
+#![cfg(feature = "pbkdf2")]
 
 use core::convert::TryInto;
 
