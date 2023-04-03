@@ -7,7 +7,7 @@ use core::str::FromStr;
 
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
 // use rand::distributions::{Distribution, Uniform};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::{
     encoding::ternary::{Btrit, T1B1Buf, Trit, TritBuf, Trits, TryteBuf, T1B1},
@@ -45,6 +45,8 @@ impl Zeroize for Seed {
         unsafe { self.0.as_i8_slice_mut().zeroize() }
     }
 }
+
+impl ZeroizeOnDrop for Seed {}
 
 impl Seed {
     // /// Creates a new random `Seed`.

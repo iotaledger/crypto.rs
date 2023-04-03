@@ -16,6 +16,8 @@ use core::convert::TryInto;
 #[cfg(feature = "ed25519")]
 use crate::signatures::ed25519;
 
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SECRET_KEY_LENGTH: usize = 32;
 
@@ -99,6 +101,7 @@ impl From<PublicKey> for [u8; PUBLIC_KEY_LENGTH] {
 }
 
 /// An X25519 Secret Key
+#[derive(Zeroize, ZeroizeOnDrop)]
 pub struct SecretKey(x25519_dalek::StaticSecret);
 
 impl SecretKey {
