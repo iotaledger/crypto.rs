@@ -7,10 +7,13 @@ use core::{
     hash::{Hash, Hasher},
 };
 
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
+#[derive(Zeroize, ZeroizeOnDrop)]
 pub struct SecretKey(ed25519_zebra::SigningKey);
 
 impl SecretKey {

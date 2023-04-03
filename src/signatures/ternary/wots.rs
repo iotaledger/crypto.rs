@@ -12,7 +12,7 @@ use core::{
 };
 
 use bee_common_derive::{SecretDebug, SecretDisplay, SecretDrop};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::{
     encoding::ternary::{T1B1Buf, T3B1Buf, TritBuf, Trits, Tryte, T1B1, T3B1},
@@ -132,6 +132,8 @@ impl<S> Zeroize for WotsPrivateKey<S> {
         unsafe { self.state.as_i8_slice_mut().zeroize() }
     }
 }
+
+impl<S> ZeroizeOnDrop for WotsPrivateKey<S> {}
 
 impl<S: Sponge + Default> PrivateKey for WotsPrivateKey<S> {
     type PublicKey = WotsPublicKey<S>;

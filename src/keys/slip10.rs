@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use core::{convert::TryFrom, default::Default};
 
 use serde::{Deserialize, Serialize};
-use zeroize::Zeroize;
+use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
@@ -36,6 +36,7 @@ impl Curve {
 ///
 /// But since the seed entropy is always passed through HMAC-SHA512 any bytesequence is acceptable,
 /// therefore formally the size requirement is context sensitive.
+#[derive(Zeroize, ZeroizeOnDrop)]
 pub struct Seed(Vec<u8>);
 
 impl Seed {
