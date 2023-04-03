@@ -13,10 +13,10 @@
 use core::convert::TryFrom;
 use core::convert::TryInto;
 
+use zeroize::{Zeroize, ZeroizeOnDrop};
+
 #[cfg(feature = "ed25519")]
 use crate::signatures::ed25519;
-
-use zeroize::{Zeroize, ZeroizeOnDrop};
 
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SECRET_KEY_LENGTH: usize = 32;
