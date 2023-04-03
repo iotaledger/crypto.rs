@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.17.1]
+
+- Zeroize on drop secret keys.
+  - [e34f0ab](https://www.github.com/iotaledger/crypto.rs/commit/e34f0aba4ed1c158c749f79b9c6ad008951834ea) Zeroize on drop ([#185](https://www.github.com/iotaledger/crypto.rs/pull/185)) on 2023-04-03
+
 ## \[0.17.0]
 
 - More informative errors in age module.
