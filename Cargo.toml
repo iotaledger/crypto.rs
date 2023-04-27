@@ -22,7 +22,7 @@ name = "crypto"
 
 [features]
 default = [ ]
-std = [ "serde?/std" ]
+std = [ "k256?/std", "serde?/std" ]
 aes-cbc = [
   "dep:aes",
   "cipher",
@@ -37,7 +37,8 @@ aes-gcm = [ "dep:aes-gcm", "cipher" ]
 chacha = [ "chacha20poly1305", "cipher" ]
 ed25519 = [ "ed25519-zebra", "zeroize" ]
 x25519 = [ "x25519-dalek", "curve25519-dalek", "zeroize" ]
-random = [ "getrandom" ]
+random = [ "getrandom", "rand?/getrandom" ]
+rand = [ "dep:rand" ]
 aes = [ "aes-cbc", "aes-gcm", "aes-kw" ]
 blake2b = [ "blake2", "digest" ]
 ternary_hashes = [ ]
@@ -47,7 +48,7 @@ kerl_deprecated_do_not_use = [
   "ternary_encoding",
   "byteorder",
   "lazy_static",
-  "tiny-keccak"
+  "dep:tiny-keccak"
 ]
 ternary_keys = [ ]
 ternary_signatures = [ ]
@@ -57,7 +58,7 @@ wots_deprecated_do_not_use = [
   "ternary_encoding",
   "sha3",
   "zeroize",
-  "rand",
+  "dep:rand",
   "bee-common-derive"
 ]
 sha = [ "dep:sha2", "digest" ]
@@ -79,7 +80,7 @@ age = [
   "dep:sha2",
   "zeroize"
 ]
-secp256k1 = [ "k256", "signature" ]
+secp256k1 = [ "dep:k256", "k256?/ecdsa", "dep:tiny-keccak", "zeroize" ]
 
 [dependencies]
 aead = { version = "0.5", optional = true, default-features = false }
@@ -112,23 +113,14 @@ zeroize = { version = "1.5", optional = true, default-features = false, features
 scrypt = { version = "0.11", optional = true, default-features = false }
 hkdf = { version = "0.12", optional = true, default-features = false }
 base64 = { version = "0.21", optional = true, default-features = false }
+k256 = { version = "0.13", optional = true, default-features = false, features = ["ecdh", "ecdsa", "sha256"] }
+#signature = { version = "2.1", optional = true, default-features = false }
 
 [target."cfg(not(target_family = \"wasm\"))".dependencies]
 cpufeatures = { version = "0.2", optional = true, default-features = false }
 
 [build-dependencies]
 autocfg = { version = "1.1", default-features = false }
-
-  [dependencies.k256]
-  version = "0.7"
-  optional = true
-  default-features = false
-  features = ["ecdh", "ecdsa", "sha256"]
-
-  [dependencies.signature]
-  version = "1.2"
-  optional = true
-  default-features = false
 
 [dev-dependencies]
 hex = { version = "0.4", default-features = false, features = [ "alloc", "std" ] }
