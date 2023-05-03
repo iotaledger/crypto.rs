@@ -3,9 +3,7 @@
 
 #![cfg(feature = "secp256k1")]
 
-use core::convert::TryInto;
-
-use crypto::signatures::secp256k1_ecdsa::{PublicKey, SecretKey, Signature, };
+use crypto::signatures::secp256k1_ecdsa::{PublicKey, SecretKey, Signature};
 
 mod utils;
 
@@ -31,18 +29,19 @@ fn run_secp256k1_sign_verify(sk: SecretKey, pk: PublicKey) {
     assert_eq!(pk, sig.verify_recover(&msg).unwrap());
 
     assert!(pk.verify(&sig2, &msg));
+    #[cfg(feature = "rand")]
     assert!(!SecretKey::generate()
         .public_key()
-        .verify(&Signature::try_from_slice(&sig_bytes).unwrap(), &msg)
-    );
+        .verify(&Signature::try_from_slice(&sig_bytes).unwrap(), &msg));
 
-    utils::corrupt(&mut sig_bytes);
+    // utils::corrupt(&mut sig_bytes);
+    sig_bytes[7] ^= 1;
     assert!(!pk.verify(&Signature::try_from_bytes(&sig_bytes).unwrap(), &msg));
 }
 
-#[cfg(feature = "rand")]
 #[test]
 fn test_secp256k1_sign_verify() {
+    use core::convert::TryInto;
     let skb = hex::decode("ea68a753b20281db2cd5084a215fdda70c7e3cf3d167575fce9b02eb1f36fe9c").unwrap();
     let sk = SecretKey::try_from_bytes((&skb[..]).try_into().unwrap()).unwrap();
 

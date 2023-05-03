@@ -31,11 +31,6 @@
                 private_key: "30d1dc7e5fc04c31219ab25a27ae00b50f6fd66622f6e9c913253d6511d1e662",
             },
             TestChain {
-                chain: Chain::from_u32_hardened(vec![0, 1, 2, 2]),
-                chain_code: "8f6d87f93d750e0efccda017d662a1b31a266e4a6f5993b15f5c1f07f74dd5cc",
-                private_key: "30d1dc7e5fc04c31219ab25a27ae00b50f6fd66622f6e9c913253d6511d1e662",
-            },
-            TestChain {
                 chain: Chain::from_u32_hardened(vec![0, 1, 2, 2, 1000000000]),
                 chain_code: "68789923a0cac2cd5a29172a475fe9e0fb14cd6adb5ad98a3fa70333e7afa230",
                 private_key: "8f94d394a8e8fd6b1bc2f3f49f5c47e385281d5c17e65324b0f62483e37e8793",
