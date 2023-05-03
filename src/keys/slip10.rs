@@ -119,7 +119,7 @@ impl ExtendedSecretKey {
         Self(KeyImpl::from_seed(curve, &seed.0))
     }
 
-    pub fn from_extended_bytes(curve: Curve, ext_bytes: &[u8; 64]) -> crate::Result<Self> {
+    pub fn try_from_extended_bytes(curve: Curve, ext_bytes: &[u8; 64]) -> crate::Result<Self> {
         let mut key = KeyImpl { curve, ext: [0_u8; 65] };
         key.ext[1..].copy_from_slice(ext_bytes);
         if key.is_secret_key_valid() {
