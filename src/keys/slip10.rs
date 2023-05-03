@@ -161,7 +161,7 @@ impl ExtendedSecretKey {
 
     pub fn child_key(&self, segment: &Segment) -> crate::Result<Self> {
         #[cfg(feature = "ed25519")]
-        if self.0.curve == Curve::Ed25519 && !segment.hardened() {
+        if self.0.curve == Curve::Ed25519 && !segment.is_hardened() {
             return Err(crate::Error::InvalidArgumentError {
                 alg: "SLIP10",
                 expected: "hardened key index for Ed25519 master secret key",
@@ -261,7 +261,7 @@ impl ExtendedPublicKey {
         #[cfg(feature = "ed25519")]
         debug_assert_ne!(Curve::Ed25519, self.curve());
 
-        if !segment.hardened() {
+        if !segment.is_hardened() {
             Ok(Self(self.0.child_key(segment)))
         } else {
             Err(crate::Error::InvalidArgumentError {
@@ -485,7 +485,7 @@ impl KeyImpl {
 
     fn child_key(&self, segment: &Segment) -> Self {
         let mut data = [0u8; 33 + 4];
-        data[..33].copy_from_slice(&self.calc_data_bytes(segment.hardened()));
+        data[..33].copy_from_slice(&self.calc_data_bytes(segment.is_hardened()));
         data[33..].copy_from_slice(&segment.bs()); // ser32(i)
 
         let mut key = Self {
@@ -512,7 +512,7 @@ impl Segment {
         Self(i)
     }
 
-    pub fn hardened(&self) -> bool {
+    pub fn is_hardened(&self) -> bool {
         self.0 & Self::HARDEN_MASK != 0
     }
 
@@ -562,11 +562,11 @@ impl Chain {
     }
 
     pub fn all_hardened(&self) -> bool {
-        self.0.iter().all(Segment::hardened)
+        self.0.iter().all(Segment::is_hardened)
     }
 
     pub fn all_non_hardened(&self) -> bool {
-        self.0.iter().all(|s| !s.hardened())
+        self.0.iter().all(|s| !s.is_hardened())
     }
 }
 

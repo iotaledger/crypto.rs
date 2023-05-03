@@ -47,7 +47,7 @@ mod test {
                 hex::decode_to_slice(c.private_key, &mut expected_private_key as &mut [u8]).unwrap();
                 assert_eq!(expected_private_key, ck.secret_key().to_bytes());
 
-                let last_segment_non_hardened = !c.chain.segments().last().map_or(true, Segment::hardened);
+                let last_segment_non_hardened = !c.chain.segments().last().map_or(true, Segment::is_hardened);
                 if last_segment_non_hardened && curve.is_non_hardened_supported() {
                     let esk = seed.to_master_key(curve);
                     let (head, tail) = c.chain.segments().split_at(c.chain.len() - 1);
