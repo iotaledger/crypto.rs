@@ -4,12 +4,16 @@
 #![allow(clippy::from_over_into)]
 
 use alloc::vec::Vec;
-use core::{convert::TryFrom, default::Default};
+use core::convert::TryFrom;
 
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
-use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
+use crate::macs::hmac::HMAC_SHA512;
+#[cfg(feature = "ed25519")]
+use crate::signatures::ed25519;
+#[cfg(feature = "secp256k1")]
+use crate::signatures::secp256k1_ecdsa;
 
 // https://github.com/satoshilabs/slips/blob/master/slip-0010.md
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
@@ -17,16 +21,68 @@ use crate::{macs::hmac::HMAC_SHA512, signatures::ed25519::SecretKey};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub enum Curve {
+    #[cfg(feature = "ed25519")]
     Ed25519,
+    #[cfg(feature = "secp256k1")]
+    Secp256k1,
 }
 
 impl Curve {
+    pub fn is_non_hardened_supported(&self) -> bool {
+        match self {
+            #[cfg(feature = "ed25519")]
+            Curve::Ed25519 => false,
+            #[cfg(feature = "secp256k1")]
+            _ => true,
+        }
+    }
+
     fn seedkey(&self) -> &[u8] {
         match self {
+            #[cfg(feature = "ed25519")]
             Curve::Ed25519 => b"ed25519 seed",
+            #[cfg(feature = "secp256k1")]
+            Curve::Secp256k1 => b"Bitcoin seed",
         }
     }
 }
+
+#[derive(ZeroizeOnDrop)]
+pub enum SecretKey {
+    #[cfg(feature = "ed25519")]
+    Ed25519(ed25519::SecretKey),
+    #[cfg(feature = "secp256k1")]
+    Secp256k1Ecdsa(secp256k1_ecdsa::SecretKey),
+}
+
+impl SecretKey {
+    pub fn to_bytes(&self) -> [u8; 32] {
+        match self {
+            #[cfg(feature = "ed25519")]
+            Self::Ed25519(sk) => sk.to_bytes(),
+            #[cfg(feature = "secp256k1")]
+            Self::Secp256k1Ecdsa(sk) => sk.to_bytes(),
+        }
+    }
+    pub fn public_key(&self) -> PublicKey {
+        match self {
+            #[cfg(feature = "ed25519")]
+            Self::Ed25519(sk) => PublicKey::Ed25519(sk.public_key()),
+            #[cfg(feature = "secp256k1")]
+            Self::Secp256k1Ecdsa(sk) => PublicKey::Secp256k1Ecdsa(sk.public_key()),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum PublicKey {
+    // SLIP10 does not support non-hardened key derivation from Ed25519 public keys
+    #[cfg(feature = "ed25519")]
+    Ed25519(ed25519::PublicKey),
+    #[cfg(feature = "secp256k1")]
+    Secp256k1Ecdsa(secp256k1_ecdsa::PublicKey),
+}
+
 /// A seed is an arbitrary bytestring used to create the root of the tree.
 ///
 /// Several standards generate and/or restricts the size of the seed:
@@ -44,100 +100,424 @@ impl Seed {
         Self(bs.to_vec())
     }
 
-    pub fn to_master_key(&self, curve: Curve) -> Key {
-        let mut i = [0; 64];
-        HMAC_SHA512(&self.0, curve.seedkey(), &mut i);
-        Key(i)
+    pub fn to_master_key(&self, curve: Curve) -> ExtendedSecretKey {
+        ExtendedSecretKey::from_seed(curve, self)
     }
 
-    pub fn derive(&self, curve: Curve, chain: &Chain) -> crate::Result<Key> {
+    pub fn derive(&self, curve: Curve, chain: &Chain) -> crate::Result<ExtendedSecretKey> {
         self.to_master_key(curve).derive(chain)
     }
 }
 
 pub type ChainCode = [u8; 32];
 
-#[derive(Clone, Copy, Debug, Zeroize)]
-pub struct Key([u8; 64]);
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
+pub struct ExtendedSecretKey(KeyImpl);
 
-impl Key {
+impl ExtendedSecretKey {
+    pub fn from_seed(curve: Curve, seed: &Seed) -> Self {
+        Self(KeyImpl::from_seed(curve, &seed.0))
+    }
+
+    pub fn from_extended_bytes(curve: Curve, ext_bytes: &[u8; 64]) -> crate::Result<Self> {
+        let mut key = KeyImpl { curve, ext: [0_u8; 65] };
+        key.ext[1..].copy_from_slice(ext_bytes);
+        if key.is_secret_key_valid() {
+            Ok(Self(key))
+        } else {
+            Err(crate::Error::InvalidArgumentError {
+                alg: "SLIP10",
+                expected: "extended secret key",
+            })
+        }
+    }
+
+    pub fn curve(&self) -> Curve {
+        self.0.curve
+    }
+
+    pub fn extended_bytes(&self) -> &[u8; 64] {
+        self.0.extended_secret_bytes()
+    }
+
+    pub fn secret_bytes(&self) -> &[u8; 32] {
+        self.0.secret_bytes()
+    }
+
     pub fn secret_key(&self) -> SecretKey {
-        let mut il = [0; 32];
-        il.copy_from_slice(&self.0[..32]);
-        SecretKey::from_bytes(il)
+        match self.curve() {
+            #[cfg(feature = "ed25519")]
+            Curve::Ed25519 => SecretKey::Ed25519(ed25519::SecretKey::from_bytes(*self.secret_bytes())),
+            #[cfg(feature = "secp256k1")]
+            Curve::Secp256k1 => secp256k1_ecdsa::SecretKey::try_from_bytes(*self.secret_bytes())
+                .map(SecretKey::Secp256k1Ecdsa)
+                .expect("valid extended secret key"),
+        }
     }
 
-    pub fn chain_code(&self) -> ChainCode {
-        let mut ir = [0; 32];
-        ir.copy_from_slice(&self.0[32..]);
-        ir
+    pub fn chain_code(&self) -> &[u8; 32] {
+        self.0.chain_code()
     }
 
-    pub fn child_key(&self, segment: &Segment) -> crate::Result<Key> {
-        if !segment.hardened {
+    pub fn child_key(&self, segment: &Segment) -> crate::Result<Self> {
+        #[cfg(feature = "ed25519")]
+        if self.0.curve == Curve::Ed25519 && !segment.hardened() {
             return Err(crate::Error::InvalidArgumentError {
                 alg: "SLIP10",
-                expected: "hardened key",
+                expected: "hardened key index for Ed25519 master secret key",
             });
         }
 
-        let mut data = [0u8; 1 + 32 + 4];
-        data[1..1 + 32].copy_from_slice(&self.0[..32]); // ser256(k_par) = ser256(parse256(il)) = il
-        data[1 + 32..1 + 32 + 4].copy_from_slice(&segment.bs); // ser32(i)
-
-        let mut i = [0; 64];
-        HMAC_SHA512(&data, &self.0[32..], &mut i);
-
-        Ok(Self(i))
+        Ok(Self(self.0.child_key(segment)))
     }
 
-    pub fn derive(&self, chain: &Chain) -> crate::Result<Key> {
-        let mut k = *self;
-        for c in &chain.0 {
-            k = k.child_key(c)?;
+    pub fn derive(&self, chain: &Chain) -> crate::Result<Self> {
+        #[cfg(feature = "ed25519")]
+        if self.0.curve == Curve::Ed25519 && !chain.all_hardened() {
+            return Err(crate::Error::InvalidArgumentError {
+                alg: "SLIP10",
+                expected: "hardened key index for Ed25519 master secret key",
+            });
         }
-        Ok(k)
+
+        let mut key = self.0.clone();
+        for segment in &chain.0 {
+            key = key.child_key(segment);
+        }
+        Ok(Self(key))
+    }
+
+    pub fn try_into_extended_public_key(&self) -> crate::Result<ExtendedPublicKey> {
+        if self.curve().is_non_hardened_supported() {
+            let mut k = KeyImpl {
+                curve: self.curve(),
+                ext: [0_u8; 65],
+            };
+            k.ext[..33].copy_from_slice(&self.0.calc_public_bytes());
+            k.ext[33..].copy_from_slice(self.chain_code());
+            Ok(ExtendedPublicKey(k))
+        } else {
+            Err(crate::Error::InvalidArgumentError {
+                alg: "SLIP10",
+                expected: "curve supporting non-hardened key derivation",
+            })
+        }
     }
 }
 
-impl TryFrom<&[u8]> for Key {
-    type Error = crate::Error;
+#[derive(Clone)]
+pub struct ExtendedPublicKey(KeyImpl);
 
-    fn try_from(bs: &[u8]) -> Result<Self, Self::Error> {
-        if bs.len() != 64 {
-            return Err(crate::Error::BufferSize {
-                name: "key",
-                has: bs.len(),
-                needs: 64,
-            });
+impl ExtendedPublicKey {
+    pub fn try_from_extended_bytes(curve: Curve, ext_bytes: &[u8; 65]) -> crate::Result<Self> {
+        if !curve.is_non_hardened_supported() {
+            Err(crate::Error::InvalidArgumentError {
+                alg: "SLIP10",
+                expected: "curve supporting non-hardened key derivation",
+            })
+        } else {
+            let key = KeyImpl { curve, ext: *ext_bytes };
+            if !key.is_public_key_valid() {
+                Err(crate::Error::InvalidArgumentError {
+                    alg: "SLIP10",
+                    expected: "valid extended public key",
+                })
+            } else {
+                Ok(Self(key))
+            }
+        }
+    }
+
+    pub fn curve(&self) -> Curve {
+        self.0.curve
+    }
+
+    pub fn extended_bytes(&self) -> &[u8; 65] {
+        self.0.extended_public_bytes()
+    }
+
+    pub fn public_bytes(&self) -> &[u8; 33] {
+        self.0.public_bytes()
+    }
+
+    pub fn public_key(&self) -> PublicKey {
+        match self.curve() {
+            #[cfg(feature = "ed25519")]
+            Curve::Ed25519 => {
+                unreachable!("SLIP10 does not support non-hardened key derivation from Ed25519 public keys")
+            }
+            #[cfg(feature = "secp256k1")]
+            Curve::Secp256k1 => secp256k1_ecdsa::PublicKey::try_from_bytes(self.public_bytes())
+                .map(PublicKey::Secp256k1Ecdsa)
+                .expect("valid extended public key"),
+        }
+    }
+
+    pub fn chain_code(&self) -> &[u8; 32] {
+        self.0.chain_code()
+    }
+
+    pub fn child_key(&self, segment: &Segment) -> crate::Result<Self> {
+        #[cfg(feature = "ed25519")]
+        debug_assert_ne!(Curve::Ed25519, self.curve());
+
+        if !segment.hardened() {
+            Ok(Self(self.0.child_key(segment)))
+        } else {
+            Err(crate::Error::InvalidArgumentError {
+                alg: "SLIP10",
+                expected: "non hardened key index for master public key",
+            })
+        }
+    }
+
+    pub fn derive(&self, chain: &Chain) -> crate::Result<Self> {
+        #[cfg(feature = "ed25519")]
+        debug_assert_ne!(Curve::Ed25519, self.curve());
+
+        if chain.all_non_hardened() {
+            let mut key = self.0.clone();
+            for segment in &chain.0 {
+                key = key.child_key(segment);
+            }
+            Ok(Self(key))
+        } else {
+            Err(crate::Error::InvalidArgumentError {
+                alg: "SLIP10",
+                expected: "non hardened key index for master public key",
+            })
+        }
+    }
+}
+
+impl TryFrom<&ExtendedSecretKey> for ExtendedPublicKey {
+    type Error = crate::Error;
+    fn try_from(esk: &ExtendedSecretKey) -> crate::Result<Self> {
+        esk.try_into_extended_public_key()
+    }
+}
+
+#[derive(Clone)]
+struct KeyImpl {
+    curve: Curve,
+    ext: [u8; 65],
+}
+
+impl Zeroize for KeyImpl {
+    fn zeroize(&mut self) {
+        self.ext.zeroize();
+    }
+}
+impl Drop for KeyImpl {
+    fn drop(&mut self) {
+        self.zeroize()
+    }
+}
+impl ZeroizeOnDrop for KeyImpl {}
+
+impl KeyImpl {
+    fn ext_mut(&mut self) -> &mut [u8; 64] {
+        // (&mut self.ext[1..]).try_into().unwrap()
+        unsafe { &mut *(self.ext[1..].as_mut_ptr() as *mut [u8; 64]) }
+    }
+
+    fn extended_secret_bytes(&self) -> &[u8; 64] {
+        // self.ext[1..].try_into().unwrap()
+        unsafe { &*(self.ext[1..].as_ptr() as *const [u8; 64]) }
+    }
+
+    fn extended_public_bytes(&self) -> &[u8; 65] {
+        &self.ext
+    }
+
+    fn secret_bytes(&self) -> &[u8; 32] {
+        // self.ext[1..33].try_into().unwrap()
+        unsafe { &*(self.ext[1..33].as_ptr() as *const [u8; 32]) }
+    }
+
+    fn public_bytes(&self) -> &[u8; 33] {
+        // self.ext[..33].try_into().unwrap()
+        unsafe { &*(self.ext[..33].as_ptr() as *const [u8; 33]) }
+    }
+
+    fn chain_code(&self) -> &[u8; 32] {
+        // self.ext[33..].try_into().unwrap()
+        unsafe { &*(self.ext[33..].as_ptr() as *const [u8; 32]) }
+    }
+
+    fn is_secret_bytes(&self) -> bool {
+        debug_assert!(self.ext[0] < 4);
+        self.ext[0] == 0
+    }
+
+    fn is_public_bytes(&self) -> bool {
+        debug_assert!(self.ext[0] < 4);
+        self.ext[0] != 0
+    }
+
+    fn is_secret_key_valid(&self) -> bool {
+        match self.curve {
+            #[cfg(feature = "ed25519")]
+            Curve::Ed25519 => true,
+            #[cfg(feature = "secp256k1")]
+            Curve::Secp256k1 => {
+                // secp256k1_ecdsa::SecretKey::try_from_bytes(*self.secret_bytes()).is_ok()
+                k256::SecretKey::from_bytes(self.secret_bytes().into()).is_ok()
+            }
+        }
+    }
+
+    fn is_public_key_valid(&self) -> bool {
+        match self.curve {
+            #[cfg(feature = "ed25519")]
+            Curve::Ed25519 => unreachable!("ed25519 curve is not supported for non-hardened public key derivation"),
+            #[cfg(feature = "secp256k1")]
+            Curve::Secp256k1 => {
+                // secp256k1_ecdsa::PublicKey::try_from_bytes(self.public_bytes()).is_ok()
+                k256::PublicKey::from_sec1_bytes(self.public_bytes()).is_ok()
+            }
+        }
+    }
+
+    fn calc_public_bytes(&self) -> [u8; 33] {
+        match self.curve {
+            #[cfg(feature = "ed25519")]
+            Curve::Ed25519 => unreachable!(),
+            #[cfg(feature = "secp256k1")]
+            Curve::Secp256k1 => {
+                use k256::elliptic_curve::sec1::ToEncodedPoint;
+                let sk =
+                    k256::SecretKey::from_bytes(self.secret_bytes().into()).expect("valid Secp256k1 parent secret key");
+                let pk = sk.public_key();
+                let mut pk_bytes = [0_u8; 33];
+                pk_bytes.copy_from_slice(pk.to_encoded_point(true).as_bytes());
+                pk_bytes
+            }
+        }
+    }
+
+    fn calc_data_bytes(&self, hardened: bool) -> [u8; 33] {
+        if hardened || self.is_public_bytes() {
+            *self.public_bytes()
+        } else {
+            self.calc_public_bytes()
+        }
+    }
+
+    fn from_seed(curve: Curve, seed: &[u8]) -> Self {
+        let mut key = Self { curve, ext: [0; 65] };
+        HMAC_SHA512(seed, curve.seedkey(), key.ext_mut());
+        while !key.is_secret_key_valid() {
+            let mut tmp = [0_u8; 64];
+            tmp.copy_from_slice(&key.ext[1..]);
+            HMAC_SHA512(&tmp, curve.seedkey(), key.ext_mut());
+            tmp.zeroize();
+        }
+        key
+    }
+
+    fn add(&mut self, parent_key: &[u8; 33]) -> bool {
+        // input:
+        // - self - private delta key
+        // - parent_key - private or public key
+        // output:
+        // - self - parent + delta private key or public + delta public key
+
+        debug_assert!(self.is_secret_bytes());
+        debug_assert!(parent_key[0] < 4);
+
+        match self.curve {
+            #[cfg(feature = "ed25519")]
+            Curve::Ed25519 => {
+                debug_assert_eq!(0, parent_key[0]);
+                true
+            }
+            #[cfg(feature = "secp256k1")]
+            Curve::Secp256k1 => {
+                use k256::{
+                    elliptic_curve::{group::prime::PrimeCurveAffine, sec1::ToEncodedPoint},
+                    AffinePoint, ProjectivePoint,
+                };
+
+                // if let Some(sk_delta) = k256::ecdsa::SigningKey::from_bytes(self.secret_bytes().into()) {
+                if let Ok(sk_delta) = k256::SecretKey::from_bytes(self.secret_bytes().into()) {
+                    if parent_key[0] == 0 {
+                        use core::convert::TryInto;
+                        // let sk = k256::ecdsa::SigningKey::from_bytes(parent_key[1..].try_into().unwrap())
+                        let sk = k256::SecretKey::from_bytes((&parent_key[1..]).try_into().unwrap())
+                            .expect("valid Secp256k1 parent secret key");
+
+                        let scalar_delta = sk_delta.to_nonzero_scalar();
+                        let mut scalar = *sk.to_nonzero_scalar().as_ref();
+                        scalar += scalar_delta.as_ref();
+
+                        if scalar.is_zero().into() {
+                            false
+                        } else {
+                            self.ext[1..33].copy_from_slice(&scalar.to_bytes());
+                            true
+                        }
+                    } else {
+                        // let pk_delta = k256::ecdsa::VerifyingKey::from(&sk_delta);
+                        // let pk_parent = k256::ecdsa::VerifyingKey::from_sec1_bytes(parent_key)
+                        //     .expect("valid Secp256k1 parent public key");
+                        let pk_delta = sk_delta.public_key();
+                        let pk_parent =
+                            k256::PublicKey::from_sec1_bytes(parent_key).expect("valid Secp256k1 parent public key");
+
+                        let mut point: ProjectivePoint = pk_parent.as_affine().into();
+                        point += pk_delta.as_affine();
+                        let point_sum: AffinePoint = point.into();
+
+                        if point_sum.is_identity().into() {
+                            false
+                        } else {
+                            self.ext[..33].copy_from_slice(point_sum.to_encoded_point(true).as_bytes());
+                            true
+                        }
+                    }
+                } else {
+                    false
+                }
+            }
+        }
+    }
+
+    fn child_key(&self, segment: &Segment) -> Self {
+        let mut data = [0u8; 33 + 4];
+        data[..33].copy_from_slice(&self.calc_data_bytes(segment.hardened()));
+        data[33..].copy_from_slice(&segment.bs()); // ser32(i)
+
+        let mut key = Self {
+            curve: self.curve,
+            ext: [0; 65],
+        };
+        HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
+        while !key.add(self.public_bytes()) {
+            data[0] = 1;
+            data[1..1 + 32].copy_from_slice(key.secret_bytes());
+            HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
         }
 
-        let mut ds = [0; 64];
-        ds.copy_from_slice(bs);
-        Ok(Self(ds))
+        data.zeroize();
+        key
     }
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct Segment {
-    hardened: bool,
-    bs: [u8; 4],
-}
+pub struct Segment(u32);
 
 impl Segment {
     pub fn from_u32(i: u32) -> Self {
-        Self {
-            hardened: i >= Self::HARDEN_MASK,
-            bs: i.to_be_bytes(), // ser32(i)
-        }
+        Self(i)
     }
 
     pub fn hardened(&self) -> bool {
-        self.hardened
+        self.0 & Self::HARDEN_MASK != 0
     }
 
     pub fn bs(&self) -> [u8; 4] {
-        self.bs
+        self.0.to_be_bytes() // ser32(i)
     }
 
     pub const HARDEN_MASK: u32 = 1 << 31;
@@ -149,6 +529,10 @@ pub struct Chain(Vec<Segment>);
 impl Chain {
     pub fn empty() -> Self {
         Self(Vec::new())
+    }
+
+    pub fn from_segments<'a, I: IntoIterator<Item = &'a Segment>>(is: I) -> Self {
+        Self(is.into_iter().cloned().collect())
     }
 
     pub fn from_u32<I: IntoIterator<Item = u32>>(is: I) -> Self {
@@ -165,8 +549,24 @@ impl Chain {
         Self(ss)
     }
 
-    pub fn segments(&self) -> Vec<Segment> {
-        self.0.clone()
+    pub fn is_empty(&self) -> bool {
+        self.0.is_empty()
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+
+    pub fn segments(&self) -> &[Segment] {
+        &self.0
+    }
+
+    pub fn all_hardened(&self) -> bool {
+        self.0.iter().all(Segment::hardened)
+    }
+
+    pub fn all_non_hardened(&self) -> bool {
+        self.0.iter().all(|s| !s.hardened())
     }
 }
 
@@ -179,11 +579,5 @@ impl Default for Chain {
 impl AsRef<Chain> for Chain {
     fn as_ref(&self) -> &Self {
         self
-    }
-}
-
-impl From<Key> for Vec<u8> {
-    fn from(other: Key) -> Self {
-        other.0.to_vec()
     }
 }
