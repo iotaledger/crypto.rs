@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.17.1"
+version = "0.18.0"
 license = "Apache-2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
@@ -11,8 +11,6 @@ description = "The canonical source of cryptographic ground-truth for all IOTA R
 homepage = "https://iota.org"
 repository = "https://github.com/iotaledger/crypto.rs"
 exclude = [ "/tests", "/.github", "/.changes" ]
-# This resolver prevents breaking no_std with dev-dependencies
-# See https://rust-lang.github.io/rfcs/2957-cargo-features2.html
 resolver = "2"
 
 [package.metadata.docs.rs]
