@@ -3,6 +3,8 @@
 
 use core::convert::TryFrom;
 
+use zeroize::ZeroizeOnDrop;
+
 pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 33;
 pub const SIGNATURE_LENGTH: usize = 65;
@@ -29,6 +31,7 @@ impl From<Address> for [u8; ADDRESS_LENGTH] {
     }
 }
 
+#[derive(ZeroizeOnDrop)]
 pub struct SecretKey(k256::ecdsa::SigningKey);
 
 impl SecretKey {
@@ -55,15 +58,19 @@ impl SecretKey {
 
     pub fn try_from_bytes(bytes: [u8; SECRET_KEY_LENGTH]) -> crate::Result<Self> {
         k256::ecdsa::SigningKey::from_bytes(&bytes.into())
-            .map_err(|_| crate::Error::ConvertError { from: "bytes", to: "secp256k1 ecdsa secret key" })
+            .map_err(|_| crate::Error::ConvertError {
+                from: "bytes",
+                to: "secp256k1 ecdsa secret key",
+            })
             .map(Self)
     }
 
     // Signature operation can fail for some reason.
     // Not sure what to do. Panic? Retry?
     pub fn try_sign(&self, msg: &[u8]) -> crate::Result<Signature> {
-        self.0.sign_recoverable(msg)
-            .map_err(|_| crate::Error::SignatureError { alg: "secp256k1 ecdsa", })
+        self.0
+            .sign_recoverable(msg)
+            .map_err(|_| crate::Error::SignatureError { alg: "secp256k1 ecdsa" })
             .map(|(sig, rid)| Signature(sig, rid))
     }
 
@@ -115,7 +122,7 @@ impl PublicKey {
         let public_key = public_key.as_bytes();
         debug_assert_eq!(public_key[0], 0x04);
         // let hash = keccak256(&public_key[1..]);
-        use tiny_keccak::{Hasher, Keccak, };
+        use tiny_keccak::{Hasher, Keccak};
         let mut keccak = Keccak::v256();
         keccak.update(&public_key[1..]);
         let mut hash = [0u8; 32];
@@ -151,21 +158,34 @@ impl Signature {
     }
 
     pub fn try_from_bytes(sig: &[u8; SIGNATURE_LENGTH]) -> crate::Result<Self> {
-        let rid = k256::ecdsa::RecoveryId::from_byte(sig[64])
-            .ok_or(crate::Error::ConvertError { from: "bytes", to: "secp256k1 ecdsa signature" })?;
+        let rid = k256::ecdsa::RecoveryId::from_byte(sig[64]).ok_or(crate::Error::ConvertError {
+            from: "bytes",
+            to: "secp256k1 ecdsa signature",
+        })?;
         k256::ecdsa::Signature::from_slice(&sig[..64])
-            .map_err(|_| crate::Error::ConvertError { from: "bytes", to: "secp256k1 ecdsa signature" })
+            .map_err(|_| crate::Error::ConvertError {
+                from: "bytes",
+                to: "secp256k1 ecdsa signature",
+            })
             .map(|s| Self(s, rid))
     }
 
     pub fn try_from_slice(sig: &[u8]) -> crate::Result<Self> {
         if sig.len() != SIGNATURE_LENGTH {
-            Err(crate::Error::ConvertError { from: "slice", to: "secp256k1 ecdsa signature" })
+            Err(crate::Error::ConvertError {
+                from: "slice",
+                to: "secp256k1 ecdsa signature",
+            })
         } else {
-            let rid = k256::ecdsa::RecoveryId::from_byte(sig[64])
-                .ok_or(crate::Error::ConvertError { from: "bytes", to: "secp256k1 ecdsa signature" })?;
+            let rid = k256::ecdsa::RecoveryId::from_byte(sig[64]).ok_or(crate::Error::ConvertError {
+                from: "bytes",
+                to: "secp256k1 ecdsa signature",
+            })?;
             k256::ecdsa::Signature::from_slice(&sig[..64])
-                .map_err(|_| crate::Error::ConvertError { from: "slice", to: "secp256k1 ecdsa signature" })
+                .map_err(|_| crate::Error::ConvertError {
+                    from: "slice",
+                    to: "secp256k1 ecdsa signature",
+                })
                 .map(|s| Self(s, rid))
         }
     }
