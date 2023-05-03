@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.18.0]
+
+- Make `serde` dependency `no_std` compatible.
+  - [3a78d8b](https://www.github.com/iotaledger/crypto.rs/commit/3a78d8bbc900d2529cd44149b11241e80bf586c2) fix changefile ([#189](https://www.github.com/iotaledger/crypto.rs/pull/189)) on 2023-05-03
+
 ## \[0.17.1]
 
 - Zeroize on drop secret keys.
