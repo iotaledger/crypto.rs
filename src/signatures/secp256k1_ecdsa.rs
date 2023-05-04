@@ -5,27 +5,26 @@ use core::convert::TryFrom;
 
 use zeroize::ZeroizeOnDrop;
 
-pub const SECRET_KEY_LENGTH: usize = 32;
-pub const PUBLIC_KEY_LENGTH: usize = 33;
-pub const SIGNATURE_LENGTH: usize = 65;
-pub const ADDRESS_LENGTH: usize = 20;
-
 #[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
-pub struct Address([u8; ADDRESS_LENGTH]);
+pub struct Address([u8; Self::LENGTH]);
 
-impl AsRef<[u8; ADDRESS_LENGTH]> for Address {
-    fn as_ref(&self) -> &[u8; ADDRESS_LENGTH] {
+impl Address {
+    pub const LENGTH: usize = 20;
+}
+
+impl AsRef<[u8; Address::LENGTH]> for Address {
+    fn as_ref(&self) -> &[u8; Address::LENGTH] {
         &self.0
     }
 }
 
-impl From<[u8; ADDRESS_LENGTH]> for Address {
-    fn from(bytes: [u8; ADDRESS_LENGTH]) -> Self {
+impl From<[u8; Address::LENGTH]> for Address {
+    fn from(bytes: [u8; Address::LENGTH]) -> Self {
         Self(bytes)
     }
 }
 
-impl From<Address> for [u8; ADDRESS_LENGTH] {
+impl From<Address> for [u8; Address::LENGTH] {
     fn from(address: Address) -> Self {
         address.0
     }
@@ -35,6 +34,8 @@ impl From<Address> for [u8; ADDRESS_LENGTH] {
 pub struct SecretKey(k256::ecdsa::SigningKey);
 
 impl SecretKey {
+    pub const LENGTH: usize = 32;
+
     #[cfg(feature = "rand")]
     #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
     pub fn generate() -> Self {
@@ -52,11 +53,11 @@ impl SecretKey {
         PublicKey(k256::ecdsa::VerifyingKey::from(&self.0))
     }
 
-    pub fn to_bytes(&self) -> [u8; SECRET_KEY_LENGTH] {
+    pub fn to_bytes(&self) -> [u8; SecretKey::LENGTH] {
         self.0.to_bytes().into()
     }
 
-    pub fn try_from_bytes(bytes: [u8; SECRET_KEY_LENGTH]) -> crate::Result<Self> {
+    pub fn try_from_bytes(bytes: [u8; SecretKey::LENGTH]) -> crate::Result<Self> {
         k256::ecdsa::SigningKey::from_bytes(&bytes.into())
             .map_err(|_| crate::Error::ConvertError {
                 from: "bytes",
@@ -83,21 +84,23 @@ impl SecretKey {
 pub struct PublicKey(k256::ecdsa::VerifyingKey);
 
 impl PublicKey {
+    pub const LENGTH: usize = 33;
+
     pub fn verify(&self, sig: &Signature, msg: &[u8]) -> bool {
         use k256::ecdsa::signature::Verifier;
         self.0.verify(msg, &sig.0).is_ok()
     }
 
-    pub fn to_bytes(self) -> [u8; PUBLIC_KEY_LENGTH] {
+    pub fn to_bytes(self) -> [u8; PublicKey::LENGTH] {
         let encoded_point = self.0.to_encoded_point(true);
         let slice = encoded_point.as_bytes();
-        assert_eq!(PUBLIC_KEY_LENGTH, slice.len());
-        let mut bytes = [0_u8; PUBLIC_KEY_LENGTH];
+        assert_eq!(PublicKey::LENGTH, slice.len());
+        let mut bytes = [0_u8; PublicKey::LENGTH];
         bytes.copy_from_slice(slice);
         bytes
     }
 
-    pub fn try_from_bytes(bytes: &[u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
+    pub fn try_from_bytes(bytes: &[u8; PublicKey::LENGTH]) -> crate::Result<Self> {
         k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes)
             .map(Self)
             .map_err(|_| crate::Error::ConvertError {
@@ -134,9 +137,9 @@ impl PublicKey {
     }
 }
 
-impl TryFrom<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
+impl TryFrom<[u8; PublicKey::LENGTH]> for PublicKey {
     type Error = crate::Error;
-    fn try_from(bytes: [u8; PUBLIC_KEY_LENGTH]) -> crate::Result<Self> {
+    fn try_from(bytes: [u8; PublicKey::LENGTH]) -> crate::Result<Self> {
         Self::try_from_bytes(&bytes)
     }
 }
@@ -144,14 +147,16 @@ impl TryFrom<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
 pub struct Signature(k256::ecdsa::Signature, k256::ecdsa::RecoveryId);
 
 impl Signature {
-    pub fn to_bytes(&self) -> [u8; SIGNATURE_LENGTH] {
-        let mut bytes = [0_u8; SIGNATURE_LENGTH];
+    pub const LENGTH: usize = 65;
+
+    pub fn to_bytes(&self) -> [u8; Signature::LENGTH] {
+        let mut bytes = [0_u8; Signature::LENGTH];
         bytes[0..64].copy_from_slice(&self.0.to_bytes());
         bytes[64] = self.1.into();
         bytes
     }
 
-    pub fn try_from_bytes(sig: &[u8; SIGNATURE_LENGTH]) -> crate::Result<Self> {
+    pub fn try_from_bytes(sig: &[u8; Signature::LENGTH]) -> crate::Result<Self> {
         let rid = k256::ecdsa::RecoveryId::from_byte(sig[64]).ok_or(crate::Error::ConvertError {
             from: "bytes",
             to: "secp256k1 ecdsa signature",
@@ -165,7 +170,7 @@ impl Signature {
     }
 
     pub fn try_from_slice(sig: &[u8]) -> crate::Result<Self> {
-        if sig.len() != SIGNATURE_LENGTH {
+        if sig.len() != Signature::LENGTH {
             Err(crate::Error::ConvertError {
                 from: "slice",
                 to: "secp256k1 ecdsa signature",
