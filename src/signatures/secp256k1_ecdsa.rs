@@ -141,12 +141,6 @@ impl TryFrom<[u8; PUBLIC_KEY_LENGTH]> for PublicKey {
     }
 }
 
-// impl Hash for PublicKey {
-//     fn hash<H: Hasher>(&self, state: &mut H) {
-//         (self.as_slice()).hash(state);
-//     }
-// }
-
 pub struct Signature(k256::ecdsa::Signature, k256::ecdsa::RecoveryId);
 
 impl Signature {
