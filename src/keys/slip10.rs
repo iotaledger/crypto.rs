@@ -76,7 +76,6 @@ impl SecretKey {
 
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub enum PublicKey {
-    // SLIP10 does not support non-hardened key derivation from Ed25519 public keys
     #[cfg(feature = "ed25519")]
     Ed25519(ed25519::PublicKey),
     #[cfg(feature = "secp256k1")]
@@ -317,12 +316,10 @@ impl ZeroizeOnDrop for KeyImpl {}
 
 impl KeyImpl {
     fn ext_mut(&mut self) -> &mut [u8; 64] {
-        // (&mut self.ext[1..]).try_into().unwrap()
         unsafe { &mut *(self.ext[1..].as_mut_ptr() as *mut [u8; 64]) }
     }
 
     fn extended_secret_bytes(&self) -> &[u8; 64] {
-        // self.ext[1..].try_into().unwrap()
         unsafe { &*(self.ext[1..].as_ptr() as *const [u8; 64]) }
     }
 
@@ -331,17 +328,14 @@ impl KeyImpl {
     }
 
     fn secret_bytes(&self) -> &[u8; 32] {
-        // self.ext[1..33].try_into().unwrap()
         unsafe { &*(self.ext[1..33].as_ptr() as *const [u8; 32]) }
     }
 
     fn public_bytes(&self) -> &[u8; 33] {
-        // self.ext[..33].try_into().unwrap()
         unsafe { &*(self.ext[..33].as_ptr() as *const [u8; 33]) }
     }
 
     fn chain_code(&self) -> &[u8; 32] {
-        // self.ext[33..].try_into().unwrap()
         unsafe { &*(self.ext[33..].as_ptr() as *const [u8; 32]) }
     }
 
@@ -361,7 +355,6 @@ impl KeyImpl {
             Curve::Ed25519 => true,
             #[cfg(feature = "secp256k1")]
             Curve::Secp256k1 => {
-                // secp256k1_ecdsa::SecretKey::try_from_bytes(*self.secret_bytes()).is_ok()
                 k256::SecretKey::from_bytes(self.secret_bytes().into()).is_ok()
             }
         }
@@ -373,7 +366,6 @@ impl KeyImpl {
             Curve::Ed25519 => unreachable!("ed25519 curve is not supported for non-hardened public key derivation"),
             #[cfg(feature = "secp256k1")]
             Curve::Secp256k1 => {
-                // secp256k1_ecdsa::PublicKey::try_from_bytes(self.public_bytes()).is_ok()
                 k256::PublicKey::from_sec1_bytes(self.public_bytes()).is_ok()
             }
         }
@@ -417,12 +409,6 @@ impl KeyImpl {
     }
 
     fn add(&mut self, parent_key: &[u8; 33]) -> bool {
-        // input:
-        // - self - private delta key
-        // - parent_key - private or public key
-        // output:
-        // - self - parent + delta private key or public + delta public key
-
         debug_assert!(self.is_secret_bytes());
         debug_assert!(parent_key[0] < 4);
 
@@ -439,11 +425,9 @@ impl KeyImpl {
                     AffinePoint, ProjectivePoint,
                 };
 
-                // if let Some(sk_delta) = k256::ecdsa::SigningKey::from_bytes(self.secret_bytes().into()) {
                 if let Ok(sk_delta) = k256::SecretKey::from_bytes(self.secret_bytes().into()) {
                     if parent_key[0] == 0 {
                         use core::convert::TryInto;
-                        // let sk = k256::ecdsa::SigningKey::from_bytes(parent_key[1..].try_into().unwrap())
                         let sk = k256::SecretKey::from_bytes((&parent_key[1..]).try_into().unwrap())
                             .expect("valid Secp256k1 parent secret key");
 
@@ -458,9 +442,6 @@ impl KeyImpl {
                             true
                         }
                     } else {
-                        // let pk_delta = k256::ecdsa::VerifyingKey::from(&sk_delta);
-                        // let pk_parent = k256::ecdsa::VerifyingKey::from_sec1_bytes(parent_key)
-                        //     .expect("valid Secp256k1 parent public key");
                         let pk_delta = sk_delta.public_key();
                         let pk_parent =
                             k256::PublicKey::from_sec1_bytes(parent_key).expect("valid Secp256k1 parent public key");
