@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use core::convert::TryFrom;
+use core::hash::{Hash, Hasher};
 
 use zeroize::ZeroizeOnDrop;
 
@@ -27,6 +28,12 @@ impl From<[u8; Address::LENGTH]> for Address {
 impl From<Address> for [u8; Address::LENGTH] {
     fn from(address: Address) -> Self {
         address.0
+    }
+}
+
+impl Hash for Address {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.hash(state);
     }
 }
 
@@ -94,7 +101,6 @@ impl PublicKey {
     pub fn to_bytes(self) -> [u8; PublicKey::LENGTH] {
         let encoded_point = self.0.to_encoded_point(true);
         let slice = encoded_point.as_bytes();
-        assert_eq!(PublicKey::LENGTH, slice.len());
         let mut bytes = [0_u8; PublicKey::LENGTH];
         bytes.copy_from_slice(slice);
         bytes
@@ -141,6 +147,13 @@ impl TryFrom<[u8; PublicKey::LENGTH]> for PublicKey {
     type Error = crate::Error;
     fn try_from(bytes: [u8; PublicKey::LENGTH]) -> crate::Result<Self> {
         Self::try_from_bytes(&bytes)
+    }
+}
+
+impl Hash for PublicKey {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        let encoded_point = self.0.to_encoded_point(true);
+        encoded_point.as_bytes().hash(state);
     }
 }
 
