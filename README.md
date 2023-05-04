@@ -36,13 +36,13 @@ To be included in this list an implementation must:
 | keys | PBKDF2-HMAC-SHA256 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
 | keys | PBKDF2-HMAC-SHA384 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
 | keys | PBKDF2-HMAC-SHA512 | [`pbkdf`](/src/keys/pbkdf.rs)       | [rfc][PBKDF-RFC]           | `pbkdf2`           | self                     | ★★★★☆ |
-| keys | BIP-39             | [`bip39`](/src/keys/bip39.rs)            | [rfc][BIP39-RFC]           | `crypto.rs`        | [multilang][BIP39-TEST]  | ★★☆☆☆ |
-| keys | SLIP-10            | [`slip10`]()                    | [rfc][SLIP10-RFC]          | `crypto.rs`    | self                     | ★★☆☆☆ |
+| keys | BIP-39             | [`bip39`](/src/keys/bip39.rs)            | [rfc][BIP39-RFC]           | `crypto.rs`    | [multilang][BIP39-TEST]  | ★★☆☆☆ |
+| keys | SLIP-10            | [`slip10`](/src/keys/slip10.rs)          | [rfc][SLIP10-RFC]          | `crypto.rs`    | [official][SLIP10-RFC]   | ★★★☆☆ |
 | macs        | HMAC-SHA2-256      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | macs        | HMAC-SHA2-384      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
 | macs        | HMAC-SHA2-512      | [`hmac`](/src/macs/hmac.rs)         | [rfc][HMAC-RFC]            | `hmac`             | [official][HMAC-TEST]    | ★★★★☆ |
-| signatures  | Ed25519            | [`ed25519`](/src/signatures/ed25519.rs)        | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
-| signatures  | Secp256k1          | [`secp256k1`](/src/signatures/secp256k1rs)     | [spec][SECP256K1-SPEC]     | `k256`             | extended                 | ☆☆☆☆☆ |
+| signatures  | Ed25519            | [`ed25519`](/src/signatures/ed25519.rs)           | [rfc (draft)][ED25519-RFC] | `ed25519-zebra`    | extended                 | ★★★★☆ |
+| signatures  | Secp256k1 ECDSA    | [`secp256k1`](/src/signatures/secp256k1_ecdsa.rs) | [spec][SECP256K1-SPEC]     | `k256`             | extended                 | ★★★☆☆ |
 | utility    |  RANDOM                  | [`random`](/src/utils/rand.rs)              |                            | `getrandom`        | math                     | ★★★★★ |
 
 
