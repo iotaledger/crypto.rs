@@ -15,12 +15,6 @@ macro_rules! assert_buffer {
     }};
 }
 
-macro_rules! assert_buffer_eq {
-    ($length:expr, $target:expr, $name:expr) => {{
-        assert_buffer!($length, $target, $length == $target, $name)
-    }};
-}
-
 macro_rules! assert_buffer_lte {
     ($length:expr, $maximum:expr, $name:expr) => {{
         assert_buffer!($length, $maximum, $length <= $maximum, $name)
@@ -35,11 +29,6 @@ macro_rules! assert_buffer_gte {
 
 #[cfg(test)]
 mod tests {
-    fn test_assert_eq(length: usize, target: usize) -> crate::Result<()> {
-        assert_buffer_eq!(length, target, "buffer");
-        Ok(())
-    }
-
     fn test_assert_lte(length: usize, minimum: usize) -> crate::Result<()> {
         assert_buffer_lte!(length, minimum, "buffer");
         Ok(())
@@ -48,15 +37,6 @@ mod tests {
     fn test_assert_gte(length: usize, maximum: usize) -> crate::Result<()> {
         assert_buffer_gte!(length, maximum, "buffer");
         Ok(())
-    }
-
-    #[test]
-    fn test_assert_buffer_eq() {
-        assert!(test_assert_eq(0, 16).is_err());
-        assert!(test_assert_eq(15, 16).is_err());
-        assert!(test_assert_eq(16, 16).is_ok());
-        assert!(test_assert_eq(17, 16).is_err());
-        assert!(test_assert_eq(255, 16).is_err());
     }
 
     #[test]
