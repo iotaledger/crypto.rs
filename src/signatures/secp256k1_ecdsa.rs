@@ -99,21 +99,35 @@ impl PublicKey {
     }
 
     pub fn try_from_bytes(bytes: &[u8; PublicKey::LENGTH]) -> crate::Result<Self> {
-        k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes)
-            .map(Self)
-            .map_err(|_| crate::Error::ConvertError {
+        if bytes[0] == 2 || bytes[0] == 3 {
+            k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes)
+                .map(Self)
+                .map_err(|_| crate::Error::ConvertError {
+                    from: "compressed bytes",
+                    to: "Secp256k1 SEC1 compressed public key",
+                })
+        } else {
+            Err(crate::Error::ConvertError {
                 from: "compressed bytes",
-                to: "Secp256k1 public key",
+                to: "Secp256k1 SEC1 compressed public key",
             })
+        }
     }
 
     pub fn try_from_slice(bytes: &[u8]) -> crate::Result<Self> {
-        k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes)
-            .map(Self)
-            .map_err(|_| crate::Error::ConvertError {
-                from: "compressed slice",
-                to: "Secp256k1 public key",
+        if bytes.len() == Self::LENGTH && (bytes[0] == 2 || bytes[0] == 3) {
+            k256::ecdsa::VerifyingKey::from_sec1_bytes(bytes)
+                .map(Self)
+                .map_err(|_| crate::Error::ConvertError {
+                    from: "compressed slice",
+                    to: "Secp256k1 SEC1 compressed public key",
+                })
+        } else {
+            Err(crate::Error::ConvertError {
+                from: "compressed bytes",
+                to: "Secp256k1 SEC1 compressed public key",
             })
+        }
     }
 
     // credit: [secret_key_to_address](https://github.com/gakonst/ethers-rs/)

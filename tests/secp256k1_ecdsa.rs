@@ -59,3 +59,18 @@ fn test_secp256k1_sign_verify_random() {
     let pk = sk.public_key();
     run_secp256k1_sign_verify(sk, pk);
 }
+
+#[test]
+fn test_secp256k1_public_key_bytes() {
+    let mut sk_bytes = [0_u8; 32];
+    let mut pk_bytes = [0_u8; 33];
+    sk_bytes[0] += 1;
+    let sk = SecretKey::try_from_bytes(sk_bytes).unwrap();
+    let pk = sk.public_key();
+    pk_bytes.copy_from_slice(&pk.to_bytes());
+    assert_eq!(2, pk_bytes[0]);
+    pk_bytes[0] = 5;
+    // This is a SEC1 Compact form of the same public key. It is forbidden
+    let pk2 = PublicKey::try_from_bytes(&pk_bytes);
+    assert!(pk2.is_err());
+}

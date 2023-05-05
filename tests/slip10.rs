@@ -73,7 +73,7 @@ mod test {
 
     #[cfg(feature = "ed25519")]
     #[test]
-    fn ed25519_test_vectors() -> Result<()> {
+    fn slip10_ed25519_test_vectors() -> Result<()> {
         let tvs = include!("fixtures/slip10_ed25519.rs");
 
         run_test_vectors(Curve::Ed25519, &tvs)
@@ -81,9 +81,22 @@ mod test {
 
     #[cfg(feature = "secp256k1")]
     #[test]
-    fn secp256k1_test_vectors() -> Result<()> {
+    fn slip10_secp256k1_test_vectors() -> Result<()> {
         let tvs = include!("fixtures/slip10_secp256k1.rs");
 
         run_test_vectors(Curve::Secp256k1, &tvs)
+    }
+
+    #[cfg(feature = "secp256k1")]
+    #[test]
+    fn slip10_secp256k1_public_key_test() {
+        use crypto::keys::slip10::ExtendedPublicKey;
+        let seed = Seed::from_bytes(&[1]);
+        let esk = seed.to_master_key(Curve::Secp256k1);
+        let epk = esk.try_into_extended_public_key().unwrap();
+        let mut epk_bytes = *epk.extended_bytes();
+        assert_eq!(2, epk_bytes[0]);
+        epk_bytes[0] = 5;
+        assert!(ExtendedPublicKey::try_from_extended_bytes(Curve::Secp256k1, &epk_bytes).is_err());
     }
 }
