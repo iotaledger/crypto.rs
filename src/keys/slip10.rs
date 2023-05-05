@@ -354,9 +354,7 @@ impl KeyImpl {
             #[cfg(feature = "ed25519")]
             Curve::Ed25519 => true,
             #[cfg(feature = "secp256k1")]
-            Curve::Secp256k1 => {
-                k256::SecretKey::from_bytes(self.secret_bytes().into()).is_ok()
-            }
+            Curve::Secp256k1 => k256::SecretKey::from_bytes(self.secret_bytes().into()).is_ok(),
         }
     }
 
@@ -365,9 +363,7 @@ impl KeyImpl {
             #[cfg(feature = "ed25519")]
             Curve::Ed25519 => unreachable!("ed25519 curve is not supported for non-hardened public key derivation"),
             #[cfg(feature = "secp256k1")]
-            Curve::Secp256k1 => {
-                k256::PublicKey::from_sec1_bytes(self.public_bytes()).is_ok()
-            }
+            Curve::Secp256k1 => k256::PublicKey::from_sec1_bytes(self.public_bytes()).is_ok(),
         }
     }
 
