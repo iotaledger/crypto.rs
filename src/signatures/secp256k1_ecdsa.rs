@@ -6,7 +6,7 @@ use core::hash::{Hash, Hasher};
 
 use zeroize::ZeroizeOnDrop;
 
-#[derive(Clone, Copy, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Address([u8; Self::LENGTH]);
 
 impl Address {
@@ -28,12 +28,6 @@ impl From<[u8; Address::LENGTH]> for Address {
 impl From<Address> for [u8; Address::LENGTH] {
     fn from(address: Address) -> Self {
         address.0
-    }
-}
-
-impl Hash for Address {
-    fn hash<H: Hasher>(&self, state: &mut H) {
-        self.0.hash(state);
     }
 }
 
@@ -73,8 +67,6 @@ impl SecretKey {
             .map(Self)
     }
 
-    // Signature operation can fail for some reason.
-    // Not sure what to do. Panic? Retry?
     pub fn try_sign(&self, msg: &[u8]) -> crate::Result<Signature> {
         self.0
             .sign_recoverable(msg)
