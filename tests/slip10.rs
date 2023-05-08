@@ -34,7 +34,7 @@ mod test {
 
             let mut expected_master_private_key = [0u8; 32];
             hex::decode_to_slice(tv.master_private_key, &mut expected_master_private_key as &mut [u8]).unwrap();
-            assert_eq!(expected_master_private_key, m.secret_key().to_bytes());
+            assert_eq!(expected_master_private_key, *m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
                 let ck = seed.derive(curve, &c.chain)?;
@@ -45,7 +45,7 @@ mod test {
 
                 let mut expected_private_key = [0u8; 32];
                 hex::decode_to_slice(c.private_key, &mut expected_private_key as &mut [u8]).unwrap();
-                assert_eq!(expected_private_key, ck.secret_key().to_bytes());
+                assert_eq!(expected_private_key, *ck.secret_key().to_bytes());
 
                 let last_segment_non_hardened = !c.chain.segments().last().map_or(true, Segment::is_hardened);
                 if last_segment_non_hardened && curve.is_non_hardened_supported() {
@@ -61,7 +61,7 @@ mod test {
                     let esk = esk.child_key(&segment).unwrap();
                     let epk = epk.child_key(&segment).unwrap();
                     assert_eq!(expected_chain_code, *esk.chain_code());
-                    assert_eq!(expected_private_key, esk.secret_key().to_bytes());
+                    assert_eq!(expected_private_key, *esk.secret_key().to_bytes());
                     assert_eq!(esk.chain_code(), epk.chain_code());
                     assert_eq!(esk.secret_key().public_key(), epk.public_key());
                 }

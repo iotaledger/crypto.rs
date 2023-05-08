@@ -12,7 +12,7 @@ fn run_secp256k1_sign_verify(sk: SecretKey, pk: PublicKey) {
     let _addr = pk.to_address();
 
     let sk_bytes = sk.to_bytes();
-    let sk2 = SecretKey::try_from_bytes(sk_bytes).unwrap();
+    let sk2 = SecretKey::try_from_bytes(&sk_bytes).unwrap();
     let sk2_bytes = sk2.to_bytes();
     assert_eq!(sk_bytes, sk2_bytes);
 
@@ -65,7 +65,7 @@ fn test_secp256k1_public_key_bytes() {
     let mut sk_bytes = [0_u8; 32];
     let mut pk_bytes = [0_u8; 33];
     sk_bytes[0] += 1;
-    let sk = SecretKey::try_from_bytes(sk_bytes).unwrap();
+    let sk = SecretKey::try_from_bytes(&sk_bytes).unwrap();
     let pk = sk.public_key();
     pk_bytes.copy_from_slice(&pk.to_bytes());
     assert_eq!(2, pk_bytes[0]);

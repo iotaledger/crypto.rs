@@ -7,7 +7,7 @@ use core::{
     hash::{Hash, Hasher},
 };
 
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 #[deprecated = "Use associated const SecretKey::LENGTH"]
 pub const SECRET_KEY_LENGTH: usize = 32;
@@ -27,30 +27,34 @@ impl SecretKey {
     pub fn generate() -> crate::Result<Self> {
         let mut bs = [0u8; SecretKey::LENGTH];
         crate::utils::rand::fill(&mut bs)?;
-        Ok(Self::from_bytes(bs))
+        let sk = Self::from_bytes(&bs);
+        bs.zeroize();
+        Ok(sk)
     }
 
     #[cfg(feature = "rand")]
     pub fn generate_with<R: rand::CryptoRng + rand::RngCore>(rng: &mut R) -> Self {
         let mut bs = [0_u8; SecretKey::LENGTH];
         rng.fill_bytes(&mut bs);
-        Self::from_bytes(bs)
+        let sk = Self::from_bytes(&bs);
+        bs.zeroize();
+        sk
     }
 
     pub fn public_key(&self) -> PublicKey {
         PublicKey(ed25519_zebra::VerificationKey::from(&self.0))
     }
 
-    pub fn to_bytes(&self) -> [u8; SecretKey::LENGTH] {
-        self.0.into()
+    pub fn to_bytes(&self) -> Zeroizing<[u8; SecretKey::LENGTH]> {
+        Zeroizing::new(self.0.into())
     }
 
     pub fn as_slice(&self) -> &[u8] {
         self.0.as_ref()
     }
 
-    pub fn from_bytes(bytes: [u8; SecretKey::LENGTH]) -> Self {
-        Self(bytes.into())
+    pub fn from_bytes(bytes: &[u8; SecretKey::LENGTH]) -> Self {
+        Self((*bytes).into())
     }
 
     pub fn sign(&self, msg: &[u8]) -> Signature {

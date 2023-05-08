@@ -7,7 +7,7 @@ use alloc::vec::Vec;
 use core::convert::TryFrom;
 
 use serde::{Deserialize, Serialize};
-use zeroize::{Zeroize, ZeroizeOnDrop};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
 use crate::macs::hmac::HMAC_SHA512;
 #[cfg(feature = "ed25519")]
@@ -56,7 +56,7 @@ pub enum SecretKey {
 }
 
 impl SecretKey {
-    pub fn to_bytes(&self) -> [u8; 32] {
+    pub fn to_bytes(&self) -> Zeroizing<[u8; 32]> {
         match self {
             #[cfg(feature = "ed25519")]
             Self::Ed25519(sk) => sk.to_bytes(),
@@ -146,9 +146,9 @@ impl ExtendedSecretKey {
     pub fn secret_key(&self) -> SecretKey {
         match self.curve() {
             #[cfg(feature = "ed25519")]
-            Curve::Ed25519 => SecretKey::Ed25519(ed25519::SecretKey::from_bytes(*self.secret_bytes())),
+            Curve::Ed25519 => SecretKey::Ed25519(ed25519::SecretKey::from_bytes(self.secret_bytes())),
             #[cfg(feature = "secp256k1")]
-            Curve::Secp256k1 => secp256k1_ecdsa::SecretKey::try_from_bytes(*self.secret_bytes())
+            Curve::Secp256k1 => secp256k1_ecdsa::SecretKey::try_from_bytes(self.secret_bytes())
                 .map(SecretKey::Secp256k1Ecdsa)
                 .expect("valid extended secret key"),
         }

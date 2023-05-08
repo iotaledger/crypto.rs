@@ -4,7 +4,7 @@
 use core::convert::TryFrom;
 use core::hash::{Hash, Hasher};
 
-use zeroize::ZeroizeOnDrop;
+use zeroize::{ZeroizeOnDrop, Zeroizing};
 
 #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 pub struct Address([u8; Self::LENGTH]);
@@ -54,12 +54,12 @@ impl SecretKey {
         PublicKey(k256::ecdsa::VerifyingKey::from(&self.0))
     }
 
-    pub fn to_bytes(&self) -> [u8; SecretKey::LENGTH] {
-        self.0.to_bytes().into()
+    pub fn to_bytes(&self) -> Zeroizing<[u8; SecretKey::LENGTH]> {
+        Zeroizing::new(self.0.to_bytes().into())
     }
 
-    pub fn try_from_bytes(bytes: [u8; SecretKey::LENGTH]) -> crate::Result<Self> {
-        k256::ecdsa::SigningKey::from_bytes(&bytes.into())
+    pub fn try_from_bytes(bytes: &[u8; SecretKey::LENGTH]) -> crate::Result<Self> {
+        k256::ecdsa::SigningKey::from_bytes(bytes.into())
             .map_err(|_| crate::Error::ConvertError {
                 from: "bytes",
                 to: "secp256k1 ecdsa secret key",
