@@ -6,31 +6,6 @@ use core::hash::{Hash, Hasher};
 
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
-pub struct Address([u8; Self::LENGTH]);
-
-impl Address {
-    pub const LENGTH: usize = 20;
-}
-
-impl AsRef<[u8; Address::LENGTH]> for Address {
-    fn as_ref(&self) -> &[u8; Address::LENGTH] {
-        &self.0
-    }
-}
-
-impl From<[u8; Address::LENGTH]> for Address {
-    fn from(bytes: [u8; Address::LENGTH]) -> Self {
-        Self(bytes)
-    }
-}
-
-impl From<Address> for [u8; Address::LENGTH] {
-    fn from(address: Address) -> Self {
-        address.0
-    }
-}
-
 #[derive(ZeroizeOnDrop)]
 pub struct SecretKey(k256::ecdsa::SigningKey);
 
@@ -131,7 +106,7 @@ impl PublicKey {
     }
 
     // credit: [secret_key_to_address](https://github.com/gakonst/ethers-rs/)
-    pub fn to_address(&self) -> Address {
+    pub fn to_evm_address(&self) -> EvmAddress {
         // let public_key = secret_key.verifying_key();
         let public_key = self.0.to_encoded_point(/* compress = */ false);
         let public_key = public_key.as_bytes();
@@ -145,7 +120,7 @@ impl PublicKey {
 
         let mut bytes = [0u8; 20];
         bytes.copy_from_slice(&hash[12..]);
-        Address::from(bytes)
+        EvmAddress::from(bytes)
     }
 }
 
@@ -214,3 +189,32 @@ impl Signature {
             .map(PublicKey)
     }
 }
+
+mod evm_address {
+    #[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+    pub struct EvmAddress([u8; Self::LENGTH]);
+
+    impl EvmAddress {
+        pub const LENGTH: usize = 20;
+    }
+
+    impl AsRef<[u8; EvmAddress::LENGTH]> for EvmAddress {
+        fn as_ref(&self) -> &[u8; EvmAddress::LENGTH] {
+            &self.0
+        }
+    }
+
+    impl From<[u8; EvmAddress::LENGTH]> for EvmAddress {
+        fn from(bytes: [u8; EvmAddress::LENGTH]) -> Self {
+            Self(bytes)
+        }
+    }
+
+    impl From<EvmAddress> for [u8; EvmAddress::LENGTH] {
+        fn from(address: EvmAddress) -> Self {
+            address.0
+        }
+    }
+}
+
+pub use evm_address::EvmAddress;

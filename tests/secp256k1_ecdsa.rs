@@ -9,7 +9,7 @@ mod utils;
 
 fn run_secp256k1_sign_verify(sk: SecretKey, pk: PublicKey) {
     assert_eq!(pk.to_bytes(), sk.public_key().to_bytes());
-    let _addr = pk.to_address();
+    let _addr = pk.to_evm_address();
 
     let sk_bytes = sk.to_bytes();
     let sk2 = SecretKey::try_from_bytes(&sk_bytes).unwrap();
