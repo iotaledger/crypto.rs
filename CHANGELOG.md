@@ -1,5 +1,11 @@
 # Changelog
 
+## \[0.19.0]
+
+- [`ad2b035`](https://www.github.com/iotaledger/crypto.rs/commit/ad2b03560660b7c2950597df60ba7ae71f11ca2b)([#187](https://www.github.com/iotaledger/crypto.rs/pull/187)) Add `Secp256k1` ECDSA signature.
+- [`ad2b035`](https://www.github.com/iotaledger/crypto.rs/commit/ad2b03560660b7c2950597df60ba7ae71f11ca2b)([#187](https://www.github.com/iotaledger/crypto.rs/pull/187)) Deprecated ed25519 constants (eg. `ed25519::SECRET_KEY_LENGTH`), use associated constants instead (eg. `ed25519::SecretKey::LENGTH`).
+- [`ad2b035`](https://www.github.com/iotaledger/crypto.rs/commit/ad2b03560660b7c2950597df60ba7ae71f11ca2b)([#187](https://www.github.com/iotaledger/crypto.rs/pull/187)) SLIP-10 support `Secp256k1` curve and non-hardened key derivation.
+
 ## \[0.18.0]
 
 - Make `serde` dependency `no_std` compatible.
