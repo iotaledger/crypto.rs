@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.18.0"
+version = "0.19.0"
 license = "Apache-2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2018"
@@ -67,7 +67,14 @@ pbkdf2 = [ "dep:pbkdf2", "pbkdf2/hmac", "dep:sha2" ]
 bip39 = [ "pbkdf2", "unicode-normalization" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
-slip10 = [ "hmac", "sha", "random", "serde", "zeroize", "k256?/arithmetic" ]
+slip10 = [
+  "hmac",
+  "sha",
+  "random",
+  "serde",
+  "zeroize",
+  "k256?/arithmetic"
+]
 cipher = [ "aead", "dep:cipher", "generic-array" ]
 ternary_encoding = [ "serde", "num-traits" ]
 age = [
