@@ -33,7 +33,7 @@ impl Curve {
             #[cfg(feature = "ed25519")]
             Curve::Ed25519 => false,
             #[cfg(feature = "secp256k1")]
-            _ => true,
+            Curve::Secp256k1 => true,
         }
     }
 
@@ -299,6 +299,9 @@ impl TryFrom<&ExtendedSecretKey> for ExtendedPublicKey {
 #[derive(Clone)]
 struct KeyImpl {
     curve: Curve,
+    // for secret key derivation: 0 + sk + chain code
+    // for public key derivation: SEC1-pk + chain code
+    // SEC1-pk = (if y-coord is even { 2 } else { 3 }) + x-coord
     ext: [u8; 65],
 }
 
