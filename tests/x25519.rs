@@ -68,7 +68,7 @@ fn test_x25519_from_ed25519() -> crypto::Result<()> {
 
     use crypto::signatures::ed25519;
 
-    let sk1 = ed25519::SecretKey::from_bytes([1_u8; 32]);
+    let sk1 = ed25519::SecretKey::from_bytes(&[1_u8; 32]);
     let xsk1: SecretKey = (&sk1).into();
     let pk1 = sk1.public_key();
     let xpk1: PublicKey = (&pk1).try_into()?;
