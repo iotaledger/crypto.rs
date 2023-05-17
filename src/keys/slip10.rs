@@ -401,6 +401,10 @@ impl<K: hazmat::Derivable> Extended<K> {
         unsafe { &mut *(self.ext[..33].as_mut_ptr() as *mut [u8; 33]) }
     }
 
+    fn add_key(&mut self, parent_key: &[u8; 33]) -> bool {
+        K::add_key(self.key_bytes_mut(), parent_key)
+    }
+
     fn is_key_valid(&self) -> bool {
         K::is_key_valid(self.key_bytes())
     }
@@ -426,7 +430,7 @@ impl<K: hazmat::Derivable> Extended<K> {
             ext: [0; 65],
         };
         HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
-        while !K::add_key(key.key_bytes_mut(), self.key_bytes()) {
+        while !key.add_key(self.key_bytes()) {
             data[0] = 1;
             data[1..1 + 32].copy_from_slice(key.key_bytes());
             HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
