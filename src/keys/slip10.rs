@@ -17,22 +17,6 @@ use crate::macs::hmac::HMAC_SHA512;
 // https://en.bitcoin.it/wiki/BIP_0039
 
 pub mod hazmat {
-    pub struct True;
-    pub struct False;
-    pub trait AsBool {
-        fn as_bool() -> bool;
-    }
-    impl AsBool for True {
-        fn as_bool() -> bool {
-            true
-        }
-    }
-    impl AsBool for False {
-        fn as_bool() -> bool {
-            false
-        }
-    }
-
     pub trait Curve {
         const SEEDKEY: &'static [u8];
     }
