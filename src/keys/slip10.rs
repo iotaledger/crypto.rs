@@ -428,7 +428,6 @@ impl KeyImpl {
 
                 if let Ok(sk_delta) = k256::SecretKey::from_bytes(self.secret_bytes().into()) {
                     if parent_key[0] == 0 {
-                        use core::convert::TryInto;
                         let sk = k256::SecretKey::from_bytes((&parent_key[1..]).try_into().unwrap())
                             .expect("valid Secp256k1 parent secret key");
 
