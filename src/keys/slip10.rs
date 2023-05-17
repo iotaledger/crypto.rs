@@ -6,7 +6,7 @@
 use alloc::vec::Vec;
 use core::convert::TryFrom;
 
-//TODO: derive(Serialize, Deserialize) for Chain
+// TODO: derive(Serialize, Deserialize) for Chain
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
@@ -23,10 +23,14 @@ pub mod hazmat {
         fn as_bool() -> bool;
     }
     impl AsBool for True {
-        fn as_bool() -> bool { true }
+        fn as_bool() -> bool {
+            true
+        }
     }
     impl AsBool for False {
-        fn as_bool() -> bool { false }
+        fn as_bool() -> bool {
+            false
+        }
     }
 
     pub trait Curve {
@@ -37,7 +41,7 @@ pub mod hazmat {
     pub struct SecretKey<C>(core::marker::PhantomData<C>);
     #[derive(Clone, Copy, Debug)]
     pub struct PublicKey<C>(core::marker::PhantomData<C>);
-    
+
     pub trait Derivable {
         type Curve: Curve;
         const IS_NON_HARDENED_SUPPORTED: bool;
@@ -49,12 +53,12 @@ pub mod hazmat {
     }
 }
 
-pub use hazmat::{Curve, Derivable, SecretKey, PublicKey};
+pub use hazmat::{Curve, Derivable, PublicKey, SecretKey};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
-    use crate::signatures::ed25519;
     use super::hazmat::*;
+    use crate::signatures::ed25519;
 
     #[derive(Clone, Copy, Debug, Default)]
     pub struct Ed25519;
@@ -91,8 +95,8 @@ pub use self::ed25519::Ed25519;
 
 #[cfg(feature = "secp256k1")]
 pub mod secp256k1 {
-    use crate::signatures::secp256k1_ecdsa;
     use super::hazmat::*;
+    use crate::signatures::secp256k1_ecdsa;
 
     #[derive(Clone, Copy, Debug, Default)]
     pub struct Secp256k1;
@@ -113,15 +117,14 @@ pub mod secp256k1 {
         fn into_key(key_bytes: &[u8; 33]) -> Self::Key {
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
-            secp256k1_ecdsa::SecretKey::try_from_bytes(sk_bytes)
-                .expect("valid extended secret key")
+            secp256k1_ecdsa::SecretKey::try_from_bytes(sk_bytes).expect("valid extended secret key")
         }
         fn add_key(key_bytes: &mut [u8; 33], parent_key: &[u8; 33]) -> bool {
             debug_assert_eq!(0, parent_key[0]);
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
 
-            if let Ok(sk_delta) = k256::SecretKey::from_bytes((&*sk_bytes).into()) {
+            if let Ok(sk_delta) = k256::SecretKey::from_bytes(sk_bytes.into()) {
                 use core::convert::TryInto;
                 let sk = k256::SecretKey::from_bytes((&parent_key[1..]).try_into().unwrap())
                     .expect("valid Secp256k1 parent secret key");
@@ -144,8 +147,7 @@ pub mod secp256k1 {
             use k256::elliptic_curve::sec1::ToEncodedPoint;
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
-            let sk = k256::SecretKey::from_bytes(sk_bytes.into())
-                .expect("valid Secp256k1 parent secret key");
+            let sk = k256::SecretKey::from_bytes(sk_bytes.into()).expect("valid Secp256k1 parent secret key");
             let pk = sk.public_key();
             let mut pk_bytes = [0_u8; 33];
             pk_bytes.copy_from_slice(pk.to_encoded_point(true).as_bytes());
@@ -222,13 +224,15 @@ impl Seed {
         Self(bs.to_vec())
     }
 
-    pub fn to_master_key<C: hazmat::Curve>(&self) -> ExtendedSecretKey<C> where
+    pub fn to_master_key<C: hazmat::Curve>(&self) -> ExtendedSecretKey<C>
+    where
         hazmat::SecretKey<C>: hazmat::Derivable,
     {
         ExtendedSecretKey::from_seed(self)
     }
 
-    pub fn derive<C: hazmat::Curve>(&self, chain: &Chain) -> crate::Result<ExtendedSecretKey<C>> where
+    pub fn derive<C: hazmat::Curve>(&self, chain: &Chain) -> crate::Result<ExtendedSecretKey<C>>
+    where
         hazmat::SecretKey<C>: hazmat::Derivable,
     {
         self.to_master_key().derive(chain)
@@ -268,7 +272,8 @@ impl<K> ZeroizeOnDrop for Extended<K> {}
 pub type ExtendedSecretKey<C> = Extended<hazmat::SecretKey<C>>;
 pub type ExtendedPublicKey<C> = Extended<hazmat::PublicKey<C>>;
 
-impl<C: hazmat::Curve> ExtendedSecretKey<C> where
+impl<C: hazmat::Curve> ExtendedSecretKey<C>
+where
     hazmat::SecretKey<C>: hazmat::Derivable,
 {
     pub fn from_seed(seed: &Seed) -> Self {
@@ -291,7 +296,8 @@ impl<C: hazmat::Curve> ExtendedSecretKey<C> where
     }
 }
 
-impl<C: hazmat::Curve> From<&Seed> for ExtendedSecretKey<C> where
+impl<C: hazmat::Curve> From<&Seed> for ExtendedSecretKey<C>
+where
     hazmat::SecretKey<C>: hazmat::Derivable,
 {
     fn from(seed: &Seed) -> Self {
@@ -299,7 +305,8 @@ impl<C: hazmat::Curve> From<&Seed> for ExtendedSecretKey<C> where
     }
 }
 
-impl<C: hazmat::Curve> ExtendedSecretKey<C> where
+impl<C: hazmat::Curve> ExtendedSecretKey<C>
+where
     hazmat::SecretKey<C>: hazmat::Derivable,
     hazmat::PublicKey<C>: hazmat::Derivable,
 {
@@ -308,7 +315,8 @@ impl<C: hazmat::Curve> ExtendedSecretKey<C> where
     }
 }
 
-impl<C: hazmat::Curve> ExtendedPublicKey<C> where
+impl<C: hazmat::Curve> ExtendedPublicKey<C>
+where
     hazmat::SecretKey<C>: hazmat::Derivable,
     hazmat::PublicKey<C>: hazmat::Derivable,
 {
@@ -317,13 +325,16 @@ impl<C: hazmat::Curve> ExtendedPublicKey<C> where
             key: core::marker::PhantomData,
             ext: [0_u8; 65],
         };
-        k.ext[..33].copy_from_slice(&<hazmat::SecretKey<C> as hazmat::Derivable>::calc_non_hardened_data(esk.key_bytes()));
+        k.ext[..33].copy_from_slice(&<hazmat::SecretKey<C> as hazmat::Derivable>::calc_non_hardened_data(
+            esk.key_bytes(),
+        ));
         k.ext[33..].copy_from_slice(esk.chain_code());
         k
     }
 }
 
-impl<C: hazmat::Curve> From<&ExtendedSecretKey<C>> for ExtendedPublicKey<C> where
+impl<C: hazmat::Curve> From<&ExtendedSecretKey<C>> for ExtendedPublicKey<C>
+where
     hazmat::SecretKey<C>: hazmat::Derivable,
     hazmat::PublicKey<C>: hazmat::Derivable,
 {
@@ -332,7 +343,8 @@ impl<C: hazmat::Curve> From<&ExtendedSecretKey<C>> for ExtendedPublicKey<C> wher
     }
 }
 
-impl<C: hazmat::Curve> ExtendedPublicKey<C> where
+impl<C: hazmat::Curve> ExtendedPublicKey<C>
+where
     hazmat::PublicKey<C>: hazmat::Derivable,
 {
     pub fn public_key(&self) -> <hazmat::PublicKey<C> as hazmat::Derivable>::Key {
@@ -448,7 +460,6 @@ impl<K: hazmat::Derivable> TryFrom<&[u8; 65]> for Extended<K> {
         Self::try_from_extended_bytes(ext_bytes)
     }
 }
-
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct Segment(u32);
