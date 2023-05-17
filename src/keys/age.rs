@@ -810,7 +810,6 @@ mod tests {
 
     #[cfg(feature = "std")]
     fn enc_crate(plaintext: &[u8]) -> Vec<u8> {
-        use core::convert::TryInto;
         let password = "password".as_bytes();
         let work_factor = 1_u8.try_into().unwrap();
         let salt = [0x11_u8; 16];
