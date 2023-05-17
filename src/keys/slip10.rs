@@ -28,7 +28,7 @@ pub mod hazmat {
 
     pub trait Derivable {
         type Curve: Curve;
-        const IS_NON_HARDENED_SUPPORTED: bool;
+        const ALLOW_NON_HARDENED: bool;
         type Key;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool;
         fn into_key(key_bytes: &[u8; 33]) -> Self::Key;
@@ -53,7 +53,7 @@ pub mod ed25519 {
 
     impl Derivable for SecretKey<Ed25519> {
         type Curve = Ed25519;
-        const IS_NON_HARDENED_SUPPORTED: bool = false;
+        const ALLOW_NON_HARDENED: bool = false;
         type Key = ed25519::SecretKey;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             key_bytes[0] == 0
@@ -91,7 +91,7 @@ pub mod secp256k1 {
 
     impl Derivable for SecretKey<Secp256k1> {
         type Curve = Secp256k1;
-        const IS_NON_HARDENED_SUPPORTED: bool = true;
+        const ALLOW_NON_HARDENED: bool = true;
         type Key = secp256k1_ecdsa::SecretKey;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             debug_assert_eq!(0, key_bytes[0]);
@@ -142,7 +142,7 @@ pub mod secp256k1 {
 
     impl Derivable for PublicKey<Secp256k1> {
         type Curve = Secp256k1;
-        const IS_NON_HARDENED_SUPPORTED: bool = true;
+        const ALLOW_NON_HARDENED: bool = true;
         type Key = secp256k1_ecdsa::PublicKey;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             (key_bytes[0] == 2 || key_bytes[0] == 3) && k256::PublicKey::from_sec1_bytes(key_bytes).is_ok()
@@ -265,7 +265,7 @@ where
             ext: [0; 65],
         };
         HMAC_SHA512(&seed.0, C::SEEDKEY, key.ext_mut());
-        while !key.is_secret_key_valid() {
+        while !key.is_key_valid() {
             let mut tmp = [0_u8; 64];
             tmp.copy_from_slice(&key.ext[1..]);
             HMAC_SHA512(&tmp, C::SEEDKEY, key.ext_mut());
@@ -364,7 +364,7 @@ impl<K: hazmat::Derivable> Extended<K> {
     }
 
     pub fn derive(&self, chain: &Chain) -> crate::Result<Self> {
-        if K::IS_NON_HARDENED_SUPPORTED || chain.all_hardened() {
+        if K::ALLOW_NON_HARDENED || chain.all_hardened() {
             let mut key: Self = self.clone();
             for segment in &chain.0 {
                 key = key.derive_child_key(segment);
@@ -373,18 +373,18 @@ impl<K: hazmat::Derivable> Extended<K> {
         } else {
             Err(crate::Error::InvalidArgumentError {
                 alg: "SLIP10",
-                expected: "hardened key index for Ed25519 master secret key",
+                expected: "hardened key index",
             })
         }
     }
 
     pub fn child_key(&self, segment: &Segment) -> crate::Result<Self> {
-        if K::IS_NON_HARDENED_SUPPORTED || segment.is_hardened() {
+        if K::ALLOW_NON_HARDENED || segment.is_hardened() {
             Ok(self.derive_child_key(segment))
         } else {
             Err(crate::Error::InvalidArgumentError {
                 alg: "SLIP10",
-                expected: "hardened key index for Ed25519 master secret key",
+                expected: "hardened key index",
             })
         }
     }
@@ -401,7 +401,7 @@ impl<K: hazmat::Derivable> Extended<K> {
         unsafe { &mut *(self.ext[..33].as_mut_ptr() as *mut [u8; 33]) }
     }
 
-    fn is_secret_key_valid(&self) -> bool {
+    fn is_key_valid(&self) -> bool {
         K::is_key_valid(self.key_bytes())
     }
 
@@ -409,13 +409,13 @@ impl<K: hazmat::Derivable> Extended<K> {
         if hardened {
             *self.key_bytes()
         } else {
-            debug_assert!(K::IS_NON_HARDENED_SUPPORTED);
+            debug_assert!(K::ALLOW_NON_HARDENED);
             K::calc_non_hardened_data(self.key_bytes())
         }
     }
 
     fn derive_child_key(&self, segment: &Segment) -> Self {
-        debug_assert!(K::IS_NON_HARDENED_SUPPORTED || segment.is_hardened());
+        debug_assert!(K::ALLOW_NON_HARDENED || segment.is_hardened());
 
         let mut data = [0u8; 33 + 4];
         data[..33].copy_from_slice(&self.calc_data(segment.is_hardened()));
