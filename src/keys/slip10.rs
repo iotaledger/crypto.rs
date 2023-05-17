@@ -125,7 +125,6 @@ pub mod secp256k1 {
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
 
             if let Ok(sk_delta) = k256::SecretKey::from_bytes(sk_bytes.into()) {
-                use core::convert::TryInto;
                 let sk = k256::SecretKey::from_bytes((&parent_key[1..]).try_into().unwrap())
                     .expect("valid Secp256k1 parent secret key");
 
@@ -480,8 +479,7 @@ impl Segment {
     pub const HARDEN_MASK: u32 = 1 << 31;
 }
 
-#[derive(Clone, Debug, Eq, Hash, PartialEq)]
-#[cfg_attr(feature = "std", derive(Serialize, Deserialize))]
+#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct Chain(Vec<Segment>);
 
 impl Chain {
