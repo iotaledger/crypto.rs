@@ -6,7 +6,7 @@ mod slip10 {
     #![allow(clippy::identity_op)]
 
     use crypto::{
-        keys::slip10::{self, Chain, Seed},
+        keys::slip10::{Chain, Seed},
         Result,
     };
 
@@ -25,10 +25,12 @@ mod slip10 {
 
     #[cfg(feature = "ed25519")]
     fn run_ed25519_test_vectors(tvs: &[TestVector]) -> Result<()> {
+        use crypto::signatures::ed25519;
+
         for tv in tvs {
             let seed = Seed::from_bytes(&hex::decode(tv.seed).unwrap());
 
-            let m = seed.to_master_key::<slip10::Ed25519>();
+            let m = seed.to_master_key::<ed25519::SecretKey>();
             let mut expected_master_chain_code = [0u8; 32];
             hex::decode_to_slice(tv.master_chain_code, &mut expected_master_chain_code as &mut [u8]).unwrap();
             assert_eq!(expected_master_chain_code, *m.chain_code());
@@ -38,7 +40,7 @@ mod slip10 {
             assert_eq!(expected_master_private_key, *m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
-                let ck = seed.derive::<slip10::Ed25519>(&c.chain)?;
+                let ck = seed.derive::<ed25519::SecretKey>(&c.chain)?;
 
                 let mut expected_chain_code = [0u8; 32];
                 hex::decode_to_slice(c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
@@ -56,10 +58,12 @@ mod slip10 {
     #[cfg(feature = "secp256k1")]
     fn run_secp256k1_test_vectors(tvs: &[TestVector]) -> Result<()> {
         use crypto::keys::slip10::Segment;
+        use crypto::signatures::secp256k1_ecdsa;
+
         for tv in tvs {
             let seed = Seed::from_bytes(&hex::decode(tv.seed).unwrap());
 
-            let m = seed.to_master_key::<slip10::Secp256k1>();
+            let m = seed.to_master_key::<secp256k1_ecdsa::SecretKey>();
             let mut expected_master_chain_code = [0u8; 32];
             hex::decode_to_slice(tv.master_chain_code, &mut expected_master_chain_code as &mut [u8]).unwrap();
             assert_eq!(expected_master_chain_code, *m.chain_code());
@@ -69,7 +73,7 @@ mod slip10 {
             assert_eq!(expected_master_private_key, *m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
-                let ck = seed.derive::<slip10::Secp256k1>(&c.chain)?;
+                let ck = seed.derive::<secp256k1_ecdsa::SecretKey>(&c.chain)?;
 
                 let mut expected_chain_code = [0u8; 32];
                 hex::decode_to_slice(c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
@@ -81,7 +85,7 @@ mod slip10 {
 
                 let last_segment_non_hardened = !c.chain.segments().last().map_or(true, Segment::is_hardened);
                 if last_segment_non_hardened {
-                    let esk = seed.to_master_key::<slip10::Secp256k1>();
+                    let esk = seed.to_master_key::<secp256k1_ecdsa::SecretKey>();
                     let (head, tail) = c.chain.segments().split_at(c.chain.len() - 1);
                     let chain = Chain::from_segments(head);
                     let segment = tail[0];
@@ -121,13 +125,28 @@ mod slip10 {
     #[cfg(feature = "secp256k1")]
     #[test]
     fn secp256k1_public_key_test() {
-        use crypto::keys::slip10::ExtendedPublicKey;
+        use crypto::keys::slip10::Extended;
+        use crypto::signatures::secp256k1_ecdsa;
+
         let seed = Seed::from_bytes(&[1]);
-        let esk = seed.to_master_key::<slip10::Secp256k1>();
+        let esk = seed.to_master_key::<secp256k1_ecdsa::SecretKey>();
         let epk = esk.into_extended_public_key();
         let mut epk_bytes = *epk.extended_bytes();
         assert_eq!(2, epk_bytes[0]);
         epk_bytes[0] = 5;
-        assert!(ExtendedPublicKey::<slip10::Secp256k1>::try_from_extended_bytes(&epk_bytes).is_err());
+        assert!(Extended::<secp256k1_ecdsa::PublicKey>::try_from_extended_bytes(&epk_bytes).is_err());
+    }
+
+    #[cfg(feature = "secp256k1")]
+    #[test]
+    fn secp256k1_chain_test() {
+        use crypto::signatures::secp256k1_ecdsa;
+
+        let _ = Seed::from_bytes(&[1])
+            .derive::<secp256k1_ecdsa::SecretKey>(&Chain::from_u32([0, 1, 2]))
+            .unwrap()
+            .secret_key()
+            .public_key()
+            .to_bytes();
     }
 }

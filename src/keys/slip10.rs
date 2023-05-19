@@ -17,48 +17,37 @@ use crate::macs::hmac::HMAC_SHA512;
 // https://en.bitcoin.it/wiki/BIP_0039
 
 pub mod hazmat {
-    pub trait Curve {
-        const SEEDKEY: &'static [u8];
-    }
-
-    #[derive(Clone, Copy, Debug)]
-    pub struct SecretKey<C>(core::marker::PhantomData<C>);
-    #[derive(Clone, Copy, Debug)]
-    pub struct PublicKey<C>(core::marker::PhantomData<C>);
-
     pub trait Derivable {
-        type Curve: Curve;
-        const ALLOW_NON_HARDENED: bool;
-        type Key;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool;
-        fn into_key(key_bytes: &[u8; 33]) -> Self::Key;
+        fn into_key(key_bytes: &[u8; 33]) -> Self;
         fn add_key(key_bytes: &mut [u8; 33], parent_key: &[u8; 33]) -> bool;
+
+        const ALLOW_NON_HARDENED: bool;
         fn calc_non_hardened_data(key_bytes: &[u8; 33]) -> [u8; 33];
+    }
+    pub trait IsSecretKey: Derivable {
+        const SEEDKEY: &'static [u8];
+        // PublicKey type may not be Derivable as is the case with ed25519
+        type PublicKey;
+    }
+    pub trait IsPublicKey: Derivable {
+        type SecretKey: IsSecretKey;
     }
 }
 
-pub use hazmat::{Curve, Derivable, PublicKey, SecretKey};
+pub use hazmat::{Derivable, IsPublicKey, IsSecretKey};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
     use super::hazmat::*;
     use crate::signatures::ed25519;
 
-    #[derive(Clone, Copy, Debug, Default)]
-    pub struct Ed25519;
-
-    impl Curve for Ed25519 {
-        const SEEDKEY: &'static [u8] = b"ed25519 seed";
-    }
-
-    impl Derivable for SecretKey<Ed25519> {
-        type Curve = Ed25519;
+    impl Derivable for ed25519::SecretKey {
         const ALLOW_NON_HARDENED: bool = false;
-        type Key = ed25519::SecretKey;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             key_bytes[0] == 0
         }
-        fn into_key(key_bytes: &[u8; 33]) -> Self::Key {
+        fn into_key(key_bytes: &[u8; 33]) -> Self {
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
             ed25519::SecretKey::from_bytes(sk_bytes)
@@ -71,34 +60,27 @@ pub mod ed25519 {
         }
     }
 
-    pub type ExtendedSecretKey = super::ExtendedSecretKey<Ed25519>;
-}
+    impl IsSecretKey for ed25519::SecretKey {
+        const SEEDKEY: &'static [u8] = b"ed25519 seed";
+        type PublicKey = ed25519::PublicKey;
+    }
 
-#[cfg(feature = "ed25519")]
-pub use self::ed25519::Ed25519;
+    pub type ExtendedSecretKey = super::Extended<ed25519::SecretKey>;
+}
 
 #[cfg(feature = "secp256k1")]
 pub mod secp256k1 {
     use super::hazmat::*;
     use crate::signatures::secp256k1_ecdsa;
 
-    #[derive(Clone, Copy, Debug, Default)]
-    pub struct Secp256k1;
-
-    impl Curve for Secp256k1 {
-        const SEEDKEY: &'static [u8] = b"Bitcoin seed";
-    }
-
-    impl Derivable for SecretKey<Secp256k1> {
-        type Curve = Secp256k1;
+    impl Derivable for secp256k1_ecdsa::SecretKey {
         const ALLOW_NON_HARDENED: bool = true;
-        type Key = secp256k1_ecdsa::SecretKey;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
             k256::SecretKey::from_bytes(sk_bytes.into()).is_ok()
         }
-        fn into_key(key_bytes: &[u8; 33]) -> Self::Key {
+        fn into_key(key_bytes: &[u8; 33]) -> Self {
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
             secp256k1_ecdsa::SecretKey::try_from_bytes(sk_bytes).expect("valid extended secret key")
@@ -138,16 +120,17 @@ pub mod secp256k1 {
         }
     }
 
-    pub type ExtendedSecretKey = super::ExtendedSecretKey<Secp256k1>;
+    impl IsSecretKey for secp256k1_ecdsa::SecretKey {
+        const SEEDKEY: &'static [u8] = b"Bitcoin seed";
+        type PublicKey = secp256k1_ecdsa::PublicKey;
+    }
 
-    impl Derivable for PublicKey<Secp256k1> {
-        type Curve = Secp256k1;
+    impl Derivable for secp256k1_ecdsa::PublicKey {
         const ALLOW_NON_HARDENED: bool = true;
-        type Key = secp256k1_ecdsa::PublicKey;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             (key_bytes[0] == 2 || key_bytes[0] == 3) && k256::PublicKey::from_sec1_bytes(key_bytes).is_ok()
         }
-        fn into_key(key_bytes: &[u8; 33]) -> Self::Key {
+        fn into_key(key_bytes: &[u8; 33]) -> Self {
             secp256k1_ecdsa::PublicKey::try_from_bytes(key_bytes)
                 // implementation guarantees that it always succeeds
                 .expect("valid extended public key")
@@ -184,11 +167,10 @@ pub mod secp256k1 {
         }
     }
 
-    pub type ExtendedPublicKey = super::ExtendedPublicKey<Secp256k1>;
+    impl IsPublicKey for secp256k1_ecdsa::PublicKey {
+        type SecretKey = secp256k1_ecdsa::SecretKey;
+    }
 }
-
-#[cfg(feature = "secp256k1")]
-pub use secp256k1::Secp256k1;
 
 /// A seed is an arbitrary bytestring used to create the root of the tree.
 ///
@@ -207,17 +189,11 @@ impl Seed {
         Self(bs.to_vec())
     }
 
-    pub fn to_master_key<C: hazmat::Curve>(&self) -> ExtendedSecretKey<C>
-    where
-        hazmat::SecretKey<C>: hazmat::Derivable,
-    {
-        ExtendedSecretKey::from_seed(self)
+    pub fn to_master_key<K: hazmat::IsSecretKey>(&self) -> Extended<K> {
+        Extended::from_seed(self)
     }
 
-    pub fn derive<C: hazmat::Curve>(&self, chain: &Chain) -> crate::Result<ExtendedSecretKey<C>>
-    where
-        hazmat::SecretKey<C>: hazmat::Derivable,
-    {
+    pub fn derive<K: hazmat::IsSecretKey>(&self, chain: &Chain) -> crate::Result<Extended<K>> {
         self.to_master_key().derive(chain)
     }
 }
@@ -252,63 +228,47 @@ impl<K> Drop for Extended<K> {
 
 impl<K> ZeroizeOnDrop for Extended<K> {}
 
-pub type ExtendedSecretKey<C> = Extended<hazmat::SecretKey<C>>;
-pub type ExtendedPublicKey<C> = Extended<hazmat::PublicKey<C>>;
-
-impl<C: hazmat::Curve> ExtendedSecretKey<C>
-where
-    hazmat::SecretKey<C>: hazmat::Derivable,
-{
+impl<K: hazmat::IsSecretKey> Extended<K> {
     pub fn from_seed(seed: &Seed) -> Self {
         let mut key = Self {
             key: core::marker::PhantomData,
             ext: [0; 65],
         };
-        HMAC_SHA512(&seed.0, C::SEEDKEY, key.ext_mut());
+        HMAC_SHA512(&seed.0, K::SEEDKEY, key.ext_mut());
         while !key.is_key_valid() {
             let mut tmp = [0_u8; 64];
             tmp.copy_from_slice(&key.ext[1..]);
-            HMAC_SHA512(&tmp, C::SEEDKEY, key.ext_mut());
+            HMAC_SHA512(&tmp, K::SEEDKEY, key.ext_mut());
             tmp.zeroize();
         }
         key
     }
 
-    pub fn secret_key(&self) -> <hazmat::SecretKey<C> as hazmat::Derivable>::Key {
+    pub fn secret_key(&self) -> K {
         self.key()
+    }
+
+    pub fn into_extended_public_key(&self) -> Extended<K::PublicKey>
+    where
+        K::PublicKey: hazmat::IsPublicKey<SecretKey = K>,
+    {
+        Extended::from_extended_secret_key(self)
     }
 }
 
-impl<C: hazmat::Curve> From<&Seed> for ExtendedSecretKey<C>
-where
-    hazmat::SecretKey<C>: hazmat::Derivable,
-{
+impl<K: hazmat::IsSecretKey> From<&Seed> for Extended<K> {
     fn from(seed: &Seed) -> Self {
         Self::from_seed(seed)
     }
 }
 
-impl<C: hazmat::Curve> ExtendedSecretKey<C>
-where
-    hazmat::SecretKey<C>: hazmat::Derivable,
-    hazmat::PublicKey<C>: hazmat::Derivable,
-{
-    pub fn into_extended_public_key(&self) -> ExtendedPublicKey<C> {
-        ExtendedPublicKey::<C>::from_extended_secret_key(self)
-    }
-}
-
-impl<C: hazmat::Curve> ExtendedPublicKey<C>
-where
-    hazmat::SecretKey<C>: hazmat::Derivable,
-    hazmat::PublicKey<C>: hazmat::Derivable,
-{
-    pub fn from_extended_secret_key(esk: &ExtendedSecretKey<C>) -> Self {
+impl<K: hazmat::IsPublicKey> Extended<K> {
+    pub fn from_extended_secret_key(esk: &Extended<K::SecretKey>) -> Self {
         let mut k = Self {
             key: core::marker::PhantomData,
             ext: [0_u8; 65],
         };
-        k.ext[..33].copy_from_slice(&<hazmat::SecretKey<C> as hazmat::Derivable>::calc_non_hardened_data(
+        k.ext[..33].copy_from_slice(&<K::SecretKey as hazmat::Derivable>::calc_non_hardened_data(
             esk.key_bytes(),
         ));
         k.ext[33..].copy_from_slice(esk.chain_code());
@@ -316,27 +276,20 @@ where
     }
 }
 
-impl<C: hazmat::Curve> From<&ExtendedSecretKey<C>> for ExtendedPublicKey<C>
-where
-    hazmat::SecretKey<C>: hazmat::Derivable,
-    hazmat::PublicKey<C>: hazmat::Derivable,
-{
-    fn from(esk: &ExtendedSecretKey<C>) -> Self {
+impl<K: hazmat::IsPublicKey> From<&Extended<K::SecretKey>> for Extended<K> {
+    fn from(esk: &Extended<K::SecretKey>) -> Self {
         Self::from_extended_secret_key(esk)
     }
 }
 
-impl<C: hazmat::Curve> ExtendedPublicKey<C>
-where
-    hazmat::PublicKey<C>: hazmat::Derivable,
-{
-    pub fn public_key(&self) -> <hazmat::PublicKey<C> as hazmat::Derivable>::Key {
+impl<K: hazmat::IsPublicKey> Extended<K> {
+    pub fn public_key(&self) -> K {
         self.key()
     }
 }
 
 impl<K: hazmat::Derivable> Extended<K> {
-    fn key(&self) -> K::Key {
+    fn key(&self) -> K {
         K::into_key(self.key_bytes())
     }
 
