@@ -402,15 +402,15 @@ impl<K: hazmat::Derivable> TryFrom<&[u8; 65]> for Extended<K> {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct Segment(u32);
+pub struct Segment(pub u32);
 
 impl Segment {
-    pub fn from_u32(i: u32) -> Self {
-        Self(i)
-    }
-
     pub fn is_hardened(&self) -> bool {
         self.0 & Self::HARDEN_MASK != 0
+    }
+
+    pub fn is_non_hardened(&self) -> bool {
+        !self.is_hardened()
     }
 
     pub fn bs(&self) -> [u8; 4] {
@@ -418,6 +418,18 @@ impl Segment {
     }
 
     pub const HARDEN_MASK: u32 = 1 << 31;
+}
+
+impl From<u32> for Segment {
+    fn from(i: u32) -> Self {
+        Self(i)
+    }
+}
+
+impl From<Segment> for u32 {
+    fn from(s: Segment) -> Self {
+        s.0
+    }
 }
 
 #[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
@@ -433,7 +445,7 @@ impl Chain {
     }
 
     pub fn from_u32<I: IntoIterator<Item = u32>>(is: I) -> Self {
-        Self(is.into_iter().map(Segment::from_u32).collect())
+        Self(is.into_iter().map(Segment).collect())
     }
 
     pub fn from_u32_hardened<I: IntoIterator<Item = u32>>(is: I) -> Self {
@@ -463,7 +475,7 @@ impl Chain {
     }
 
     pub fn all_non_hardened(&self) -> bool {
-        self.0.iter().all(|s| !s.is_hardened())
+        self.0.iter().all(Segment::is_non_hardened)
     }
 }
 
