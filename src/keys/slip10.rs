@@ -240,7 +240,7 @@ impl<K: hazmat::IsSecretKey> Extended<K> {
         self.key()
     }
 
-    pub fn into_extended_public_key(&self) -> Extended<K::PublicKey>
+    pub fn to_extended_public_key(&self) -> Extended<K::PublicKey>
     where
         K::PublicKey: hazmat::IsPublicKey<SecretKey = K>,
     {

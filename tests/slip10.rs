@@ -90,7 +90,7 @@ mod slip10 {
                     let chain = Chain::from_segments(head);
                     let segment = tail[0];
                     let esk = esk.derive(&chain).unwrap();
-                    let epk = esk.into_extended_public_key();
+                    let epk = esk.to_extended_public_key();
                     assert_eq!(esk.chain_code(), epk.chain_code());
                     assert_eq!(esk.secret_key().public_key(), epk.public_key());
 
@@ -130,7 +130,7 @@ mod slip10 {
 
         let seed = Seed::from_bytes(&[1]);
         let esk = seed.to_master_key::<secp256k1_ecdsa::SecretKey>();
-        let epk = esk.into_extended_public_key();
+        let epk = esk.to_extended_public_key();
         let mut epk_bytes = *epk.extended_bytes();
         assert_eq!(2, epk_bytes[0]);
         epk_bytes[0] = 5;
