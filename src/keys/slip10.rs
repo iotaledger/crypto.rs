@@ -15,7 +15,7 @@ use crate::macs::hmac::HMAC_SHA512;
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
 
-pub mod hazmat {
+mod hazmat {
     pub trait Derivable {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool;
         fn to_key(key_bytes: &[u8; 33]) -> Self;
@@ -33,8 +33,6 @@ pub mod hazmat {
         type SecretKey: IsSecretKey;
     }
 }
-
-pub use hazmat::{Derivable, IsPublicKey, IsSecretKey};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
