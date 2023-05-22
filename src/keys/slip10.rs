@@ -6,7 +6,6 @@
 use alloc::vec::Vec;
 use core::convert::TryFrom;
 
-// TODO: derive(Serialize, Deserialize) for Chain
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
