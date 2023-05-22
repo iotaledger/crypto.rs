@@ -408,10 +408,6 @@ impl Segment {
         self.0 & Self::HARDEN_MASK != 0
     }
 
-    pub fn is_non_hardened(&self) -> bool {
-        !self.is_hardened()
-    }
-
     pub fn bs(&self) -> [u8; 4] {
         self.0.to_be_bytes() // ser32(i)
     }
