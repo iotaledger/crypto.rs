@@ -64,7 +64,7 @@ pub mod ed25519 {
         type PublicKey = ed25519::PublicKey;
     }
 
-    pub type ExtendedSecretKey = super::Extended<ed25519::SecretKey>;
+    pub type ExtendedSecretKey = super::Slip10<ed25519::SecretKey>;
 }
 
 #[cfg(feature = "secp256k1")]
@@ -188,11 +188,11 @@ impl Seed {
         Self(bs.to_vec())
     }
 
-    pub fn to_master_key<K: hazmat::IsSecretKey>(&self) -> Extended<K> {
-        Extended::from_seed(self)
+    pub fn to_master_key<K: hazmat::IsSecretKey>(&self) -> Slip10<K> {
+        Slip10::from_seed(self)
     }
 
-    pub fn derive<K: hazmat::IsSecretKey>(&self, chain: &Chain) -> crate::Result<Extended<K>> {
+    pub fn derive<K: hazmat::IsSecretKey>(&self, chain: &Chain) -> crate::Result<Slip10<K>> {
         self.to_master_key().derive(chain)
     }
 }
@@ -200,12 +200,12 @@ impl Seed {
 pub type ChainCode = [u8; 32];
 
 #[derive(ZeroizeOnDrop)]
-pub struct Extended<K> {
+pub struct Slip10<K> {
     key: core::marker::PhantomData<K>,
     ext: [u8; 65],
 }
 
-impl<K> Clone for Extended<K> {
+impl<K> Clone for Slip10<K> {
     fn clone(&self) -> Self {
         Self {
             key: core::marker::PhantomData,
@@ -214,13 +214,13 @@ impl<K> Clone for Extended<K> {
     }
 }
 
-impl<K> Zeroize for Extended<K> {
+impl<K> Zeroize for Slip10<K> {
     fn zeroize(&mut self) {
         self.ext.zeroize()
     }
 }
 
-impl<K: hazmat::IsSecretKey> Extended<K> {
+impl<K: hazmat::IsSecretKey> Slip10<K> {
     pub fn from_seed(seed: &Seed) -> Self {
         let mut key = Self::new();
         HMAC_SHA512(&seed.0, K::SEEDKEY, key.ext_mut());
@@ -237,22 +237,22 @@ impl<K: hazmat::IsSecretKey> Extended<K> {
         self.key()
     }
 
-    pub fn to_extended_public_key(&self) -> Extended<K::PublicKey>
+    pub fn to_extended_public_key(&self) -> Slip10<K::PublicKey>
     where
         K::PublicKey: hazmat::IsPublicKey<SecretKey = K>,
     {
-        Extended::from_extended_secret_key(self)
+        Slip10::from_extended_secret_key(self)
     }
 }
 
-impl<K: hazmat::IsSecretKey> From<&Seed> for Extended<K> {
+impl<K: hazmat::IsSecretKey> From<&Seed> for Slip10<K> {
     fn from(seed: &Seed) -> Self {
         Self::from_seed(seed)
     }
 }
 
-impl<K: hazmat::IsPublicKey> Extended<K> {
-    pub fn from_extended_secret_key(esk: &Extended<K::SecretKey>) -> Self {
+impl<K: hazmat::IsPublicKey> Slip10<K> {
+    pub fn from_extended_secret_key(esk: &Slip10<K::SecretKey>) -> Self {
         let mut k = Self::new();
         k.ext[..33].copy_from_slice(&<K::SecretKey as hazmat::Derivable>::calc_non_hardened_data(
             esk.key_bytes(),
@@ -262,19 +262,19 @@ impl<K: hazmat::IsPublicKey> Extended<K> {
     }
 }
 
-impl<K: hazmat::IsPublicKey> From<&Extended<K::SecretKey>> for Extended<K> {
-    fn from(esk: &Extended<K::SecretKey>) -> Self {
+impl<K: hazmat::IsPublicKey> From<&Slip10<K::SecretKey>> for Slip10<K> {
+    fn from(esk: &Slip10<K::SecretKey>) -> Self {
         Self::from_extended_secret_key(esk)
     }
 }
 
-impl<K: hazmat::IsPublicKey> Extended<K> {
+impl<K: hazmat::IsPublicKey> Slip10<K> {
     pub fn public_key(&self) -> K {
         self.key()
     }
 }
 
-impl<K> Extended<K> {
+impl<K> Slip10<K> {
     fn new() -> Self {
         Self {
             key: core::marker::PhantomData,
@@ -283,7 +283,7 @@ impl<K> Extended<K> {
     }
 }
 
-impl<K: hazmat::Derivable> Extended<K> {
+impl<K: hazmat::Derivable> Slip10<K> {
     fn key(&self) -> K {
         K::to_key(self.key_bytes())
     }
@@ -386,7 +386,7 @@ impl<K: hazmat::Derivable> Extended<K> {
     }
 }
 
-impl<K: hazmat::Derivable> TryFrom<&[u8; 65]> for Extended<K> {
+impl<K: hazmat::Derivable> TryFrom<&[u8; 65]> for Slip10<K> {
     type Error = crate::Error;
     fn try_from(ext_bytes: &[u8; 65]) -> crate::Result<Self> {
         Self::try_from_extended_bytes(ext_bytes)

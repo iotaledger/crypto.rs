@@ -125,7 +125,7 @@ mod slip10 {
     #[cfg(feature = "secp256k1")]
     #[test]
     fn secp256k1_public_key_test() {
-        use crypto::keys::slip10::Extended;
+        use crypto::keys::slip10::Slip10;
         use crypto::signatures::secp256k1_ecdsa;
 
         let seed = Seed::from_bytes(&[1]);
@@ -134,7 +134,7 @@ mod slip10 {
         let mut epk_bytes = *epk.extended_bytes();
         assert_eq!(2, epk_bytes[0]);
         epk_bytes[0] = 5;
-        assert!(Extended::<secp256k1_ecdsa::PublicKey>::try_from_extended_bytes(&epk_bytes).is_err());
+        assert!(Slip10::<secp256k1_ecdsa::PublicKey>::try_from_extended_bytes(&epk_bytes).is_err());
     }
 
     #[cfg(feature = "secp256k1")]
