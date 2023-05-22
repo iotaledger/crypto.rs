@@ -222,10 +222,7 @@ impl<K> Zeroize for Extended<K> {
 
 impl<K: hazmat::IsSecretKey> Extended<K> {
     pub fn from_seed(seed: &Seed) -> Self {
-        let mut key = Self {
-            key: core::marker::PhantomData,
-            ext: [0; 65],
-        };
+        let mut key = Self::new();
         HMAC_SHA512(&seed.0, K::SEEDKEY, key.ext_mut());
         while !key.is_key_valid() {
             let mut tmp = [0_u8; 64];
@@ -256,10 +253,7 @@ impl<K: hazmat::IsSecretKey> From<&Seed> for Extended<K> {
 
 impl<K: hazmat::IsPublicKey> Extended<K> {
     pub fn from_extended_secret_key(esk: &Extended<K::SecretKey>) -> Self {
-        let mut k = Self {
-            key: core::marker::PhantomData,
-            ext: [0_u8; 65],
-        };
+        let mut k = Self::new();
         k.ext[..33].copy_from_slice(&<K::SecretKey as hazmat::Derivable>::calc_non_hardened_data(
             esk.key_bytes(),
         ));
@@ -277,6 +271,15 @@ impl<K: hazmat::IsPublicKey> From<&Extended<K::SecretKey>> for Extended<K> {
 impl<K: hazmat::IsPublicKey> Extended<K> {
     pub fn public_key(&self) -> K {
         self.key()
+    }
+}
+
+impl<K> Extended<K> {
+    fn new() -> Self {
+        Self {
+            key: core::marker::PhantomData,
+            ext: [0_u8; 65],
+        }
     }
 }
 
@@ -370,10 +373,7 @@ impl<K: hazmat::Derivable> Extended<K> {
         data[..33].copy_from_slice(&self.calc_data(segment.is_hardened()));
         data[33..].copy_from_slice(&segment.bs()); // ser32(i)
 
-        let mut key = Self {
-            key: core::marker::PhantomData,
-            ext: [0; 65],
-        };
+        let mut key = Self::new();
         HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
         while !key.add_key(self.key_bytes()) {
             data[0] = 1;
