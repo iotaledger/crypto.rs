@@ -6,12 +6,12 @@ mod slip10 {
     #![allow(clippy::identity_op)]
 
     use crypto::{
-        keys::slip10::{Chain, Seed},
+        keys::slip10::{Chain, Hardened, Seed},
         Result,
     };
 
     struct TestChain {
-        chain: Chain,
+        chain: Chain<Hardened<u32>>,
         chain_code: &'static str,
         private_key: &'static str,
     }
@@ -40,7 +40,7 @@ mod slip10 {
             assert_eq!(expected_master_private_key, *m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
-                let ck = seed.derive::<ed25519::SecretKey>(&c.chain)?;
+                let ck = seed.derive_hardened::<ed25519::SecretKey>(&c.chain);
 
                 let mut expected_chain_code = [0u8; 32];
                 hex::decode_to_slice(c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
@@ -73,7 +73,7 @@ mod slip10 {
             assert_eq!(expected_master_private_key, *m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
-                let ck = seed.derive::<secp256k1_ecdsa::SecretKey>(&c.chain)?;
+                let ck = seed.derive::<secp256k1_ecdsa::SecretKey>(&c.chain);
 
                 let mut expected_chain_code = [0u8; 32];
                 hex::decode_to_slice(c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
@@ -87,15 +87,15 @@ mod slip10 {
                 if last_segment_non_hardened {
                     let esk = seed.to_master_key::<secp256k1_ecdsa::SecretKey>();
                     let (head, tail) = c.chain.segments().split_at(c.chain.len() - 1);
-                    let chain = Chain::from_segments(head);
+                    let chain = Chain::from_segments(head.iter().cloned());
                     let segment = tail[0];
-                    let esk = esk.derive(&chain).unwrap();
+                    let esk = esk.derive(&chain);
                     let epk = esk.to_extended_public_key();
                     assert_eq!(esk.chain_code(), epk.chain_code());
                     assert_eq!(esk.secret_key().public_key(), epk.public_key());
 
-                    let esk = esk.child_key(&segment).unwrap();
-                    let epk = epk.child_key(&segment).unwrap();
+                    let esk = esk.child_key(&segment);
+                    let epk = epk.child_key(&segment);
                     assert_eq!(expected_chain_code, *esk.chain_code());
                     assert_eq!(expected_private_key, *esk.secret_key().to_bytes());
                     assert_eq!(esk.chain_code(), epk.chain_code());
@@ -143,8 +143,7 @@ mod slip10 {
         use crypto::signatures::secp256k1_ecdsa;
 
         let _ = Seed::from_bytes(&[1])
-            .derive::<secp256k1_ecdsa::SecretKey>(&Chain::from_u32([0, 1, 2]))
-            .unwrap()
+            .derive::<secp256k1_ecdsa::SecretKey>(&Chain::from_segments([0, 1, 2]))
             .secret_key()
             .public_key()
             .to_bytes();
