@@ -475,7 +475,7 @@ impl Chain {
     }
 
     pub fn all_non_hardened(&self) -> bool {
-        self.0.iter().all(Segment::is_non_hardened)
+        !self.0.iter().any(Segment::is_hardened)
     }
 }
 
