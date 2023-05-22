@@ -18,7 +18,7 @@ use crate::macs::hmac::HMAC_SHA512;
 pub mod hazmat {
     pub trait Derivable {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool;
-        fn into_key(key_bytes: &[u8; 33]) -> Self;
+        fn to_key(key_bytes: &[u8; 33]) -> Self;
         fn add_key(key_bytes: &mut [u8; 33], parent_key: &[u8; 33]) -> bool;
 
         const ALLOW_NON_HARDENED: bool;
@@ -46,7 +46,7 @@ pub mod ed25519 {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             key_bytes[0] == 0
         }
-        fn into_key(key_bytes: &[u8; 33]) -> Self {
+        fn to_key(key_bytes: &[u8; 33]) -> Self {
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
             ed25519::SecretKey::from_bytes(sk_bytes)
@@ -79,7 +79,7 @@ pub mod secp256k1 {
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
             k256::SecretKey::from_bytes(sk_bytes.into()).is_ok()
         }
-        fn into_key(key_bytes: &[u8; 33]) -> Self {
+        fn to_key(key_bytes: &[u8; 33]) -> Self {
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
             secp256k1_ecdsa::SecretKey::try_from_bytes(sk_bytes).expect("valid extended secret key")
@@ -129,7 +129,7 @@ pub mod secp256k1 {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             (key_bytes[0] == 2 || key_bytes[0] == 3) && k256::PublicKey::from_sec1_bytes(key_bytes).is_ok()
         }
-        fn into_key(key_bytes: &[u8; 33]) -> Self {
+        fn to_key(key_bytes: &[u8; 33]) -> Self {
             secp256k1_ecdsa::PublicKey::try_from_bytes(key_bytes)
                 // implementation guarantees that it always succeeds
                 .expect("valid extended public key")
@@ -289,7 +289,7 @@ impl<K: hazmat::IsPublicKey> Extended<K> {
 
 impl<K: hazmat::Derivable> Extended<K> {
     fn key(&self) -> K {
-        K::into_key(self.key_bytes())
+        K::to_key(self.key_bytes())
     }
 
     pub fn extended_bytes(&self) -> &[u8; 65] {
