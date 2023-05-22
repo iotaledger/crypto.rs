@@ -199,6 +199,7 @@ impl Seed {
 
 pub type ChainCode = [u8; 32];
 
+#[derive(ZeroizeOnDrop)]
 pub struct Extended<K> {
     key: core::marker::PhantomData<K>,
     ext: [u8; 65],
@@ -218,14 +219,6 @@ impl<K> Zeroize for Extended<K> {
         self.ext.zeroize()
     }
 }
-
-impl<K> Drop for Extended<K> {
-    fn drop(&mut self) {
-        self.zeroize()
-    }
-}
-
-impl<K> ZeroizeOnDrop for Extended<K> {}
 
 impl<K: hazmat::IsSecretKey> Extended<K> {
     pub fn from_seed(seed: &Seed) -> Self {
