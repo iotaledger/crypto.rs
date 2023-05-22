@@ -55,7 +55,7 @@ pub mod ed25519 {
             true
         }
         fn calc_non_hardened_data(_key_bytes: &[u8; 33]) -> [u8; 33] {
-            unreachable!()
+            unreachable!("SLIP10: ed25519 does no support non-hardened key derivation")
         }
     }
 
