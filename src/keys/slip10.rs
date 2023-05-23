@@ -386,7 +386,7 @@ impl<K: Derivable> Slip10<K> {
     {
         let mut data = [0u8; 33 + 4];
         data[..33].copy_from_slice(&self.calc_data(segment));
-        data[33..].copy_from_slice(&segment.to_le_bytes()); // ser32(i)
+        data[33..].copy_from_slice(&segment.to_be_bytes()); // ser32(i)
 
         let mut key = Self::new();
         HMAC_SHA512(&data, self.chain_code(), key.ext_mut());

@@ -10,10 +10,23 @@ mod slip10 {
         Result,
     };
 
-    struct TestChain {
+    struct TestHardenedChain {
         chain: HardenedChain,
         chain_code: &'static str,
         private_key: &'static str,
+    }
+
+    struct TestChain {
+        chain: Chain,
+        chain_code: &'static str,
+        private_key: &'static str,
+    }
+
+    struct TestHardenedVector {
+        seed: &'static str,
+        master_chain_code: &'static str,
+        master_private_key: &'static str,
+        chains: Vec<TestHardenedChain>,
     }
 
     struct TestVector {
@@ -24,7 +37,7 @@ mod slip10 {
     }
 
     #[cfg(feature = "ed25519")]
-    fn run_ed25519_test_vectors(tvs: &[TestVector]) -> Result<()> {
+    fn run_ed25519_test_vectors(tvs: &[TestHardenedVector]) -> Result<()> {
         use crypto::signatures::ed25519;
 
         for tv in tvs {
