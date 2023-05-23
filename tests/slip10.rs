@@ -142,7 +142,7 @@ mod slip10 {
     #[cfg(feature = "secp256k1")]
     #[test]
     fn secp256k1_public_key_test() {
-        use crypto::keys::slip10::Slip10;
+        use crypto::keys::slip10::{Segment, Slip10};
         use crypto::signatures::secp256k1_ecdsa;
 
         let seed = Seed::from_bytes(&[1]);
@@ -153,10 +153,23 @@ mod slip10 {
         epk_bytes[0] = 5;
         assert!(Slip10::<secp256k1_ecdsa::PublicKey>::try_from_extended_bytes(&epk_bytes).is_err());
 
+        assert!(esk.derive(&Chain::from_u32([0, 1, 2])).is_ok());
+        assert!(esk.derive(&Chain::from_u32([0, 0x80000001, 2])).is_ok());
+        assert!(esk
+            .derive(&Chain::from_u32([0x80000000, 0x80000001, 0x80000002]))
+            .is_ok());
+
+        assert!(esk.child_key(&Segment(0)).is_ok());
+        assert!(esk.child_key(&Segment(0x80000000)).is_ok());
+
+        assert!(epk.derive(&Chain::from_u32([0, 1, 2])).is_ok());
         assert!(epk.derive(&Chain::from_u32([0, 0x80000001, 2])).is_err());
         assert!(epk
             .derive(&Chain::from_u32([0x80000000, 0x80000001, 0x80000002]))
             .is_err());
+
+        assert!(epk.child_key(&Segment(0)).is_ok());
+        assert!(epk.child_key(&Segment(0x80000000)).is_err());
     }
 
     #[cfg(feature = "secp256k1")]
