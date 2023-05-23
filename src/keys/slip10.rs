@@ -22,6 +22,7 @@ mod hazmat {
         fn add_key(key_bytes: &mut [u8; 33], parent_key: &[u8; 33]) -> bool;
 
         const ALLOW_NON_HARDENED: bool;
+        const ALLOW_HARDENED: bool;
         fn calc_non_hardened_data(key_bytes: &[u8; 33]) -> [u8; 33];
     }
     pub trait IsSecretKey: Derivable {
@@ -41,6 +42,7 @@ pub mod ed25519 {
 
     impl Derivable for ed25519::SecretKey {
         const ALLOW_NON_HARDENED: bool = false;
+        const ALLOW_HARDENED: bool = true;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             key_bytes[0] == 0
         }
@@ -72,6 +74,7 @@ pub mod secp256k1 {
 
     impl Derivable for secp256k1_ecdsa::SecretKey {
         const ALLOW_NON_HARDENED: bool = true;
+        const ALLOW_HARDENED: bool = true;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
@@ -124,6 +127,7 @@ pub mod secp256k1 {
 
     impl Derivable for secp256k1_ecdsa::PublicKey {
         const ALLOW_NON_HARDENED: bool = true;
+        const ALLOW_HARDENED: bool = false;
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
             (key_bytes[0] == 2 || key_bytes[0] == 3) && k256::PublicKey::from_sec1_bytes(key_bytes).is_ok()
         }
@@ -310,7 +314,9 @@ impl<K: hazmat::Derivable> Slip10<K> {
     }
 
     pub fn derive(&self, chain: &Chain) -> crate::Result<Self> {
-        if K::ALLOW_NON_HARDENED || chain.all_hardened() {
+        if K::ALLOW_NON_HARDENED && (K::ALLOW_HARDENED || chain.all_non_hardened())
+            || (K::ALLOW_HARDENED && chain.all_hardened())
+        {
             let mut key: Self = self.clone();
             for segment in &chain.0 {
                 key = key.derive_child_key(segment);
@@ -325,7 +331,9 @@ impl<K: hazmat::Derivable> Slip10<K> {
     }
 
     pub fn child_key(&self, segment: &Segment) -> crate::Result<Self> {
-        if K::ALLOW_NON_HARDENED || segment.is_hardened() {
+        if K::ALLOW_NON_HARDENED && (K::ALLOW_HARDENED || !segment.is_hardened())
+            || (K::ALLOW_HARDENED && segment.is_hardened())
+        {
             Ok(self.derive_child_key(segment))
         } else {
             Err(crate::Error::InvalidArgumentError {

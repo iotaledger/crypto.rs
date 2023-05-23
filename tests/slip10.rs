@@ -114,6 +114,23 @@ mod slip10 {
         run_ed25519_test_vectors(&tvs)
     }
 
+    #[cfg(feature = "ed25519")]
+    #[test]
+    fn ed25519_non_hardened() -> Result<()> {
+        use crypto::signatures::ed25519;
+
+        let seed = Seed::from_bytes(&[1]);
+        let esk = seed.to_master_key::<ed25519::SecretKey>();
+        // let epk = esk.to_extended_public_key();
+        assert!(esk.derive(&Chain::from_u32([0, 1, 2])).is_err());
+        assert!(esk.derive(&Chain::from_u32([0, 0x80000001, 2])).is_err());
+        assert!(esk
+            .derive(&Chain::from_u32([0x80000000, 0x80000001, 0x80000002]))
+            .is_ok());
+
+        Ok(())
+    }
+
     #[cfg(feature = "secp256k1")]
     #[test]
     fn secp256k1_test_vectors() -> Result<()> {
@@ -135,6 +152,11 @@ mod slip10 {
         assert_eq!(2, epk_bytes[0]);
         epk_bytes[0] = 5;
         assert!(Slip10::<secp256k1_ecdsa::PublicKey>::try_from_extended_bytes(&epk_bytes).is_err());
+
+        assert!(epk.derive(&Chain::from_u32([0, 0x80000001, 2])).is_err());
+        assert!(epk
+            .derive(&Chain::from_u32([0x80000000, 0x80000001, 0x80000002]))
+            .is_err());
     }
 
     #[cfg(feature = "secp256k1")]
@@ -144,6 +166,10 @@ mod slip10 {
 
         let _ = Seed::from_bytes(&[1])
             .derive::<secp256k1_ecdsa::SecretKey>(&Chain::from_u32([0, 1, 2]))
+            .unwrap()
+            .derive(&Chain::from_u32([0, 0x80000001, 2]))
+            .unwrap()
+            .derive(&Chain::from_u32([0x80000000, 0x80000001, 0x80000002]))
             .unwrap()
             .secret_key()
             .public_key()
