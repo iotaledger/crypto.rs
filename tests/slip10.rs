@@ -6,7 +6,7 @@ mod slip10 {
     #![allow(clippy::identity_op)]
 
     use crypto::{
-        keys::slip10::{Chain, HardenedChain, Seed},
+        keys::slip10::{Chain, ChainKind, HardenedChain, Seed},
         Result,
     };
 
@@ -17,7 +17,7 @@ mod slip10 {
     }
 
     struct TestChain {
-        chain: Chain,
+        chain: ChainKind,
         chain_code: &'static str,
         private_key: &'static str,
     }
@@ -156,7 +156,7 @@ mod slip10 {
         use crypto::signatures::secp256k1_ecdsa;
 
         let _ = Seed::from_bytes(&[1])
-            .derive::<secp256k1_ecdsa::SecretKey, _>(&Chain::from_segments([0, 1, 2]))
+            .derive::<secp256k1_ecdsa::SecretKey, _>(&Chain::from_segments([0, 1, 2]).as_mixed().unwrap())
             .secret_key()
             .public_key()
             .to_bytes();

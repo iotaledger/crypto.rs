@@ -39,6 +39,18 @@ where
         }
     }
 }
+impl<K: Derivable> CalcData<ChainKind> for Slip10<K>
+where
+    Self: CalcNonHardenedData,
+{
+    fn calc_data(&self, segment: u32) -> [u8; 33] {
+        if segment.is_hardened() {
+            *self.key_bytes()
+        } else {
+            self.calc_non_hardened_data()
+        }
+    }
+}
 impl<K: IsSecretKey> CalcData<HardenedChain> for Slip10<K>
 where
     Self: CalcData<Chain> + CalcNonHardenedData,
@@ -433,18 +445,18 @@ impl Segment for u32 {
 pub struct Chain(Vec<u32>);
 
 impl Chain {
-    pub fn from_segments<I: IntoIterator<Item = u32>>(is: I) -> Self {
-        Self(is.into_iter().collect())
+    pub fn from_segments<I: IntoIterator<Item = u32>>(is: I) -> ChainKind {
+        let mut all_hardened = true;
+        let chain = Self(is.into_iter().inspect(|s| all_hardened &= s.is_hardened()).collect());
+        if all_hardened {
+            ChainKind::Hardened(HardenedChain(chain))
+        } else {
+            ChainKind::Mixed(chain)
+        }
     }
 
     pub fn from_segments_hardened<I: IntoIterator<Item = u32>>(is: I) -> HardenedChain {
         HardenedChain(Self(is.into_iter().map(u32::to_hardened).collect()))
-    }
-
-    pub fn join<O: Deref<Target = Chain>>(&self, o: O) -> Self {
-        let mut ss = self.0.clone();
-        ss.extend_from_slice(&o.0);
-        Self(ss)
     }
 
     pub fn is_empty(&self) -> bool {
@@ -463,6 +475,55 @@ impl Chain {
 impl AsRef<Chain> for Chain {
     fn as_ref(&self) -> &Chain {
         &self
+    }
+}
+
+pub enum ChainKind {
+    Hardened(HardenedChain),
+    Mixed(Chain),
+}
+
+impl ChainKind {
+    /// Get the chain as hardened
+    pub fn as_hardened(self) -> Result<HardenedChain, Chain> {
+        match self {
+            ChainKind::Hardened(h) => Ok(h),
+            ChainKind::Mixed(m) => Err(m),
+        }
+    }
+
+    /// Get the chain as mixed
+    pub fn as_mixed(self) -> Result<Chain, HardenedChain> {
+        match self {
+            ChainKind::Mixed(m) => Ok(m),
+            ChainKind::Hardened(h) => Err(h),
+        }
+    }
+}
+
+impl Default for ChainKind {
+    fn default() -> Self {
+        Self::Mixed(Default::default())
+    }
+}
+
+impl AsRef<Chain> for ChainKind {
+    fn as_ref(&self) -> &Chain {
+        match self {
+            ChainKind::Hardened(h) => h.as_ref(),
+            ChainKind::Mixed(m) => m,
+        }
+    }
+}
+
+impl Deref for ChainKind {
+    type Target = Chain;
+
+    fn deref(&self) -> &Self::Target {
+        match self {
+            ChainKind::Hardened(h) => h.deref(),
+            ChainKind::Mixed(m) => m,
+        }
     }
 }
 
