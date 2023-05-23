@@ -6,12 +6,12 @@ mod slip10 {
     #![allow(clippy::identity_op)]
 
     use crypto::{
-        keys::slip10::{Chain, Hardened, Seed},
+        keys::slip10::{Chain, HardenedChain, Seed},
         Result,
     };
 
     struct TestChain {
-        chain: Chain<Hardened<u32>>,
+        chain: HardenedChain,
         chain_code: &'static str,
         private_key: &'static str,
     }
@@ -94,8 +94,8 @@ mod slip10 {
                     assert_eq!(esk.chain_code(), epk.chain_code());
                     assert_eq!(esk.secret_key().public_key(), epk.public_key());
 
-                    let esk = esk.child_key(&segment);
-                    let epk = epk.child_key(&segment);
+                    let esk = esk.child_key::<Chain>(segment);
+                    let epk = epk.child_key::<Chain>(segment);
                     assert_eq!(expected_chain_code, *esk.chain_code());
                     assert_eq!(expected_private_key, *esk.secret_key().to_bytes());
                     assert_eq!(esk.chain_code(), epk.chain_code());

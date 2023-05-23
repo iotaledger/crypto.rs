@@ -9,7 +9,7 @@
         master_private_key: "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35",
         chains: vec![
             TestChain {
-                chain: Chain::empty(),
+                chain: HardenedChain::default(),
                 chain_code: "873dff81c02f525623fd1fe5167eac3a55a049de3d314bb42ee227ffed37d508",
                 private_key: "e8f32e723decf4051aefac8e2c93c9c5b214313817cdb01a1494b917c8436b35",
             },
@@ -47,7 +47,7 @@
         master_private_key: "4b03d6fc340455b363f51020ad3ecca4f0850280cf436c70c727923f6db46c3e",
         chains: vec![
             TestChain {
-                chain: Chain::empty(),
+                chain: HardenedChain::default(),
                 chain_code: "60499f801b896d83179a4374aeb7822aaeaceaa0db1f85ee3e904c4defbd9689",
                 private_key: "4b03d6fc340455b363f51020ad3ecca4f0850280cf436c70c727923f6db46c3e",
             },

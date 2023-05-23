@@ -5,6 +5,7 @@
 
 use alloc::vec::Vec;
 use core::convert::TryFrom;
+use std::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -23,14 +24,14 @@ pub trait Derivable {
 pub trait CalcNonHardenedData {
     fn calc_non_hardened_data(&self) -> [u8; 33];
 }
-pub trait CalcData<S: Segment> {
-    fn calc_data(&self, segment: &S) -> [u8; 33];
+pub trait CalcData<C> {
+    fn calc_data(&self, segment: u32) -> [u8; 33];
 }
-impl<K: Derivable> CalcData<u32> for Slip10<K>
+impl<K: Derivable> CalcData<Chain> for Slip10<K>
 where
     Self: CalcNonHardenedData,
 {
-    fn calc_data(&self, segment: &u32) -> [u8; 33] {
+    fn calc_data(&self, segment: u32) -> [u8; 33] {
         if segment.is_hardened() {
             *self.key_bytes()
         } else {
@@ -38,12 +39,11 @@ where
         }
     }
 }
-
-impl<K: Derivable, S: Segment> CalcData<Hardened<S>> for Slip10<K>
+impl<K: Derivable> CalcData<HardenedChain> for Slip10<K>
 where
-    Self: CalcData<S> + CalcNonHardenedData,
+    Self: CalcData<Chain> + CalcNonHardenedData,
 {
-    fn calc_data(&self, _segment: &Hardened<S>) -> [u8; 33] {
+    fn calc_data(&self, _segment: u32) -> [u8; 33] {
         *self.key_bytes()
     }
 }
@@ -80,8 +80,8 @@ pub mod ed25519 {
         type PublicKey = ed25519::PublicKey;
     }
 
-    impl<S: Segment> CalcData<Hardened<S>> for Slip10<ed25519::SecretKey> {
-        fn calc_data(&self, _segment: &Hardened<S>) -> [u8; 33] {
+    impl CalcData<HardenedChain> for Slip10<ed25519::SecretKey> {
+        fn calc_data(&self, _segment: u32) -> [u8; 33] {
             *self.key_bytes()
         }
     }
@@ -219,9 +219,9 @@ impl Seed {
         Slip10::from_seed(self)
     }
 
-    pub fn derive<K: IsSecretKey, S: Segment>(&self, chain: &Chain<S>) -> Slip10<K>
+    pub fn derive<K: IsSecretKey, C: AsRef<Chain>>(&self, chain: &C) -> Slip10<K>
     where
-        Slip10<K>: CalcData<S>,
+        Slip10<K>: CalcData<C>,
     {
         self.to_master_key().derive(chain)
     }
@@ -362,31 +362,31 @@ impl<K: Derivable> Slip10<K> {
 }
 
 impl<K: Derivable> Slip10<K> {
-    pub fn derive<S: Segment>(&self, chain: &Chain<S>) -> Self
+    pub fn derive<C: AsRef<Chain>>(&self, chain: &C) -> Self
     where
-        Self: CalcData<S>,
+        Self: CalcData<C>,
     {
         let mut key: Self = self.clone();
-        for segment in &chain.0 {
+        for &segment in &chain.as_ref().0 {
             key = key.derive_child_key(segment);
         }
         key
     }
 
-    pub fn child_key<S: Segment>(&self, segment: &S) -> Self
+    pub fn child_key<C>(&self, segment: u32) -> Self
     where
-        Self: CalcData<S>,
+        Self: CalcData<C>,
     {
         self.derive_child_key(segment)
     }
 
-    fn derive_child_key<S: Segment>(&self, segment: &S) -> Self
+    fn derive_child_key<C>(&self, segment: u32) -> Self
     where
-        Self: CalcData<S>,
+        Self: CalcData<C>,
     {
         let mut data = [0u8; 33 + 4];
         data[..33].copy_from_slice(&self.calc_data(segment));
-        data[33..].copy_from_slice(segment.as_bytes().as_ref()); // ser32(i)
+        data[33..].copy_from_slice(&segment.to_le_bytes()); // ser32(i)
 
         let mut key = Self::new();
         HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
@@ -410,64 +410,40 @@ impl<K: Derivable> TryFrom<&[u8; 65]> for Slip10<K> {
 
 pub trait Segment {
     type Mask;
-    type Bytes: AsRef<[u8]>;
     const HARDEN_MASK: Self::Mask;
 
     fn is_hardened(&self) -> bool;
-    fn as_bytes(&self) -> Self::Bytes;
+    fn to_hardened(self) -> Self;
 }
 
 impl Segment for u32 {
     type Mask = Self;
-    type Bytes = [u8; 4];
     const HARDEN_MASK: Self::Mask = 1 << 31;
 
     fn is_hardened(&self) -> bool {
         self & Self::HARDEN_MASK != 0
     }
-    fn as_bytes(&self) -> Self::Bytes {
-        self.to_le_bytes()
+    fn to_hardened(self) -> Self {
+        Self::HARDEN_MASK | self
     }
 }
 
-impl<S: Segment> Segment for Hardened<S> {
-    type Mask = S::Mask;
-    type Bytes = S::Bytes;
-    const HARDEN_MASK: Self::Mask = S::HARDEN_MASK;
+#[derive(Clone, Debug, Default, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[repr(transparent)]
+pub struct Chain(Vec<u32>);
 
-    fn is_hardened(&self) -> bool {
-        self.0.is_hardened()
-    }
-    fn as_bytes(&self) -> Self::Bytes {
-        self.0.as_bytes()
-    }
-}
-
-#[derive(Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct Chain<S: Segment = u32>(Vec<S>);
-
-impl<S: Segment> Chain<S> {
-    pub fn empty() -> Self {
-        Self(Vec::new())
-    }
-
-    pub fn from_segments<I: IntoIterator<Item = S>>(is: I) -> Self {
+impl Chain {
+    pub fn from_segments<I: IntoIterator<Item = u32>>(is: I) -> Self {
         Self(is.into_iter().collect())
     }
 
-    pub fn from_segments_hardened<I: IntoIterator<Item = S>>(is: I) -> Chain<Hardened<S>>
-    where
-        S: ToHardened,
-    {
-        Chain(is.into_iter().map(ToHardened::to_hardened).collect())
+    pub fn from_segments_hardened<I: IntoIterator<Item = u32>>(is: I) -> HardenedChain {
+        HardenedChain(Self(is.into_iter().map(u32::to_hardened).collect()))
     }
 
-    pub fn join<O: AsRef<Chain<S>>>(&self, o: O) -> Self
-    where
-        S: Clone,
-    {
+    pub fn join<O: Deref<Target = Chain>>(&self, o: O) -> Self {
         let mut ss = self.0.clone();
-        ss.extend_from_slice(&o.as_ref().0);
+        ss.extend_from_slice(&o.0);
         Self(ss)
     }
 
@@ -479,37 +455,31 @@ impl<S: Segment> Chain<S> {
         self.0.len()
     }
 
-    pub fn segments(&self) -> &[S] {
+    pub fn segments(&self) -> &[u32] {
         &self.0
     }
 }
 
-impl<S: Segment> Default for Chain<S> {
-    fn default() -> Self {
-        Chain::empty()
+impl AsRef<Chain> for Chain {
+    fn as_ref(&self) -> &Chain {
+        &self
     }
 }
 
-pub trait ToHardened {
-    fn to_hardened(self) -> Hardened<Self>
-    where
-        Self: Sized;
-}
-
-impl ToHardened for u32 {
-    fn to_hardened(self) -> Hardened<Self> {
-        Hardened(Self::HARDEN_MASK | self)
-    }
-}
-
-#[derive(Copy, Clone, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Debug, Default, Eq, Hash, PartialEq, Serialize, Deserialize)]
 #[repr(transparent)]
-pub struct Hardened<T>(T);
+pub struct HardenedChain(Chain);
 
-impl<T> std::ops::Deref for Hardened<T> {
-    type Target = T;
+impl Deref for HardenedChain {
+    type Target = Chain;
 
     fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl AsRef<Chain> for HardenedChain {
+    fn as_ref(&self) -> &Chain {
         &self.0
     }
 }
