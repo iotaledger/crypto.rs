@@ -1,5 +1,10 @@
 # Changelog
 
+## \[0.20.0]
+
+- [`2c455b1`](https://www.github.com/iotaledger/crypto.rs/commit/2c455b182d02ba7b354487b2fd6e9b7443fbd179)([#193](https://www.github.com/iotaledger/crypto.rs/pull/193)) Use `alloc` serde feature.
+- [`b0322ba`](https://www.github.com/iotaledger/crypto.rs/commit/b0322ba6a3999d5c60915150c57c20dc4dce9245)([#194](https://www.github.com/iotaledger/crypto.rs/pull/194)) Rewrite SLIP-10 in a more generic form.
+
 ## \[0.19.0]
 
 - [`ad2b035`](https://www.github.com/iotaledger/crypto.rs/commit/ad2b03560660b7c2950597df60ba7ae71f11ca2b)([#187](https://www.github.com/iotaledger/crypto.rs/pull/187)) Add `Secp256k1` ECDSA signature.
