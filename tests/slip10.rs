@@ -40,7 +40,7 @@ mod slip10 {
             assert_eq!(expected_master_private_key, *m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
-                let ck = seed.derive_hardened::<ed25519::SecretKey>(&c.chain);
+                let ck = seed.derive::<ed25519::SecretKey, _>(&c.chain);
 
                 let mut expected_chain_code = [0u8; 32];
                 hex::decode_to_slice(c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
@@ -73,7 +73,7 @@ mod slip10 {
             assert_eq!(expected_master_private_key, *m.secret_key().to_bytes());
 
             for c in tv.chains.iter() {
-                let ck = seed.derive::<secp256k1_ecdsa::SecretKey>(&c.chain);
+                let ck = seed.derive::<secp256k1_ecdsa::SecretKey, _>(&c.chain);
 
                 let mut expected_chain_code = [0u8; 32];
                 hex::decode_to_slice(c.chain_code, &mut expected_chain_code as &mut [u8]).unwrap();
@@ -143,7 +143,7 @@ mod slip10 {
         use crypto::signatures::secp256k1_ecdsa;
 
         let _ = Seed::from_bytes(&[1])
-            .derive::<secp256k1_ecdsa::SecretKey>(&Chain::from_segments([0, 1, 2]))
+            .derive::<secp256k1_ecdsa::SecretKey, _>(&Chain::from_segments([0, 1, 2]))
             .secret_key()
             .public_key()
             .to_bytes();

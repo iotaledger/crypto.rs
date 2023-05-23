@@ -20,8 +20,32 @@ pub trait Derivable {
     fn to_key(key_bytes: &[u8; 33]) -> Self;
     fn add_key(key_bytes: &mut [u8; 33], parent_key: &[u8; 33]) -> bool;
 }
-pub trait CalcNonHardenedData: Derivable {
-    fn calc_non_hardened_data(key_bytes: &[u8; 33]) -> [u8; 33];
+pub trait CalcNonHardenedData {
+    fn calc_non_hardened_data(&self) -> [u8; 33];
+}
+pub trait CalcData<S: Segment> {
+    fn calc_data(&self, segment: &S) -> [u8; 33];
+}
+impl<K: Derivable> CalcData<u32> for Slip10<K>
+where
+    Self: CalcNonHardenedData,
+{
+    fn calc_data(&self, segment: &u32) -> [u8; 33] {
+        if segment.is_hardened() {
+            *self.key_bytes()
+        } else {
+            self.calc_non_hardened_data()
+        }
+    }
+}
+
+impl<K: Derivable, S: Segment> CalcData<Hardened<S>> for Slip10<K>
+where
+    Self: CalcData<S> + CalcNonHardenedData,
+{
+    fn calc_data(&self, _segment: &Hardened<S>) -> [u8; 33] {
+        *self.key_bytes()
+    }
 }
 pub trait IsSecretKey: Derivable {
     const SEEDKEY: &'static [u8];
@@ -54,6 +78,12 @@ pub mod ed25519 {
     impl IsSecretKey for ed25519::SecretKey {
         const SEEDKEY: &'static [u8] = b"ed25519 seed";
         type PublicKey = ed25519::PublicKey;
+    }
+
+    impl<S: Segment> CalcData<Hardened<S>> for Slip10<ed25519::SecretKey> {
+        fn calc_data(&self, _segment: &Hardened<S>) -> [u8; 33] {
+            *self.key_bytes()
+        }
     }
 
     pub type ExtendedSecretKey = super::Slip10<ed25519::SecretKey>;
@@ -100,9 +130,10 @@ pub mod secp256k1 {
         }
     }
 
-    impl CalcNonHardenedData for secp256k1_ecdsa::SecretKey {
-        fn calc_non_hardened_data(key_bytes: &[u8; 33]) -> [u8; 33] {
+    impl CalcNonHardenedData for Slip10<secp256k1_ecdsa::SecretKey> {
+        fn calc_non_hardened_data(&self) -> [u8; 33] {
             use k256::elliptic_curve::sec1::ToEncodedPoint;
+            let key_bytes = self.key_bytes();
             debug_assert_eq!(0, key_bytes[0]);
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
             let sk = k256::SecretKey::from_bytes(sk_bytes.into()).expect("valid Secp256k1 parent secret key");
@@ -156,9 +187,9 @@ pub mod secp256k1 {
         }
     }
 
-    impl CalcNonHardenedData for secp256k1_ecdsa::PublicKey {
-        fn calc_non_hardened_data(key_bytes: &[u8; 33]) -> [u8; 33] {
-            *key_bytes
+    impl CalcNonHardenedData for Slip10<secp256k1_ecdsa::PublicKey> {
+        fn calc_non_hardened_data(&self) -> [u8; 33] {
+            *self.key_bytes()
         }
     }
 
@@ -188,12 +219,11 @@ impl Seed {
         Slip10::from_seed(self)
     }
 
-    pub fn derive<K: IsSecretKey + CalcNonHardenedData>(&self, chain: &Chain<impl Segment>) -> Slip10<K> {
+    pub fn derive<K: IsSecretKey, S: Segment>(&self, chain: &Chain<S>) -> Slip10<K>
+    where
+        Slip10<K>: CalcData<S>,
+    {
         self.to_master_key().derive(chain)
-    }
-
-    pub fn derive_hardened<K: IsSecretKey>(&self, chain: &Chain<Hardened<impl Segment>>) -> Slip10<K> {
-        self.to_master_key().derive_hardened(chain)
     }
 }
 
@@ -240,25 +270,19 @@ impl<K: IsSecretKey> Slip10<K> {
     pub fn to_extended_public_key(&self) -> Slip10<K::PublicKey>
     where
         K::PublicKey: IsPublicKey<SecretKey = K>,
-        K: CalcNonHardenedData,
+        Self: CalcNonHardenedData,
     {
         Slip10::from_extended_secret_key(self)
     }
 }
 
-impl<K: IsSecretKey> From<&Seed> for Slip10<K> {
-    fn from(seed: &Seed) -> Self {
-        Self::from_seed(seed)
-    }
-}
-
 impl<K: IsPublicKey> Slip10<K>
 where
-    K::SecretKey: CalcNonHardenedData,
+    Slip10<K::SecretKey>: CalcNonHardenedData,
 {
     pub fn from_extended_secret_key(esk: &Slip10<K::SecretKey>) -> Self {
         let mut k = Self::new();
-        k.ext[..33].copy_from_slice(&K::SecretKey::calc_non_hardened_data(esk.key_bytes()));
+        k.ext[..33].copy_from_slice(&esk.calc_non_hardened_data());
         k.ext[33..].copy_from_slice(esk.chain_code());
         k
     }
@@ -266,7 +290,7 @@ where
 
 impl<K: IsPublicKey> From<&Slip10<K::SecretKey>> for Slip10<K>
 where
-    K::SecretKey: CalcNonHardenedData,
+    Slip10<K::SecretKey>: CalcNonHardenedData,
 {
     fn from(esk: &Slip10<K::SecretKey>) -> Self {
         Self::from_extended_secret_key(esk)
@@ -338,39 +362,10 @@ impl<K: Derivable> Slip10<K> {
 }
 
 impl<K: Derivable> Slip10<K> {
-    pub fn derive_hardened<S: Segment>(&self, chain: &Chain<Hardened<S>>) -> Self {
-        let mut key: Self = self.clone();
-        for segment in chain.segments() {
-            key = key.derive_child_key_hardened(&segment);
-        }
-        key
-    }
-
-    pub fn child_key_hardened<S: Segment>(&self, segment: &Hardened<S>) -> Self {
-        self.derive_child_key_hardened(segment)
-    }
-
-    fn derive_child_key_hardened<S: Segment>(&self, segment: &Hardened<S>) -> Self {
-        let mut data = [0u8; 33 + 4];
-        let key_bytes = self.key_bytes();
-        data[..33].copy_from_slice(key_bytes);
-        data[33..].copy_from_slice(segment.as_bytes().as_ref()); // ser32(i)
-
-        let mut key = Self::new();
-        HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
-        while !key.add_key(self.key_bytes()) {
-            data[0] = 1;
-            data[1..1 + 32].copy_from_slice(key.key_bytes());
-            HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
-        }
-
-        data.zeroize();
-        key
-    }
-}
-
-impl<K: CalcNonHardenedData> Slip10<K> {
-    pub fn derive<S: Segment>(&self, chain: &Chain<S>) -> Self {
+    pub fn derive<S: Segment>(&self, chain: &Chain<S>) -> Self
+    where
+        Self: CalcData<S>,
+    {
         let mut key: Self = self.clone();
         for segment in &chain.0 {
             key = key.derive_child_key(segment);
@@ -378,21 +373,19 @@ impl<K: CalcNonHardenedData> Slip10<K> {
         key
     }
 
-    pub fn child_key<S: Segment>(&self, segment: &S) -> Self {
+    pub fn child_key<S: Segment>(&self, segment: &S) -> Self
+    where
+        Self: CalcData<S>,
+    {
         self.derive_child_key(segment)
     }
 
-    fn calc_data(&self, hardened: bool) -> [u8; 33] {
-        if hardened {
-            *self.key_bytes()
-        } else {
-            K::calc_non_hardened_data(self.key_bytes())
-        }
-    }
-
-    fn derive_child_key<S: Segment>(&self, segment: &S) -> Self {
+    fn derive_child_key<S: Segment>(&self, segment: &S) -> Self
+    where
+        Self: CalcData<S>,
+    {
         let mut data = [0u8; 33 + 4];
-        data[..33].copy_from_slice(&self.calc_data(segment.is_hardened()));
+        data[..33].copy_from_slice(&self.calc_data(segment));
         data[33..].copy_from_slice(segment.as_bytes().as_ref()); // ser32(i)
 
         let mut key = Self::new();
