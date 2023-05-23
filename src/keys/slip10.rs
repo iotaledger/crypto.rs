@@ -5,7 +5,7 @@
 
 use alloc::vec::Vec;
 use core::convert::TryFrom;
-use std::ops::Deref;
+use core::ops::Deref;
 
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -39,7 +39,7 @@ where
         }
     }
 }
-impl<K: Derivable> CalcData<HardenedChain> for Slip10<K>
+impl<K: IsSecretKey> CalcData<HardenedChain> for Slip10<K>
 where
     Self: CalcData<Chain> + CalcNonHardenedData,
 {
