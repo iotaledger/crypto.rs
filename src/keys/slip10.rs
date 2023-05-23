@@ -39,7 +39,7 @@ where
         }
     }
 }
-impl<K: Derivable> CalcData<ChainKind> for Slip10<K>
+impl<K: IsSecretKey> CalcData<ChainKind> for Slip10<K>
 where
     Self: CalcNonHardenedData,
 {
