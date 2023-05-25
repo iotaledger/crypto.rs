@@ -72,8 +72,8 @@ fn test_mnemonic_phrase_when_separator_is_repeated() {
         // U+3000 separator
         ("　", true),
         // whitespace(U+0020) is also allowed as a separator, because U+3000 is normalized to the whitespace
-        (" 　", false),
         (" ", true),
+        (" 　", false),
         ("  ", false),
         ("　 ", false),
         ("　 　", false),
@@ -81,29 +81,18 @@ fn test_mnemonic_phrase_when_separator_is_repeated() {
 
     for case in test_cases {
         let mnemonic_phrase = format!("あいこくしん{}あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あおぞら", case.0);
-        if case.1 {
-            assert!(
-                wordlist::decode(&mnemonic_phrase, &wordlist::JAPANESE).is_ok(),
-                "{}",
-                mnemonic_phrase
-            );
-            assert!(
-                wordlist::verify(&mnemonic_phrase, &wordlist::JAPANESE).is_ok(),
-                "{}",
-                mnemonic_phrase
-            );
-        } else {
-            assert!(
-                wordlist::decode(&mnemonic_phrase, &wordlist::JAPANESE).is_err(),
-                "{}",
-                mnemonic_phrase
-            );
-            assert!(
-                wordlist::verify(&mnemonic_phrase, &wordlist::JAPANESE).is_err(),
-                "{}",
-                mnemonic_phrase
-            );
-        }
+        assert_eq!(
+            wordlist::decode(&mnemonic_phrase, &wordlist::JAPANESE).is_ok(),
+            case.1,
+            "{}",
+            mnemonic_phrase
+        );
+        assert_eq!(
+            wordlist::verify(&mnemonic_phrase, &wordlist::JAPANESE).is_ok(),
+            case.1,
+            "{}",
+            mnemonic_phrase
+        );
     }
 }
 
