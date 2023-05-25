@@ -96,6 +96,22 @@ fn test_mnemonic_phrase_when_separator_is_repeated() {
     }
 }
 
+#[test]
+fn test_mnemonic_phrase_additional_whitespace() {
+    // additional whitespace at the beginning
+    assert!(
+        wordlist::decode(" sand luggage rack used middle crater deal scare high ring swim fish use then video visa can foot clog base quality all elephant retreat", &wordlist::ENGLISH).is_err(),
+    );
+    // additional whitespace in between
+    assert!(
+        wordlist::decode("sand  luggage rack used middle crater deal scare high ring swim fish use then video visa can foot clog base quality all elephant retreat", &wordlist::ENGLISH).is_err(),
+    );
+    // additional whitespace at the end
+    assert!(
+        wordlist::decode("sand luggage rack used middle crater deal scare high ring swim fish use then video visa can foot clog base quality all elephant retreat ", &wordlist::ENGLISH).is_err(),
+    );
+}
+
 // #[test]
 // fn test_wordlist_codec_different_data_different_encodings() {
 // for _ in 0..1000 {
