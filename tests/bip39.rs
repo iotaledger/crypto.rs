@@ -66,6 +66,52 @@ fn test_wordlist_codec() {
     }
 }
 
+#[test]
+fn test_mnemonic_phrase_when_separator_is_repeated() {
+    let test_cases = &[
+        // U+3000 separator
+        ("　", true),
+        // whitespace(U+0020) is also allowed as a separator, because U+3000 is normalized to the whitespace
+        (" ", true),
+        (" 　", false),
+        ("  ", false),
+        ("　 ", false),
+        ("　 　", false),
+    ];
+
+    for case in test_cases {
+        let mnemonic_phrase = format!("あいこくしん{}あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あおぞら", case.0);
+        assert_eq!(
+            wordlist::decode(&mnemonic_phrase, &wordlist::JAPANESE).is_ok(),
+            case.1,
+            "{}",
+            mnemonic_phrase
+        );
+        assert_eq!(
+            wordlist::verify(&mnemonic_phrase, &wordlist::JAPANESE).is_ok(),
+            case.1,
+            "{}",
+            mnemonic_phrase
+        );
+    }
+}
+
+#[test]
+fn test_mnemonic_phrase_additional_whitespace() {
+    // additional whitespace at the beginning
+    assert!(
+        wordlist::decode(" sand luggage rack used middle crater deal scare high ring swim fish use then video visa can foot clog base quality all elephant retreat", &wordlist::ENGLISH).is_err(),
+    );
+    // additional whitespace in between
+    assert!(
+        wordlist::decode("sand  luggage rack used middle crater deal scare high ring swim fish use then video visa can foot clog base quality all elephant retreat", &wordlist::ENGLISH).is_err(),
+    );
+    // additional whitespace at the end
+    assert!(
+        wordlist::decode("sand luggage rack used middle crater deal scare high ring swim fish use then video visa can foot clog base quality all elephant retreat ", &wordlist::ENGLISH).is_err(),
+    );
+}
+
 // #[test]
 // fn test_wordlist_codec_different_data_different_encodings() {
 // for _ in 0..1000 {
