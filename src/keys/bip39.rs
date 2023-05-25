@@ -139,7 +139,9 @@ pub mod wordlist {
         let mut acc = 0;
         let mut i = 0;
         let ms = ms.chars().nfkd().collect::<String>();
-        for ref w in ms.split_whitespace() {
+        let separator = wordlist.separator.chars().nfkd().collect::<String>();
+
+        for ref w in ms.split(&separator) {
             match wordlist.words.iter().position(|v| v == w) {
                 None => return Err(Error::NoSuchWord(w.to_string())),
                 Some(idx) => {
