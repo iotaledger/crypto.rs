@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.20.1]
+
+- [`57a3251`](https://www.github.com/iotaledger/crypto.rs/commit/57a3251af8876ecf4771449fce7bf887b7ed9391)([#197](https://www.github.com/iotaledger/crypto.rs/pull/197)) Use word separator provided in `WordList` when decoding. Disallow toleration for multiple whitespace when single whitespace is defined as a word separator.
+
 ## \[0.20.0]
 
 - [`2c455b1`](https://www.github.com/iotaledger/crypto.rs/commit/2c455b182d02ba7b354487b2fd6e9b7443fbd179)([#193](https://www.github.com/iotaledger/crypto.rs/pull/193)) Use `alloc` serde feature.
