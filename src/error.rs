@@ -6,6 +6,7 @@ use core::fmt::{Display, Formatter, Result as FmtResult};
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// Error type of crypto.rs
+#[non_exhaustive]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Age Format Error
