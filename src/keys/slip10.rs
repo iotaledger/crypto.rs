@@ -403,12 +403,6 @@ impl<K: hazmat::Derivable> Slip10<K> {
         K: hazmat::CalcData<S>,
     {
         K::calc_data(self.key_bytes(), segment)
-        // if hardened {
-        //     *self.key_bytes()
-        // } else {
-        //     debug_assert!(K::ALLOW_NON_HARDENED);
-        //     K::calc_non_hardened_data(self.key_bytes())
-        // }
     }
 
     fn derive_child_key<S>(&self, segment: S) -> Self
