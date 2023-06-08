@@ -84,6 +84,7 @@ fn push_pop_generic_unbalanced<T: raw::RawEncodingBuf>() {
     });
 }
 
+#[allow(clippy::redundant_clone)]
 fn eq_generic<T: raw::RawEncodingBuf + Clone>() {
     fuzz(100, || {
         let a = gen_buf_balanced::<T>(0..1000).0;
@@ -93,6 +94,7 @@ fn eq_generic<T: raw::RawEncodingBuf + Clone>() {
     });
 }
 
+#[allow(clippy::redundant_clone)]
 fn eq_generic_unbalanced<T: raw::RawEncodingBuf + Clone>() {
     fuzz(100, || {
         let a = gen_buf_unbalanced::<T>(0..1000).0;
