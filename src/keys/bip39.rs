@@ -166,18 +166,22 @@ pub mod wordlist {
             let mut s = String::new();
             s.push(separator);
             let s: String = s.nfkd().collect();
+            let mut s_chars = s.chars();
 
-            if s.chars().count() == 1 {
-                let separator = s.chars().next().unwrap();
-                // each word is normalized and without separator
-                words.iter().try_for_each(|word| {
-                    if is_nfkd(word) && !word.contains(separator) {
-                        Ok(())
-                    } else {
-                        Err(Error::BadWordlist)
-                    }
-                })?;
-                Ok(Self { words, separator })
+            if let Some(separator) = s_chars.next() {
+                if s_chars.next().is_none() {
+                    // each word is normalized and without separator
+                    words.iter().try_for_each(|word| {
+                        if is_nfkd(word) && !word.contains(separator) {
+                            Ok(())
+                        } else {
+                            Err(Error::BadWordlist)
+                        }
+                    })?;
+                    Ok(Self { words, separator })
+                } else {
+                    Err(Error::BadSeparator)
+                }
             } else {
                 Err(Error::BadSeparator)
             }
