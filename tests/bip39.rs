@@ -71,38 +71,6 @@ fn test_wordlist_codec() {
     }
 }
 
-// #[test]
-// fn test_mnemonic_phrase_when_separator_is_repeated() {
-//     let test_cases = &[
-//         // U+3000 separator
-//         ("　", true),
-//         // whitespace(U+0020) is also allowed as a separator, because U+3000 is normalized to the whitespace
-//         (" ", true),
-//         (" 　", false),
-//         ("  ", false),
-//         ("　 ", false),
-//         ("　 　", false),
-//     ];
-
-//     for case in test_cases {
-//         let mnemonic_phrase = format!("あいこくしん{}あいこくしん　あいこくしん　あいこくしん　あいこくしん
-// あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あいこくしん　あおぞら", case.0);         let
-// mnemonic = Mnemonic::from(mnemonic_phrase.as_str());         let mnemonic: MnemonicRef = (&mnemonic).into();
-//         assert_eq!(
-//             wordlist::decode(mnemonic, &wordlist::JAPANESE).is_ok(),
-//             case.1,
-//             "{}",
-//             mnemonic_phrase
-//         );
-//         assert_eq!(
-//             wordlist::verify(mnemonic, &wordlist::JAPANESE).is_ok(),
-//             case.1,
-//             "{}",
-//             mnemonic_phrase
-//         );
-//     }
-// }
-
 #[test]
 fn test_mnemonic_phrase_additional_whitespace() {
     // additional whitespace at the beginning
