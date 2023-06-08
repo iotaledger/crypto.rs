@@ -31,6 +31,9 @@ pub enum Error {
     PrivateKeyError,
     /// InvalidArgumentError
     InvalidArgumentError { alg: &'static str, expected: &'static str },
+    #[cfg(feature = "slip10")]
+    /// Slip10 Segment Hardening Error
+    Slip10Error(crate::keys::slip10::SegmentHardeningError),
     /// System Error
     SystemError {
         call: &'static str,
@@ -53,6 +56,8 @@ impl Display for Error {
             Error::ConvertError { from, to } => write!(f, "failed to convert {} to {}", from, to),
             Error::PrivateKeyError => write!(f, "Failed to generate private key."),
             Error::InvalidArgumentError { alg, expected } => write!(f, "{} expects {}", alg, expected),
+            #[cfg(feature = "slip10")]
+            Error::Slip10Error(inner) => write!(f, "slip10 error: {inner:?}"),
             Error::SystemError {
                 call,
                 raw_os_error: None,

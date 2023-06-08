@@ -443,6 +443,18 @@ pub trait Segment: Copy + Into<u32> {
     fn unharden(self) -> NonHardened;
 }
 
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SegmentHardeningError {
+    SegmentHardened,
+    SegmentNonHardened,
+}
+
+impl From<SegmentHardeningError> for crate::Error {
+    fn from(inner: SegmentHardeningError) -> Self {
+        crate::Error::Slip10Error(inner)
+    }
+}
+
 const HARDEN_MASK: u32 = 1 << 31;
 
 impl Segment for u32 {
@@ -467,12 +479,12 @@ impl From<Hardened> for u32 {
 }
 
 impl TryFrom<u32> for Hardened {
-    type Error = ();
-    fn try_from(segment: u32) -> Result<Self, ()> {
+    type Error = SegmentHardeningError;
+    fn try_from(segment: u32) -> Result<Self, SegmentHardeningError> {
         if segment.is_hardened() {
             Ok(Hardened(segment))
         } else {
-            Err(())
+            Err(SegmentHardeningError::SegmentNonHardened)
         }
     }
 }
@@ -499,12 +511,12 @@ impl From<NonHardened> for u32 {
 }
 
 impl TryFrom<u32> for NonHardened {
-    type Error = ();
-    fn try_from(segment: u32) -> Result<Self, ()> {
+    type Error = SegmentHardeningError;
+    fn try_from(segment: u32) -> Result<Self, SegmentHardeningError> {
         if !segment.is_hardened() {
             Ok(NonHardened(segment))
         } else {
-            Err(())
+            Err(SegmentHardeningError::SegmentHardened)
         }
     }
 }
