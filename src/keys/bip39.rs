@@ -51,8 +51,15 @@ impl<'a> PartialEq<str> for MnemonicRef<'a> {
     }
 }
 
-#[derive(ZeroizeOnDrop)]
+#[derive(Clone, ZeroizeOnDrop)]
 pub struct Mnemonic(String);
+
+impl Deref for Mnemonic {
+    type Target = str;
+    fn deref(&self) -> &str {
+        &self.0
+    }
+}
 
 impl From<&str> for Mnemonic {
     fn from(unnormalized_mnemonic: &str) -> Self {
@@ -75,6 +82,13 @@ impl AsRef<str> for Mnemonic {
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct PassphraseRef<'a>(&'a str);
 
+impl<'a> Deref for PassphraseRef<'a> {
+    type Target = str;
+    fn deref(&self) -> &str {
+        self.0
+    }
+}
+
 impl<'a> TryFrom<&'a str> for PassphraseRef<'a> {
     type Error = Error;
     fn try_from(passphrase_str: &'a str) -> Result<Self, Error> {
@@ -86,13 +100,13 @@ impl<'a> TryFrom<&'a str> for PassphraseRef<'a> {
     }
 }
 
-#[derive(ZeroizeOnDrop)]
+#[derive(Clone, ZeroizeOnDrop)]
 pub struct Passphrase(String);
 
-impl<'a> Deref for PassphraseRef<'a> {
+impl Deref for Passphrase {
     type Target = str;
     fn deref(&self) -> &str {
-        self.0
+        &self.0
     }
 }
 
