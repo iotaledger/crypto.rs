@@ -18,9 +18,9 @@ struct TestVector {
 
 #[test]
 fn test_separator() {
-    use unicode_normalization::UnicodeNormalization;
+    use unicode_normalization::{is_nfkd, UnicodeNormalization};
     let s = "　";
-    // assert!(is_nfkd(s));
+    assert!(!is_nfkd(s));
     let s: String = s.nfkd().collect();
     assert_eq!(1, s.chars().count());
     assert_eq!(Some(' '), s.chars().next());
