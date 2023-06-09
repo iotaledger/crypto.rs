@@ -1,7 +1,7 @@
 // Copyright 2020 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
-#![cfg(all(feature = "bip39", feature = "bip39-en", feature = "bip39-jp"))]
+#![cfg(feature = "bip39")]
 
 mod utils;
 
@@ -33,7 +33,7 @@ fn test_vectors() {
     for tv in tvs.iter() {
         let entropy = hex::decode(tv.entropy).unwrap();
         let mnemonic = hex::decode(tv.mnemonic).unwrap();
-        let mnemonic = Mnemonic::from(core::str::from_utf8(&mnemonic).unwrap());
+        let mnemonic = Mnemonic::from(core::str::from_utf8(&mnemonic).unwrap().to_string());
         let mnemonic: MnemonicRef = (&mnemonic).into();
 
         assert_eq!(wordlist::encode(&entropy, &tv.wordlist).unwrap().as_ref(), &*mnemonic);
@@ -41,20 +41,29 @@ fn test_vectors() {
         assert_eq!(*wordlist::decode(mnemonic, &tv.wordlist).unwrap(), entropy);
 
         let passphrase = hex::decode(tv.passphrase).unwrap();
-        let passphrase = Passphrase::from(core::str::from_utf8(&passphrase).unwrap());
+        let passphrase = Passphrase::from(core::str::from_utf8(&passphrase).unwrap().to_string());
         let passphrase: PassphraseRef = (&passphrase).into();
         let mut expected_seed = [0; 64];
         hex::decode_to_slice(tv.seed, &mut expected_seed).unwrap();
 
-        let mut seed = Seed::default();
+        let mut seed = Seed::null();
         mnemonic_to_seed(mnemonic, passphrase, &mut seed);
         assert_eq!(seed.as_ref(), &expected_seed);
     }
 }
 
-const ALL_WORDLISTS: &[wordlist::Wordlist<'static>] = &[wordlist::ENGLISH, wordlist::JAPANESE];
-fn choose_wordlist() -> &'static wordlist::Wordlist<'static> {
-    &ALL_WORDLISTS[rand::random::<usize>() % ALL_WORDLISTS.len()]
+const ALL_WORDLISTS: &[wordlist::Wordlist<'static>] = &[
+    #[cfg(feature = "bip39-en")]
+    wordlist::ENGLISH,
+    #[cfg(feature = "bip39-jp")]
+    wordlist::JAPANESE,
+];
+
+#[test]
+fn test_wordlist_new() {
+    for ws in ALL_WORDLISTS {
+        let _ = wordlist::Wordlist::new(ws.separator(), ws.words()).unwrap();
+    }
 }
 
 #[test]
@@ -63,11 +72,11 @@ fn test_wordlist_codec() {
         let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];
         OsRng.fill_bytes(&mut data);
 
-        let ws = choose_wordlist();
-
-        let ms = wordlist::encode(&data, ws).unwrap();
-        assert_eq!(*wordlist::decode((&ms).into(), ws).unwrap(), data);
-        assert_eq!(wordlist::verify((&ms).into(), ws), Ok(()));
+        for ws in ALL_WORDLISTS {
+            let ms = wordlist::encode(&data, ws).unwrap();
+            assert_eq!(*wordlist::decode((&ms).into(), ws).unwrap(), data);
+            assert_eq!(wordlist::verify((&ms).into(), ws), Ok(()));
+        }
     }
 }
 

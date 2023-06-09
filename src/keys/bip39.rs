@@ -20,7 +20,8 @@ pub enum Error {
     ChecksumMismatch,
     UnnormalizedMnemonic,
     UnnormalizedPassphrase,
-    BadWordlist,
+    BadWordlistWord(String),
+    UnsortedWordlist,
     BadSeparator,
 }
 
@@ -51,18 +52,11 @@ impl<'a> PartialEq<str> for MnemonicRef<'a> {
     }
 }
 
-#[derive(Clone, ZeroizeOnDrop)]
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Mnemonic(String);
 
-impl Deref for Mnemonic {
-    type Target = str;
-    fn deref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl From<&str> for Mnemonic {
-    fn from(unnormalized_mnemonic: &str) -> Self {
+impl From<String> for Mnemonic {
+    fn from(unnormalized_mnemonic: String) -> Self {
         Self(unnormalized_mnemonic.chars().nfkd().collect())
     }
 }
@@ -100,18 +94,11 @@ impl<'a> TryFrom<&'a str> for PassphraseRef<'a> {
     }
 }
 
-#[derive(Clone, ZeroizeOnDrop)]
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Passphrase(String);
 
-impl Deref for Passphrase {
-    type Target = str;
-    fn deref(&self) -> &str {
-        &self.0
-    }
-}
-
-impl From<&str> for Passphrase {
-    fn from(unnormalized_passphrase: &str) -> Self {
+impl From<String> for Passphrase {
+    fn from(unnormalized_passphrase: String) -> Self {
         Self(unnormalized_passphrase.chars().nfkd().collect())
     }
 }
@@ -122,7 +109,13 @@ impl<'a> From<&'a Passphrase> for PassphraseRef<'a> {
     }
 }
 
-#[derive(Clone, ZeroizeOnDrop)]
+impl AsRef<str> for Passphrase {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Seed([u8; 64]);
 
 impl AsRef<[u8; 64]> for Seed {
@@ -131,19 +124,17 @@ impl AsRef<[u8; 64]> for Seed {
     }
 }
 
-impl Default for Seed {
-    fn default() -> Self {
+impl Seed {
+    pub fn null() -> Self {
         Self([0_u8; 64])
     }
 }
 
 pub fn mnemonic_to_seed(m: MnemonicRef, p: PassphraseRef, s: &mut Seed) {
-    let mut salt = String::with_capacity("mnemonic".len() + p.len());
-    salt.push_str("mnemonic");
-    salt.push_str(p.0);
+    let mut salt = [b"mnemonic", p.0.as_bytes()].concat();
 
     const ROUNDS: core::num::NonZeroU32 = unsafe { core::num::NonZeroU32::new_unchecked(2048) };
-    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), ROUNDS, &mut s.0);
+    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), &salt, ROUNDS, &mut s.0);
     salt.zeroize();
 }
 
@@ -188,16 +179,32 @@ pub mod wordlist {
                         if is_nfkd(word) && !word.contains(separator) {
                             Ok(())
                         } else {
-                            Err(Error::BadWordlist)
+                            Err(Error::BadWordlistWord(word.to_string()))
                         }
                     })?;
-                    Ok(Self { words, separator })
+
+                    // all words are unique, but not necessarily sorted
+                    let mut words_set = words.to_vec();
+                    words_set.sort();
+                    if iterator_sorted::is_unique_sorted(words_set.into_iter()) {
+                        Ok(Self { words, separator })
+                    } else {
+                        Err(Error::UnsortedWordlist)
+                    }
                 } else {
                     Err(Error::BadSeparator)
                 }
             } else {
                 Err(Error::BadSeparator)
             }
+        }
+
+        pub fn separator(&self) -> char {
+            self.separator
+        }
+
+        pub fn words(&self) -> &'a [&'a str; 2048] {
+            self.words
         }
     }
 
