@@ -170,7 +170,6 @@ pub mod wordlist {
     }
 
     impl<'a> Wordlist<'a> {
-        // TODO: should it be pub?
         const fn new_unchecked(separator: char, words: &'a [&'a str; 2048]) -> Self {
             Self { words, separator }
         }
