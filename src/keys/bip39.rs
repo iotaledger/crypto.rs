@@ -132,7 +132,6 @@ impl Seed {
 
 pub fn mnemonic_to_seed(m: MnemonicRef, p: PassphraseRef, s: &mut Seed) {
     let mut salt = [b"mnemonic", p.0.as_bytes()].concat();
-
     const ROUNDS: core::num::NonZeroU32 = unsafe { core::num::NonZeroU32::new_unchecked(2048) };
     crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), &salt, ROUNDS, &mut s.0);
     salt.zeroize();
@@ -156,10 +155,6 @@ pub mod wordlist {
     #[cfg_attr(docsrs, doc(cfg(feature = "bip39-jp")))]
     include!("bip39.jp.rs");
 
-    const fn cs(ent: usize) -> usize {
-        ent / 32
-    }
-
     impl<'a> Wordlist<'a> {
         const fn new_unchecked(separator: char, words: &'a [&'a str; 2048]) -> Self {
             Self { words, separator }
@@ -167,10 +162,8 @@ pub mod wordlist {
 
         pub fn new(separator: char, words: &'a [&'a str; 2048]) -> Result<Self, Error> {
             // normalize separator char
-            let mut s = String::new();
-            s.push(separator);
-            let s: String = s.nfkd().collect();
-            let mut s_chars = s.chars();
+            let s = String::from(separator);
+            let mut s_chars = s.nfkd();
 
             if let Some(separator) = s_chars.next() {
                 if s_chars.next().is_none() {
@@ -206,6 +199,10 @@ pub mod wordlist {
         pub fn words(&self) -> &'a [&'a str; 2048] {
             self.words
         }
+
+        pub fn lookup(&self, word: &str) -> Option<usize> {
+            self.words.iter().position(|w| *w == word)
+        }
     }
 
     /// Encode the given bytestring as a mnemonic sentence using the specified wordlist.
@@ -217,68 +214,50 @@ pub mod wordlist {
     #[allow(non_snake_case)]
     #[allow(clippy::many_single_char_names)]
     pub fn encode(secret_entropy: &[u8], wordlist: &Wordlist) -> Result<Mnemonic, Error> {
-        let ENT = secret_entropy.len() * 8;
-
-        if ENT != 128 && ENT != 160 && ENT != 192 && ENT != 224 && ENT != 256 {
-            return Err(Error::InvalidEntropyCount(ENT));
+        match secret_entropy.len() {
+            16 | 20 | 24 | 28 | 32 => {},
+            _ => return Err(Error::InvalidEntropyCount(secret_entropy.len() * 8)),
         }
 
-        let mut CS = [0; 32];
-        crate::hashes::sha::SHA256(secret_entropy, &mut CS);
+        let mut checksum = [0; 32];
+        crate::hashes::sha::SHA256(secret_entropy, &mut checksum);
 
-        let mut ms = None;
-
-        let b = |i: usize| {
-            if i < secret_entropy.len() {
-                Some(secret_entropy[i] as usize)
-            } else if i - secret_entropy.len() < CS.len() {
-                Some(CS[i - secret_entropy.len()] as usize)
-            } else {
-                None
-            }
-        };
-
-        let mut i = 0;
-        loop {
-            if i == ENT + cs(ENT) {
-                return Ok(Mnemonic(ms.unwrap()));
-            }
-
-            let k = i / 8;
-            let r = i % 8;
-            let idx = if 16 - r > 11 {
-                match (b(k), b(k + 1)) {
-                    (Some(b0), Some(b1)) => {
-                        let x = 11 - (8 - r);
-                        let mut y = (b0 & ((1 << (8 - r)) - 1)) << x;
-                        y |= b1 >> (8 - x);
-                        y
-                    }
-                    _ => return Ok(Mnemonic(ms.unwrap())),
+        let (_, leftover_bits, mut capacity, words) = secret_entropy
+            .iter()
+            .chain(Some(&checksum[0]))
+            .fold((0_u32, 0, 0_usize, Vec::new()), |(mut acc, mut bits, mut mnemonic_capacity, mut mnemonic_words), entropy_byte| {
+                const MASK: u32 = (1_u32 << 11) - 1;
+                acc = (acc << 8) | (*entropy_byte as u32);
+                bits += 8;
+                if bits >= 11 {
+                    debug_assert!(bits <= 18);
+                    bits -= 11;
+                    let idx = (MASK & (acc >> bits)) as usize;
+                    let word = wordlist.words[idx];
+                    mnemonic_words.push(word);
+                    mnemonic_capacity += word.as_bytes().len();
                 }
-            } else {
-                match (b(k), b(k + 1), b(k + 2)) {
-                    (Some(b0), Some(b1), Some(b2)) => {
-                        let x = 11 - 8 - (8 - r);
-                        let mut y = (b0 & ((1 << (8 - r)) - 1)) << (8 + x);
-                        y |= b1 << x;
-                        y |= b2 >> (8 - x);
-                        y
-                    }
-                    _ => return Ok(Mnemonic(ms.unwrap())),
-                }
-            };
+                debug_assert!(bits <= 10);
+                (acc, bits, mnemonic_capacity, mnemonic_words)
+            });
+        // leftover_bits here represent the number of left-over low bits in checksum byte
+        debug_assert_eq!(8, secret_entropy.len() / 4 + leftover_bits as usize);
 
-            match ms {
-                None => ms = Some(wordlist.words[idx].to_string()),
-                Some(ref mut ms) => {
-                    ms.push(wordlist.separator);
-                    ms.push_str(wordlist.words[idx]);
-                }
-            }
-
-            i += 11;
+        if !words.is_empty() {
+            capacity += (words.len() - 1) * wordlist.separator.encode_utf8(&mut [0_u8; 4]).len();
         }
+
+        // allocate the exact number of bytes required for secret mnemonic to avoid reallocations and potential secret leakage
+        let mut mnemonic = String::with_capacity(capacity);
+        words.into_iter().for_each(|word| {
+            if !mnemonic.is_empty() {
+                mnemonic.push(wordlist.separator);
+            }
+            mnemonic.push_str(word);
+        });
+        debug_assert_eq!(capacity, mnemonic.as_bytes().len());
+
+        Ok(Mnemonic(mnemonic))
     }
 
     /// Decode and compare the checksum given a mnemonic sentence and the wordlist used in the
@@ -287,66 +266,76 @@ pub mod wordlist {
     /// Be aware that the error detection has a noticable rate of false positives. Given CS
     /// checksum bits (CS := ENT / 32) the expected rate of false positives are one in 2^CS. For
     /// example given 128 bit entropy that's 1 in 16.
-    #[allow(non_snake_case)]
     pub fn decode(mnemonic: MnemonicRef, wordlist: &Wordlist) -> Result<Zeroizing<Vec<u8>>, Error> {
-        let mut data = Zeroizing::new(Vec::new());
-        let mut acc = 0;
-        let mut i = 0;
+        // allocate maximal entropy capacity of 32 bytes to avoid reallocations
+        let mut entropy = Zeroizing::new(Vec::with_capacity(32));
 
-        for ref w in mnemonic.split(wordlist.separator) {
-            match wordlist.words.iter().position(|v| v == w) {
-                None => return Err(Error::NoSuchWord(w.to_string())),
-                Some(idx) => {
-                    let r = i % 8;
-                    acc <<= 8 - r;
-                    acc |= idx >> (11 - (8 - r));
-                    data.push(acc as u8);
-                    if r + 11 < 16 {
-                        acc = idx & ((1 << (11 - (8 - r))) - 1);
-                    } else {
-                        acc = (idx & ((1 << (11 - (8 - r))) - 1)) >> (11 - 8 - (8 - r));
-                        data.push(acc as u8);
-                        acc = idx & ((1 << (11 - 8 - (8 - r))) - 1);
+        let (checksum_acc, checksum_bits) = mnemonic
+            .split(wordlist.separator)
+            .try_fold((0_u32, 0), |(mut acc, mut bits), word| {
+                let idx = wordlist
+                    .lookup(word)
+                    .ok_or_else(|| Error::NoSuchWord(word.to_string()))? as u32;
+
+                acc = (acc << 11) | idx;
+                bits += 11;
+
+                while bits > 8 {
+                    debug_assert!(bits <= 19);
+                    if entropy.len() == entropy.capacity() {
+                        return Err(Error::InvalidEntropyCount(32));
                     }
-
-                    i += 11;
+                    bits -= 8;
+                    entropy.push((acc >> bits) as u8);
                 }
-            }
+
+                debug_assert!(bits <= 8);
+                Ok((acc, bits))
+            })?;
+        // checksum_bits here represent the number of high bits in checksum byte
+        match entropy.len() {
+            16 | 20 | 24 | 28 | 32 => {
+                debug_assert_eq!(entropy.len() / 4, checksum_bits as usize);
+            },
+            _ => {
+                return Err(Error::InvalidEntropyCount(entropy.len() * 8 + checksum_bits as usize));
+            },
         }
 
-        fn sub_whole_byte_case(acc: usize, data: Zeroizing<Vec<u8>>, ent: usize) -> Result<Zeroizing<Vec<u8>>, Error> {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data, &mut CS);
-            if (acc as u8) == CS[0] >> (8 - cs(ent)) {
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
+        let mut checksum = [0; 32];
+        crate::hashes::sha::SHA256(&entropy, &mut checksum);
+        if (checksum_acc & ((1 << checksum_bits) - 1)) as u8 != checksum[0] >> (8 - checksum_bits) {
+            return Err(Error::ChecksumMismatch);
         }
 
-        if i == 128 + cs(128) {
-            sub_whole_byte_case(acc, data, 128)
-        } else if i == 160 + cs(160) {
-            sub_whole_byte_case(acc, data, 160)
-        } else if i == 192 + cs(192) {
-            sub_whole_byte_case(acc, data, 192)
-        } else if i == 224 + cs(224) {
-            sub_whole_byte_case(acc, data, 224)
-        } else if i == 256 + cs(256) {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data[..32], &mut CS);
-            if data[32] == CS[0] {
-                data.truncate(32);
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
-        } else {
-            Err(Error::InvalidEntropyCount(i))
-        }
+        Ok(entropy)
     }
 
-    pub fn verify(ms: MnemonicRef, wordlist: &Wordlist) -> Result<(), Error> {
-        decode(ms, wordlist).map(|_| ())
+    pub fn verify(mnemonic: MnemonicRef, wordlist: &Wordlist) -> Result<(), Error> {
+        decode(mnemonic, wordlist).map(|_| ())
+    }
+}
+
+#[cfg(feature = "bip39-en")]
+#[test]
+fn test_encode_decode() {
+    fn inc(e: u8, i: usize) -> u8 {
+        ((e as usize + 0x9b17f203) * (i + 0x4792a0e2) + 7) as u8
+    }
+
+    let mut entropy = [0_u8; 32];
+    for _ in 0..5 {
+        entropy
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, e)| *e = e.wrapping_add(inc(*e, i)));
+
+        for i in 4..9 {
+            let n = 4 * i;
+
+            let mnemonic = wordlist::encode(&entropy[..n], &wordlist::ENGLISH).unwrap();
+            let decoded_entropy = wordlist::decode((&mnemonic).into(), &wordlist::ENGLISH).unwrap();
+            assert_eq!(&entropy[..n], &decoded_entropy[..]);
+        }
     }
 }
