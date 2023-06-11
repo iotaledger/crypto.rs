@@ -215,17 +215,16 @@ pub mod wordlist {
     #[allow(clippy::many_single_char_names)]
     pub fn encode(secret_entropy: &[u8], wordlist: &Wordlist) -> Result<Mnemonic, Error> {
         match secret_entropy.len() {
-            16 | 20 | 24 | 28 | 32 => {},
+            16 | 20 | 24 | 28 | 32 => {}
             _ => return Err(Error::InvalidEntropyCount(secret_entropy.len() * 8)),
         }
 
         let mut checksum = [0; 32];
         crate::hashes::sha::SHA256(secret_entropy, &mut checksum);
 
-        let (_, leftover_bits, mut capacity, words) = secret_entropy
-            .iter()
-            .chain(Some(&checksum[0]))
-            .fold((0_u32, 0, 0_usize, Vec::new()), |(mut acc, mut bits, mut mnemonic_capacity, mut mnemonic_words), entropy_byte| {
+        let (_, leftover_bits, mut capacity, words) = secret_entropy.iter().chain(Some(&checksum[0])).fold(
+            (0_u32, 0, 0_usize, Vec::new()),
+            |(mut acc, mut bits, mut mnemonic_capacity, mut mnemonic_words), entropy_byte| {
                 const MASK: u32 = (1_u32 << 11) - 1;
                 acc = (acc << 8) | (*entropy_byte as u32);
                 bits += 8;
@@ -239,7 +238,8 @@ pub mod wordlist {
                 }
                 debug_assert!(bits <= 10);
                 (acc, bits, mnemonic_capacity, mnemonic_words)
-            });
+            },
+        );
         // leftover_bits here represent the number of left-over low bits in checksum byte
         debug_assert_eq!(8, secret_entropy.len() / 4 + leftover_bits as usize);
 
@@ -247,7 +247,8 @@ pub mod wordlist {
             capacity += (words.len() - 1) * wordlist.separator.encode_utf8(&mut [0_u8; 4]).len();
         }
 
-        // allocate the exact number of bytes required for secret mnemonic to avoid reallocations and potential secret leakage
+        // allocate the exact number of bytes required for secret mnemonic to avoid reallocations and potential secret
+        // leakage
         let mut mnemonic = String::with_capacity(capacity);
         words.into_iter().for_each(|word| {
             if !mnemonic.is_empty() {
@@ -270,36 +271,37 @@ pub mod wordlist {
         // allocate maximal entropy capacity of 32 bytes to avoid reallocations
         let mut entropy = Zeroizing::new(Vec::with_capacity(32));
 
-        let (checksum_acc, checksum_bits) = mnemonic
-            .split(wordlist.separator)
-            .try_fold((0_u32, 0), |(mut acc, mut bits), word| {
-                let idx = wordlist
-                    .lookup(word)
-                    .ok_or_else(|| Error::NoSuchWord(word.to_string()))? as u32;
+        let (checksum_acc, checksum_bits) =
+            mnemonic
+                .split(wordlist.separator)
+                .try_fold((0_u32, 0), |(mut acc, mut bits), word| {
+                    let idx = wordlist
+                        .lookup(word)
+                        .ok_or_else(|| Error::NoSuchWord(word.to_string()))? as u32;
 
-                acc = (acc << 11) | idx;
-                bits += 11;
+                    acc = (acc << 11) | idx;
+                    bits += 11;
 
-                while bits > 8 {
-                    debug_assert!(bits <= 19);
-                    if entropy.len() == entropy.capacity() {
-                        return Err(Error::InvalidEntropyCount(32));
+                    while bits > 8 {
+                        debug_assert!(bits <= 19);
+                        if entropy.len() == entropy.capacity() {
+                            return Err(Error::InvalidEntropyCount(32));
+                        }
+                        bits -= 8;
+                        entropy.push((acc >> bits) as u8);
                     }
-                    bits -= 8;
-                    entropy.push((acc >> bits) as u8);
-                }
 
-                debug_assert!(bits <= 8);
-                Ok((acc, bits))
-            })?;
+                    debug_assert!(bits <= 8);
+                    Ok((acc, bits))
+                })?;
         // checksum_bits here represent the number of high bits in checksum byte
         match entropy.len() {
             16 | 20 | 24 | 28 | 32 => {
                 debug_assert_eq!(entropy.len() / 4, checksum_bits as usize);
-            },
+            }
             _ => {
                 return Err(Error::InvalidEntropyCount(entropy.len() * 8 + checksum_bits as usize));
-            },
+            }
         }
 
         let mut checksum = [0; 32];
