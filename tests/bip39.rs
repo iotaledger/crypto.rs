@@ -67,6 +67,14 @@ fn test_wordlist_new() {
 }
 
 #[test]
+fn test_from_words() {
+    let words = &[
+        "sand", "luggage", "rack", "used", "middle", "crater", "deal", "scare", "high", "ring", "swim", "fish",
+    ];
+    let _: Mnemonic = words.into();
+}
+
+#[test]
 fn test_wordlist_codec() {
     for _ in 0..1000 {
         let mut data = vec![0; 32 * (4 + rand::random::<usize>() % 5) / 8];

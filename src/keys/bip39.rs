@@ -7,6 +7,7 @@
 // "String slices are always valid UTF-8."
 
 use alloc::string::{String, ToString};
+use alloc::vec::Vec;
 use core::convert::TryFrom;
 use core::ops::Deref;
 
@@ -72,11 +73,49 @@ impl<'a> PartialEq<str> for MnemonicRef<'a> {
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Mnemonic(String);
 
+/// Normalize the input string and use it as mnemonic.
+/// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
 impl From<String> for Mnemonic {
-    fn from(unnormalized_mnemonic: String) -> Self {
-        Self(unnormalized_mnemonic.chars().nfkd().collect())
+    fn from(mut unnormalized_mnemonic: String) -> Self {
+        let mnemonic = Self(unnormalized_mnemonic.chars().nfkd().collect());
+        unnormalized_mnemonic.zeroize();
+        mnemonic
     }
 }
+
+/// Join the input words with the space character (U+0020) and normalize into a mnemonic.
+/// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
+///
+/// Note, the initial word list could have had a separator different from the space. An incorrect separator will result
+/// in a different mnemonic (and seed).
+impl From<Vec<String>> for Mnemonic {
+    fn from(mut words: Vec<String>) -> Self {
+        let mnemonic = words.join(" ").into();
+        words.zeroize();
+        mnemonic
+    }
+}
+
+macro_rules! impl_from_words {
+    ($n:literal) => {
+        /// Join the input words with the space character (U+0020) and normalize into a mnemonic.
+        /// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
+        ///
+        /// Note, the initial word list could have had a separator different from the space. An incorrect separator will
+        /// result in a different mnemonic (and seed).
+        impl<'a> From<&'a [&'a str; $n]> for Mnemonic {
+            fn from(words: &'a [&'a str; $n]) -> Self {
+                words.join(" ").into()
+            }
+        }
+    };
+}
+
+impl_from_words!(12);
+impl_from_words!(15);
+impl_from_words!(18);
+impl_from_words!(21);
+impl_from_words!(24);
 
 impl<'a> From<&'a Mnemonic> for MnemonicRef<'a> {
     fn from(mnemonic_ref: &'a Mnemonic) -> Self {
