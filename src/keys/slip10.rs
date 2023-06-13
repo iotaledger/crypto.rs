@@ -452,6 +452,7 @@ impl<K: hazmat::Derivable> TryFrom<&[u8; 65]> for Slip10<K> {
     }
 }
 
+/// Segment of a derivation chain.
 pub trait Segment: Copy + Into<u32> {
     fn is_hardened(self) -> bool;
     fn ser32(self) -> [u8; 4] {
@@ -461,9 +462,13 @@ pub trait Segment: Copy + Into<u32> {
     fn unharden(self) -> NonHardened;
 }
 
+/// Error indicating unexpected/invalid segment hardening.
+/// Some keys only accept certain segments: either hardened or non-hardened.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SegmentHardeningError {
+    /// Input segment is hardened, expected non-hardened segment only.
     Hardened,
+    /// Input segment is non-hardened, expected hardened segment only.
     NonHardened,
 }
 
@@ -475,6 +480,7 @@ impl From<SegmentHardeningError> for crate::Error {
 
 const HARDEN_MASK: u32 = 1 << 31;
 
+/// `u32` type can represent both hardened and non-hardened segments.
 impl Segment for u32 {
     fn is_hardened(self) -> bool {
         self & HARDEN_MASK != 0
@@ -487,6 +493,7 @@ impl Segment for u32 {
     }
 }
 
+/// Type of hardened segments.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct Hardened(u32);
 
@@ -519,6 +526,7 @@ impl Segment for Hardened {
     }
 }
 
+/// Type of non-hardened segments.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
 pub struct NonHardened(u32);
 
