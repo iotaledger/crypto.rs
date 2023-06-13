@@ -13,18 +13,28 @@ use core::ops::Deref;
 use unicode_normalization::{is_nfkd, UnicodeNormalization};
 use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
+/// BIP39 coded error.
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
+    /// Mnemonic entropy amount is invalid (should be 128 or 160 or 192 or 224 or 256 bits)
     InvalidEntropyCount(usize),
+    /// Mnemonic contains a word not present in word list
     NoSuchWord(String),
+    /// Mnemonic corrupted, checksum mismatch
     ChecksumMismatch,
+    /// Mnemonic is not in NFKD form
     UnnormalizedMnemonic,
+    /// Passphrase is not in NFKD form
     UnnormalizedPassphrase,
+    /// Word list contains unnormalized word or word with a separator
     BadWordlistWord(String),
+    /// Word list contains duplicate words
     UnsortedWordlist,
+    /// Separator is not in NFKD form
     BadSeparator,
 }
 
+/// Reference to a normalized (unicode NFKD) mnemonic.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct MnemonicRef<'a>(&'a str);
 
@@ -52,6 +62,13 @@ impl<'a> PartialEq<str> for MnemonicRef<'a> {
     }
 }
 
+/// Owned normalized (unicode NFKD) mnemonic.
+///
+/// Mnemonic is the encoding of secret entropy using words from a given word list.
+/// Mnemonic is used to derive a seed which serves as a master key.
+/// If mnemonic is leaked then the seed is compromised (unless a strong passphrase is used).
+/// Mnemonic should be kept secret on analog media.
+/// Mnemonic should be verified against a given word list before deriving a seed from it.
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Mnemonic(String);
 
@@ -73,6 +90,7 @@ impl AsRef<str> for Mnemonic {
     }
 }
 
+/// Reference to a normalized (unicode NFKD) passphrase.
 #[derive(Clone, Copy, PartialEq, Eq)]
 pub struct PassphraseRef<'a>(&'a str);
 
@@ -94,6 +112,10 @@ impl<'a> TryFrom<&'a str> for PassphraseRef<'a> {
     }
 }
 
+/// Owned normalized (unicode NFKD) passphrase.
+///
+/// Passphrase is a memorable secret and is used as additional secret used together with mnemonic to derive seed.
+/// If passphrase and mnemonic are leaked then the seed is compromised.
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Passphrase(String);
 
@@ -115,6 +137,10 @@ impl AsRef<str> for Passphrase {
     }
 }
 
+/// Seed is a secret used as master key (ie. other keys are derived/computed from it).
+///
+/// Seed must either be securely stored (on a hardware token, for example) or it can be derived from mnemonic and
+/// optional passphrase. If seed is leaked then all keys derived from it might be compromised.
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Seed([u8; 64]);
 
@@ -130,6 +156,8 @@ impl Seed {
     }
 }
 
+/// Derive seed from mnemonic and optional (can be empty) passphrase.
+// Return seed via mutable reference to avoid potential leaks into stack memory.
 pub fn mnemonic_to_seed(m: MnemonicRef, p: PassphraseRef, s: &mut Seed) {
     let mut salt = [b"mnemonic", p.0.as_bytes()].concat();
     const ROUNDS: core::num::NonZeroU32 = unsafe { core::num::NonZeroU32::new_unchecked(2048) };
@@ -142,6 +170,9 @@ pub mod wordlist {
 
     use super::*;
 
+    /// Word list complying with BIP39 rules.
+    ///
+    /// All words should be different and easily distinguishable from other words in the list.
     pub struct Wordlist<'a> {
         words: &'a [&'a str; 2048],
         separator: char,
@@ -160,6 +191,7 @@ pub mod wordlist {
             Self { words, separator }
         }
 
+        /// Verify and construct a word list from separator char and set of words.
         pub fn new(separator: char, words: &'a [&'a str; 2048]) -> Result<Self, Error> {
             // normalize separator char
             let s = String::from(separator);
@@ -205,7 +237,7 @@ pub mod wordlist {
         }
     }
 
-    /// Encode the given bytestring as a mnemonic sentence using the specified wordlist.
+    /// Encode the given secret entropy bytestring as a mnemonic sentence using the specified word list.
     /// Only bytestrings of length 128, 160, 192, 224 and 256 bits are accepted, and this is the
     /// only expected error case.
     ///
