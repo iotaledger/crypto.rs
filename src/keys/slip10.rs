@@ -292,8 +292,9 @@ impl<K: hazmat::IsSecretKey> From<&Seed> for Slip10<K> {
     }
 }
 
-impl<K: hazmat::IsPublicKey> Slip10<K>
+impl<K> Slip10<K>
 where
+    K: hazmat::IsPublicKey,
     K::SecretKey: hazmat::ToPublic,
 {
     pub fn from_extended_secret_key(esk: &Slip10<K::SecretKey>) -> Self {
@@ -304,8 +305,9 @@ where
     }
 }
 
-impl<K: hazmat::IsPublicKey> From<&Slip10<K::SecretKey>> for Slip10<K>
+impl<K> From<&Slip10<K::SecretKey>> for Slip10<K>
 where
+    K: hazmat::IsPublicKey,
     K::SecretKey: hazmat::ToPublic,
 {
     fn from(esk: &Slip10<K::SecretKey>) -> Self {
@@ -412,7 +414,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
     {
         let mut data = [0u8; 33 + 4];
         data[..33].copy_from_slice(&self.calc_data(segment));
-        data[33..].copy_from_slice(&segment.ser32()); // ser32(i)
+        data[33..].copy_from_slice(&segment.ser32());
 
         let mut key = Self::new();
         HMAC_SHA512(&data, self.chain_code(), key.ext_mut());
@@ -445,8 +447,8 @@ pub trait Segment: Copy + Into<u32> {
 
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum SegmentHardeningError {
-    SegmentHardened,
-    SegmentNonHardened,
+    Hardened,
+    NonHardened,
 }
 
 impl From<SegmentHardeningError> for crate::Error {
@@ -484,7 +486,7 @@ impl TryFrom<u32> for Hardened {
         if segment.is_hardened() {
             Ok(Hardened(segment))
         } else {
-            Err(SegmentHardeningError::SegmentNonHardened)
+            Err(SegmentHardeningError::NonHardened)
         }
     }
 }
@@ -516,7 +518,7 @@ impl TryFrom<u32> for NonHardened {
         if !segment.is_hardened() {
             Ok(NonHardened(segment))
         } else {
-            Err(SegmentHardeningError::SegmentHardened)
+            Err(SegmentHardeningError::Hardened)
         }
     }
 }
