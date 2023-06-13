@@ -470,7 +470,7 @@ impl Segment for u32 {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct Hardened(pub u32);
+pub struct Hardened(u32);
 
 impl From<Hardened> for u32 {
     fn from(segment: Hardened) -> u32 {
@@ -502,7 +502,7 @@ impl Segment for Hardened {
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
-pub struct NonHardened(pub u32);
+pub struct NonHardened(u32);
 
 impl From<NonHardened> for u32 {
     fn from(segment: NonHardened) -> u32 {
