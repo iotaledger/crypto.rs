@@ -3,9 +3,9 @@
 
 // https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/japanese.txt
 
-pub const JAPANESE: Wordlist = Wordlist {
-    separator: "　",
-    words: &[
+pub const JAPANESE: Wordlist = Wordlist::new_unchecked(
+    ' ', //'　', // U+3000 is normalized to U+20
+    &[
         "あいこくしん",
         "あいさつ",
         "あいだ",
@@ -2055,4 +2055,4 @@ pub const JAPANESE: Wordlist = Wordlist {
         "わらう",
         "われる",
     ],
-};
+);

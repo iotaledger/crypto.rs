@@ -199,6 +199,13 @@ impl Seed {
     }
 }
 
+#[cfg(feature = "bip39")]
+impl From<super::bip39::Seed> for Seed {
+    fn from(seed: super::bip39::Seed) -> Self {
+        Self::from_bytes(seed.as_ref())
+    }
+}
+
 pub type ChainCode = [u8; 32];
 
 #[derive(ZeroizeOnDrop)]

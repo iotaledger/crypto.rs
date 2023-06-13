@@ -5,24 +5,203 @@
 
 // https://doc.rust-lang.org/std/primitive.str.html
 // "String slices are always valid UTF-8."
-type Mnemonic = str;
-type Passphrase = str;
-type Seed = [u8; 64];
 
 use alloc::string::{String, ToString};
+use alloc::vec::Vec;
+use core::convert::TryFrom;
+use core::ops::Deref;
 
-use unicode_normalization::UnicodeNormalization;
+use unicode_normalization::{is_nfkd, UnicodeNormalization};
+use zeroize::{Zeroize, ZeroizeOnDrop, Zeroizing};
 
-pub fn mnemonic_to_seed(m: &Mnemonic, p: &Passphrase, s: &mut Seed) {
-    let m = m.chars().nfkd().collect::<String>();
+/// BIP39 coded error.
+#[derive(Debug, PartialEq, Eq)]
+pub enum Error {
+    /// Mnemonic entropy amount is invalid (should be 128 or 160 or 192 or 224 or 256 bits)
+    InvalidEntropyCount(usize),
+    /// Mnemonic contains a word not present in word list
+    NoSuchWord(String),
+    /// Mnemonic corrupted, checksum mismatch
+    ChecksumMismatch,
+    /// Mnemonic is not in NFKD form
+    UnnormalizedMnemonic,
+    /// Passphrase is not in NFKD form
+    UnnormalizedPassphrase,
+    /// Word list contains unnormalized word or word with a separator
+    BadWordlistWord(String),
+    /// Word list contains duplicate words
+    UnsortedWordlist,
+    /// Separator is not in NFKD form
+    BadSeparator,
+}
 
-    let mut salt = String::with_capacity("mnemonic".len() + p.len());
-    salt.push_str("mnemonic");
-    salt.push_str(p);
-    let salt = salt.nfkd().collect::<String>();
+/// Reference to a normalized (unicode NFKD) mnemonic.
+#[derive(Clone, Copy)]
+pub struct MnemonicRef<'a>(&'a str);
 
+impl<'a> Deref for MnemonicRef<'a> {
+    type Target = str;
+    fn deref(&self) -> &str {
+        self.0
+    }
+}
+
+impl<'a> TryFrom<&'a str> for MnemonicRef<'a> {
+    type Error = Error;
+    fn try_from(mnemonic_str: &'a str) -> Result<Self, Error> {
+        if is_nfkd(mnemonic_str) {
+            Ok(MnemonicRef(mnemonic_str))
+        } else {
+            Err(Error::UnnormalizedMnemonic)
+        }
+    }
+}
+
+impl<'a> PartialEq<str> for MnemonicRef<'a> {
+    fn eq(&self, other: &str) -> bool {
+        self.0.eq(other)
+    }
+}
+
+/// Owned normalized (unicode NFKD) mnemonic.
+///
+/// Mnemonic is the encoding of secret entropy using words from a given word list.
+/// Mnemonic is used to derive a seed which serves as a master key.
+/// If mnemonic is leaked then the seed is compromised (unless a strong passphrase is used).
+/// Mnemonic should be kept secret on analog media.
+/// Mnemonic should be verified against a given word list before deriving a seed from it.
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
+pub struct Mnemonic(String);
+
+/// Normalize the input string and use it as mnemonic.
+/// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
+impl From<String> for Mnemonic {
+    fn from(mut unnormalized_mnemonic: String) -> Self {
+        let mnemonic = Self(unnormalized_mnemonic.chars().nfkd().collect());
+        unnormalized_mnemonic.zeroize();
+        mnemonic
+    }
+}
+
+/// Join the input words with the space character (U+0020) and normalize into a mnemonic.
+/// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
+///
+/// Note, the initial word list could have had a separator different from the space. An incorrect separator will result
+/// in a different mnemonic (and seed).
+impl From<Vec<String>> for Mnemonic {
+    fn from(mut words: Vec<String>) -> Self {
+        let mnemonic = words.join(" ").into();
+        words.zeroize();
+        mnemonic
+    }
+}
+
+macro_rules! impl_from_words {
+    ($n:literal) => {
+        /// Join the input words with the space character (U+0020) and normalize into a mnemonic.
+        /// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
+        ///
+        /// Note, the initial word list could have had a separator different from the space. An incorrect separator will
+        /// result in a different mnemonic (and seed).
+        impl<'a> From<&'a [&'a str; $n]> for Mnemonic {
+            fn from(words: &'a [&'a str; $n]) -> Self {
+                words.join(" ").into()
+            }
+        }
+    };
+}
+
+impl_from_words!(12);
+impl_from_words!(15);
+impl_from_words!(18);
+impl_from_words!(21);
+impl_from_words!(24);
+
+impl<'a> From<&'a Mnemonic> for MnemonicRef<'a> {
+    fn from(mnemonic_ref: &'a Mnemonic) -> Self {
+        Self(&mnemonic_ref.0)
+    }
+}
+
+impl AsRef<str> for Mnemonic {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+/// Reference to a normalized (unicode NFKD) passphrase.
+#[derive(Clone, Copy)]
+pub struct PassphraseRef<'a>(&'a str);
+
+impl<'a> Deref for PassphraseRef<'a> {
+    type Target = str;
+    fn deref(&self) -> &str {
+        self.0
+    }
+}
+
+impl<'a> TryFrom<&'a str> for PassphraseRef<'a> {
+    type Error = Error;
+    fn try_from(passphrase_str: &'a str) -> Result<Self, Error> {
+        if is_nfkd(passphrase_str) {
+            Ok(PassphraseRef(passphrase_str))
+        } else {
+            Err(Error::UnnormalizedPassphrase)
+        }
+    }
+}
+
+/// Owned normalized (unicode NFKD) passphrase.
+///
+/// Passphrase is a memorable secret and is used as additional secret used together with mnemonic to derive seed.
+/// If passphrase and mnemonic are leaked then the seed is compromised.
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
+pub struct Passphrase(String);
+
+impl From<String> for Passphrase {
+    fn from(unnormalized_passphrase: String) -> Self {
+        Self(unnormalized_passphrase.chars().nfkd().collect())
+    }
+}
+
+impl<'a> From<&'a Passphrase> for PassphraseRef<'a> {
+    fn from(passphrase_ref: &'a Passphrase) -> Self {
+        Self(&passphrase_ref.0)
+    }
+}
+
+impl AsRef<str> for Passphrase {
+    fn as_ref(&self) -> &str {
+        &self.0
+    }
+}
+
+/// Seed is a secret used as master key (ie. other keys are derived/computed from it).
+///
+/// Seed must either be securely stored (on a hardware token, for example) or it can be derived from mnemonic and
+/// optional passphrase. If seed is leaked then all keys derived from it might be compromised.
+#[derive(Clone, Zeroize, ZeroizeOnDrop)]
+pub struct Seed([u8; 64]);
+
+impl AsRef<[u8; 64]> for Seed {
+    fn as_ref(&self) -> &[u8; 64] {
+        &self.0
+    }
+}
+
+impl Seed {
+    pub fn null() -> Self {
+        Self([0_u8; 64])
+    }
+}
+
+/// Derive seed from mnemonic and optional (can be empty) passphrase.
+// Return seed via mutable reference to avoid potential leaks into stack memory.
+pub fn mnemonic_to_seed(m: MnemonicRef, p: PassphraseRef, s: &mut Seed) {
+    let mut salt = [b"mnemonic", p.0.as_bytes()].concat();
     const ROUNDS: core::num::NonZeroU32 = unsafe { core::num::NonZeroU32::new_unchecked(2048) };
-    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), salt.as_bytes(), ROUNDS, s);
+    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), &salt, ROUNDS, &mut s.0);
+    salt.zeroize();
 }
 
 pub mod wordlist {
@@ -30,9 +209,12 @@ pub mod wordlist {
 
     use super::*;
 
+    /// Word list complying with BIP39 rules.
+    ///
+    /// All words should be different and easily distinguishable from other words in the list.
     pub struct Wordlist<'a> {
-        pub words: &'a [&'a str; 2048],
-        pub separator: &'a str,
+        words: &'a [&'a str; 2048],
+        separator: char,
     }
 
     #[cfg(feature = "bip39-en")]
@@ -43,18 +225,61 @@ pub mod wordlist {
     #[cfg_attr(docsrs, doc(cfg(feature = "bip39-jp")))]
     include!("bip39.jp.rs");
 
-    #[derive(Debug, PartialEq, Eq)]
-    pub enum Error {
-        InvalidEntropyCount(usize),
-        NoSuchWord(String),
-        ChecksumMismatch,
+    impl<'a> Wordlist<'a> {
+        const fn new_unchecked(separator: char, words: &'a [&'a str; 2048]) -> Self {
+            Self { words, separator }
+        }
+
+        /// Verify and construct a word list from separator and set of words.
+        ///
+        /// Separator character must normalize to a single character.
+        /// Words must be in NFKD form, can't contain separator. All words must be unique.
+        pub fn new(separator: char, words: &'a [&'a str; 2048]) -> Result<Self, Error> {
+            // normalize separator char
+            let s = String::from(separator);
+            let mut s_chars = s.nfkd();
+
+            if let Some(separator) = s_chars.next() {
+                if s_chars.next().is_none() {
+                    // each word is normalized and without separator
+                    words.iter().try_for_each(|word| {
+                        if is_nfkd(word) && !word.contains(separator) {
+                            Ok(())
+                        } else {
+                            Err(Error::BadWordlistWord(word.to_string()))
+                        }
+                    })?;
+
+                    // all words are unique, but not necessarily sorted
+                    let mut words_set = words.to_vec();
+                    words_set.sort();
+                    if iterator_sorted::is_unique_sorted(words_set.into_iter()) {
+                        Ok(Self { words, separator })
+                    } else {
+                        Err(Error::UnsortedWordlist)
+                    }
+                } else {
+                    Err(Error::BadSeparator)
+                }
+            } else {
+                Err(Error::BadSeparator)
+            }
+        }
+
+        pub fn separator(&self) -> char {
+            self.separator
+        }
+
+        pub fn words(&self) -> &'a [&'a str; 2048] {
+            self.words
+        }
+
+        pub fn lookup(&self, word: &str) -> Option<usize> {
+            self.words.iter().position(|w| *w == word)
+        }
     }
 
-    const fn cs(ent: usize) -> usize {
-        ent / 32
-    }
-
-    /// Encode the given bytestring as a mnemonic sentence using the specified wordlist.
+    /// Encode the given secret entropy bytestring as a mnemonic sentence using the specified word list.
     /// Only bytestrings of length 128, 160, 192, 224 and 256 bits are accepted, and this is the
     /// only expected error case.
     ///
@@ -62,69 +287,52 @@ pub mod wordlist {
     /// generating the expected sentences compared to our test vectors. Use at your own risk!
     #[allow(non_snake_case)]
     #[allow(clippy::many_single_char_names)]
-    pub fn encode(data: &[u8], wordlist: &Wordlist) -> Result<String, Error> {
-        let ENT = data.len() * 8;
-
-        if ENT != 128 && ENT != 160 && ENT != 192 && ENT != 224 && ENT != 256 {
-            return Err(Error::InvalidEntropyCount(ENT));
+    pub fn encode(secret_entropy: &[u8], wordlist: &Wordlist) -> Result<Mnemonic, Error> {
+        match secret_entropy.len() {
+            16 | 20 | 24 | 28 | 32 => {}
+            _ => return Err(Error::InvalidEntropyCount(secret_entropy.len() * 8)),
         }
 
-        let mut CS = [0; 32];
-        crate::hashes::sha::SHA256(data, &mut CS);
+        let mut checksum = [0; 32];
+        crate::hashes::sha::SHA256(secret_entropy, &mut checksum);
 
-        let mut ms = None;
-
-        let b = |i: usize| {
-            if i < data.len() {
-                Some(data[i] as usize)
-            } else if i - data.len() < CS.len() {
-                Some(CS[i - data.len()] as usize)
-            } else {
-                None
-            }
-        };
-
-        let mut i = 0;
-        loop {
-            if i == ENT + cs(ENT) {
-                return Ok(ms.unwrap());
-            }
-
-            let k = i / 8;
-            let r = i % 8;
-            let idx = if 16 - r > 11 {
-                match (b(k), b(k + 1)) {
-                    (Some(b0), Some(b1)) => {
-                        let x = 11 - (8 - r);
-                        let mut y = (b0 & ((1 << (8 - r)) - 1)) << x;
-                        y |= b1 >> (8 - x);
-                        y
-                    }
-                    _ => return Ok(ms.unwrap()),
+        let (_, leftover_bits, mut capacity, words) = secret_entropy.iter().chain(Some(&checksum[0])).fold(
+            (0_u32, 0, 0_usize, Vec::new()),
+            |(mut acc, mut bits, mut mnemonic_capacity, mut mnemonic_words), entropy_byte| {
+                const MASK: u32 = (1_u32 << 11) - 1;
+                acc = (acc << 8) | (*entropy_byte as u32);
+                bits += 8;
+                if bits >= 11 {
+                    debug_assert!(bits <= 18);
+                    bits -= 11;
+                    let idx = (MASK & (acc >> bits)) as usize;
+                    let word = wordlist.words[idx];
+                    mnemonic_words.push(word);
+                    mnemonic_capacity += word.as_bytes().len();
                 }
-            } else {
-                match (b(k), b(k + 1), b(k + 2)) {
-                    (Some(b0), Some(b1), Some(b2)) => {
-                        let x = 11 - 8 - (8 - r);
-                        let mut y = (b0 & ((1 << (8 - r)) - 1)) << (8 + x);
-                        y |= b1 << x;
-                        y |= b2 >> (8 - x);
-                        y
-                    }
-                    _ => return Ok(ms.unwrap()),
-                }
-            };
+                debug_assert!(bits <= 10);
+                (acc, bits, mnemonic_capacity, mnemonic_words)
+            },
+        );
+        // leftover_bits here represent the number of left-over low bits in checksum byte
+        debug_assert_eq!(8, secret_entropy.len() / 4 + leftover_bits as usize);
 
-            match ms {
-                None => ms = Some(wordlist.words[idx].to_string()),
-                Some(ref mut ms) => {
-                    ms.push_str(wordlist.separator);
-                    ms.push_str(wordlist.words[idx]);
-                }
-            }
-
-            i += 11;
+        if !words.is_empty() {
+            capacity += (words.len() - 1) * wordlist.separator.encode_utf8(&mut [0_u8; 4]).len();
         }
+
+        // allocate the exact number of bytes required for secret mnemonic to avoid reallocations and potential secret
+        // leakage
+        let mut mnemonic = String::with_capacity(capacity);
+        words.into_iter().for_each(|word| {
+            if !mnemonic.is_empty() {
+                mnemonic.push(wordlist.separator);
+            }
+            mnemonic.push_str(word);
+        });
+        debug_assert_eq!(capacity, mnemonic.as_bytes().len());
+
+        Ok(Mnemonic(mnemonic))
     }
 
     /// Decode and compare the checksum given a mnemonic sentence and the wordlist used in the
@@ -133,68 +341,77 @@ pub mod wordlist {
     /// Be aware that the error detection has a noticable rate of false positives. Given CS
     /// checksum bits (CS := ENT / 32) the expected rate of false positives are one in 2^CS. For
     /// example given 128 bit entropy that's 1 in 16.
-    #[allow(non_snake_case)]
-    pub fn decode(ms: &str, wordlist: &Wordlist) -> Result<Vec<u8>, Error> {
-        let mut data = Vec::new();
-        let mut acc = 0;
-        let mut i = 0;
-        let ms = ms.chars().nfkd().collect::<String>();
-        let separator = wordlist.separator.chars().nfkd().collect::<String>();
+    pub fn decode(mnemonic: MnemonicRef, wordlist: &Wordlist) -> Result<Zeroizing<Vec<u8>>, Error> {
+        // allocate maximal entropy capacity of 32 bytes to avoid reallocations
+        let mut entropy = Zeroizing::new(Vec::with_capacity(32));
 
-        for ref w in ms.split(&separator) {
-            match wordlist.words.iter().position(|v| v == w) {
-                None => return Err(Error::NoSuchWord(w.to_string())),
-                Some(idx) => {
-                    let r = i % 8;
-                    acc <<= 8 - r;
-                    acc |= idx >> (11 - (8 - r));
-                    data.push(acc as u8);
-                    if r + 11 < 16 {
-                        acc = idx & ((1 << (11 - (8 - r))) - 1);
-                    } else {
-                        acc = (idx & ((1 << (11 - (8 - r))) - 1)) >> (11 - 8 - (8 - r));
-                        data.push(acc as u8);
-                        acc = idx & ((1 << (11 - 8 - (8 - r))) - 1);
+        let (checksum_acc, checksum_bits) =
+            mnemonic
+                .split(wordlist.separator)
+                .try_fold((0_u32, 0), |(mut acc, mut bits), word| {
+                    let idx = wordlist
+                        .lookup(word)
+                        .ok_or_else(|| Error::NoSuchWord(word.to_string()))? as u32;
+
+                    acc = (acc << 11) | idx;
+                    bits += 11;
+
+                    while bits > 8 {
+                        debug_assert!(bits <= 19);
+                        if entropy.len() == entropy.capacity() {
+                            return Err(Error::InvalidEntropyCount(32));
+                        }
+                        bits -= 8;
+                        entropy.push((acc >> bits) as u8);
                     }
 
-                    i += 11;
-                }
+                    debug_assert!(bits <= 8);
+                    Ok((acc, bits))
+                })?;
+        // checksum_bits here represent the number of high bits in checksum byte
+        match entropy.len() {
+            16 | 20 | 24 | 28 | 32 => {
+                debug_assert_eq!(entropy.len() / 4, checksum_bits as usize);
+            }
+            _ => {
+                return Err(Error::InvalidEntropyCount(entropy.len() * 8 + checksum_bits as usize));
             }
         }
 
-        fn sub_whole_byte_case(acc: usize, data: Vec<u8>, ent: usize) -> Result<Vec<u8>, Error> {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data, &mut CS);
-            if (acc as u8) == CS[0] >> (8 - cs(ent)) {
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
+        let mut checksum = [0; 32];
+        crate::hashes::sha::SHA256(&entropy, &mut checksum);
+        if (checksum_acc & ((1 << checksum_bits) - 1)) as u8 != checksum[0] >> (8 - checksum_bits) {
+            return Err(Error::ChecksumMismatch);
         }
 
-        if i == 128 + cs(128) {
-            sub_whole_byte_case(acc, data, 128)
-        } else if i == 160 + cs(160) {
-            sub_whole_byte_case(acc, data, 160)
-        } else if i == 192 + cs(192) {
-            sub_whole_byte_case(acc, data, 192)
-        } else if i == 224 + cs(224) {
-            sub_whole_byte_case(acc, data, 224)
-        } else if i == 256 + cs(256) {
-            let mut CS = [0; 32];
-            crate::hashes::sha::SHA256(&data[..32], &mut CS);
-            if data[32] == CS[0] {
-                data.truncate(32);
-                Ok(data)
-            } else {
-                Err(Error::ChecksumMismatch)
-            }
-        } else {
-            Err(Error::InvalidEntropyCount(i))
-        }
+        Ok(entropy)
     }
 
-    pub fn verify(ms: &str, wordlist: &Wordlist) -> Result<(), Error> {
-        decode(ms, wordlist).map(|_| ())
+    pub fn verify(mnemonic: MnemonicRef, wordlist: &Wordlist) -> Result<(), Error> {
+        decode(mnemonic, wordlist).map(|_| ())
+    }
+}
+
+#[cfg(feature = "bip39-en")]
+#[test]
+fn test_encode_decode() {
+    fn inc(e: u8, i: usize) -> u8 {
+        ((e as usize + 0x9b17f203) * (i + 0x4792a0e2) + 7) as u8
+    }
+
+    let mut entropy = [0_u8; 32];
+    for _ in 0..5 {
+        entropy
+            .iter_mut()
+            .enumerate()
+            .for_each(|(i, e)| *e = e.wrapping_add(inc(*e, i)));
+
+        for i in 4..9 {
+            let n = 4 * i;
+
+            let mnemonic = wordlist::encode(&entropy[..n], &wordlist::ENGLISH).unwrap();
+            let decoded_entropy = wordlist::decode((&mnemonic).into(), &wordlist::ENGLISH).unwrap();
+            assert_eq!(&entropy[..n], &decoded_entropy[..]);
+        }
     }
 }

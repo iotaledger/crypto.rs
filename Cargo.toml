@@ -63,7 +63,7 @@ wots_deprecated_do_not_use = [
 sha = [ "dep:sha2", "digest" ]
 hmac = [ "dep:hmac" ]
 pbkdf2 = [ "dep:pbkdf2", "pbkdf2/hmac", "dep:sha2" ]
-bip39 = [ "pbkdf2", "unicode-normalization" ]
+bip39 = [ "dep:iterator-sorted", "dep:unicode-normalization", "pbkdf2", "sha", "zeroize", "zeroize/alloc" ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
 slip10 = [
@@ -103,6 +103,7 @@ ed25519-zebra = { version = "3.0", optional = true, default-features = false }
 generic-array = { version = "0.14", optional = true, default-features = false }
 getrandom = { version = "0.2", optional = true, default-features = false, features = [ "js" ] }
 hmac = { version = "0.12", optional = true, default-features = false }
+iterator-sorted = { version = "0.1.0", optional = true, default-features = false }
 lazy_static = { version = "1.4", optional = true, default-features = false }
 num-traits = { version = "0.2", optional = true, default-features = false }
 pbkdf2 = { version = "0.12", optional = true, default-features = false }

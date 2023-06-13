@@ -6,11 +6,15 @@ use core::fmt::{Display, Formatter, Result as FmtResult};
 pub type Result<T, E = Error> = core::result::Result<T, E>;
 
 /// Error type of crypto.rs
+#[non_exhaustive]
 #[derive(Debug, PartialEq, Eq)]
 pub enum Error {
     /// Age Format Error
     #[cfg(feature = "age")]
     AgeFormatError(crate::keys::age::DecError),
+    /// Bip39 Error
+    #[cfg(feature = "bip39")]
+    Bip39Error(crate::keys::bip39::Error),
     /// Buffer Error
     BufferSize {
         name: &'static str,
@@ -39,6 +43,8 @@ impl Display for Error {
         match self {
             #[cfg(feature = "age")]
             Error::AgeFormatError(inner) => write!(f, "failed to decode/decrypt age format: {inner:?}"),
+            #[cfg(feature = "bip39")]
+            Error::Bip39Error(inner) => write!(f, "bip39 error: {inner:?}"),
             Error::BufferSize { name, needs, has } => {
                 write!(f, "{} buffer needs {} bytes, but it only has {}", name, needs, has)
             }

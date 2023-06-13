@@ -3,9 +3,9 @@
 
 // https://raw.githubusercontent.com/bitcoin/bips/master/bip-0039/english.txt
 
-pub const ENGLISH: Wordlist = Wordlist {
-    separator: " ",
-    words: &[
+pub const ENGLISH: Wordlist = Wordlist::new_unchecked(
+    ' ',
+    &[
         "abandon", "ability", "able", "about", "above", "absent", "absorb", "abstract", "absurd", "abuse", "access",
         "accident", "account", "accuse", "achieve", "acid", "acoustic", "acquire", "across", "act", "action", "actor",
         "actress", "actual", "adapt", "add", "addict", "address", "adjust", "admit", "adult", "advance", "advice",
@@ -186,4 +186,4 @@ pub const ENGLISH: Wordlist = Wordlist {
         "wreck", "wrestle", "wrist", "write", "wrong", "yard", "year", "yellow", "you", "young", "youth", "zebra",
         "zero", "zone", "zoo",
     ],
-};
+);
