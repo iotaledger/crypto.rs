@@ -36,7 +36,7 @@ pub enum Error {
 }
 
 /// Reference to a normalized (unicode NFKD) mnemonic.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub struct MnemonicRef<'a>(&'a str);
 
 impl<'a> Deref for MnemonicRef<'a> {
@@ -130,7 +130,7 @@ impl AsRef<str> for Mnemonic {
 }
 
 /// Reference to a normalized (unicode NFKD) passphrase.
-#[derive(Clone, Copy, PartialEq, Eq)]
+#[derive(Clone, Copy)]
 pub struct PassphraseRef<'a>(&'a str);
 
 impl<'a> Deref for PassphraseRef<'a> {
