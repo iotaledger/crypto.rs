@@ -231,7 +231,7 @@ pub mod wordlist {
         }
 
         /// Verify and construct a word list from separator and set of words.
-        /// 
+        ///
         /// Separator character must normalize to a single character.
         /// Words must be in NFKD form, can't contain separator. All words must be unique.
         pub fn new(separator: char, words: &'a [&'a str; 2048]) -> Result<Self, Error> {
