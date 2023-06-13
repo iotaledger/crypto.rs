@@ -230,7 +230,10 @@ pub mod wordlist {
             Self { words, separator }
         }
 
-        /// Verify and construct a word list from separator char and set of words.
+        /// Verify and construct a word list from separator and set of words.
+        /// 
+        /// Separator character must normalize to a single character.
+        /// Words must be in NFKD form, can't contain separator. All words must be unique.
         pub fn new(separator: char, words: &'a [&'a str; 2048]) -> Result<Self, Error> {
             // normalize separator char
             let s = String::from(separator);
