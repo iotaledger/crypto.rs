@@ -140,4 +140,43 @@ mod slip10 {
             .public_key()
             .to_bytes();
     }
+
+    #[test]
+    #[allow(dead_code, unused_variables)]
+    fn test_generic() {
+        use crypto::keys::slip10;
+
+        fn derive0<K: slip10::Derivable + slip10::CalcData<slip10::Hardened>>(
+            ext: &slip10::Slip10<K>,
+        ) -> slip10::Slip10<K> {
+            use slip10::Segment;
+            ext.child_key(0.harden())
+        }
+
+        fn derive1<K: slip10::Derivable + slip10::CalcData<slip10::NonHardened>>(
+            ext: &slip10::Slip10<K>,
+        ) -> slip10::Slip10<K> {
+            use slip10::Segment;
+            ext.child_key(0.unharden())
+        }
+
+        let seed = slip10::Seed::from_bytes(&[0]);
+
+        #[cfg(feature = "ed25519")]
+        {
+            use crypto::signatures::ed25519;
+            let ext_sk = slip10::Slip10::<ed25519::SecretKey>::from_seed(&seed);
+            let _ = derive0(&ext_sk);
+        }
+
+        #[cfg(feature = "secp256k1")]
+        {
+            use crypto::signatures::secp256k1_ecdsa;
+            let ext_sk = slip10::Slip10::<secp256k1_ecdsa::SecretKey>::from_seed(&seed);
+            let ext_sk = derive0(&ext_sk);
+            let _ = derive1(&ext_sk);
+            let ext_pk = ext_sk.to_extended_public_key();
+            let _ = derive1(&ext_pk);
+        }
+    }
 }

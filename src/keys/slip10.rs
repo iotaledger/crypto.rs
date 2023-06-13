@@ -21,8 +21,11 @@ use crate::macs::hmac::HMAC_SHA512;
 /// parties from importing and using them in polymorphic contexts.
 mod hazmat {
     use super::Segment;
+
+    /// Prevent external crates from deriving hazmat traits.
+    pub trait Sealed {}
     /// Derivable secret and public keys.
-    pub trait Derivable {
+    pub trait Derivable: Sealed {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool;
         fn to_key(key_bytes: &[u8; 33]) -> Self;
         fn add_key(key_bytes: &mut [u8; 33], parent_key: &[u8; 33]) -> bool;
@@ -45,15 +48,19 @@ mod hazmat {
         fn to_public(sk_bytes: &[u8; 33]) -> [u8; 33];
     }
     /// Keys that can be used to compute "data" argument of SLIP10 derivation algorithm for a specific segment type.
-    pub trait CalcData<S: Segment> {
+    pub trait CalcData<S: Segment>: Sealed {
         fn calc_data(key_bytes: &[u8; 33], segment: S) -> [u8; 33];
     }
 }
+
+pub use hazmat::{CalcData, Derivable, IsPublicKey, IsSecretKey, ToPublic};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
     use super::{hazmat::*, Hardened};
     use crate::signatures::ed25519;
+
+    impl Sealed for ed25519::SecretKey {}
 
     impl Derivable for ed25519::SecretKey {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
@@ -85,6 +92,8 @@ pub mod ed25519 {
 pub mod secp256k1 {
     use super::{hazmat::*, Hardened, NonHardened, Segment};
     use crate::signatures::secp256k1_ecdsa;
+
+    impl Sealed for secp256k1_ecdsa::SecretKey {}
 
     impl Derivable for secp256k1_ecdsa::SecretKey {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
@@ -161,6 +170,8 @@ pub mod secp256k1 {
             }
         }
     }
+
+    impl Sealed for secp256k1_ecdsa::PublicKey {}
 
     impl Derivable for secp256k1_ecdsa::PublicKey {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool {
