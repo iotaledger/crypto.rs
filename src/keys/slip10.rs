@@ -15,24 +15,36 @@ use crate::macs::hmac::HMAC_SHA512;
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
 
+/// The traits in hazmat module are implementation internals.
+/// The traits are made public due to other public API requiring them.
+/// The traits are not exported to prevent third parties from implementing them outside this crate. This prevents third
+/// parties from importing and using them in polymorphic contexts.
 mod hazmat {
     use super::Segment;
+    /// Derivable secret and public keys.
     pub trait Derivable {
         fn is_key_valid(key_bytes: &[u8; 33]) -> bool;
         fn to_key(key_bytes: &[u8; 33]) -> Self;
         fn add_key(key_bytes: &mut [u8; 33], parent_key: &[u8; 33]) -> bool;
     }
+    /// Derivable secret key.
     pub trait IsSecretKey: Derivable {
         const SEEDKEY: &'static [u8];
-        // PublicKey type may not be Derivable as is the case with ed25519
+        /// Type of corresponding public key; PublicKey type may not be Derivable as is the case with ed25519.
         type PublicKey;
     }
+    /// Derivable public key.
     pub trait IsPublicKey: Derivable {
+        /// Corresponding derivable secret key type
         type SecretKey: IsSecretKey;
     }
+    /// Derivable secret key whose corresponding public key is also derivable.
+    // The trait should have been defined as `trait ToPublic: IsSecretKey where Self::PublicKey: IsPublicKey<SecretKey =
+    // Self>`. It makes generic arguments more complex and seems like overkill.
     pub trait ToPublic: IsSecretKey {
         fn to_public(sk_bytes: &[u8; 33]) -> [u8; 33];
     }
+    /// Keys that can be used to compute "data" argument of SLIP10 derivation algorithm for a specific segment type.
     pub trait CalcData<S: Segment> {
         fn calc_data(key_bytes: &[u8; 33], segment: S) -> [u8; 33];
     }
@@ -237,8 +249,12 @@ impl From<super::bip39::Seed> for Seed {
     }
 }
 
+/// Public bytestring that uniquely distinguishes different extended keys for the same key.
 pub type ChainCode = [u8; 32];
 
+/// Extended secret or public key, ie. a key extended with a chain code.
+///
+/// Extended keys must be handled with care. Security implications are explained in BIP32.
 #[derive(ZeroizeOnDrop)]
 pub struct Slip10<K> {
     key: core::marker::PhantomData<K>,
