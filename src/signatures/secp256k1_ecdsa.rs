@@ -7,7 +7,7 @@ use core::hash::{Hash, Hasher};
 
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-#[derive(Clone, ZeroizeOnDrop, Eq, PartialEq)]
+#[derive(Clone, ZeroizeOnDrop)]
 pub struct SecretKey(k256::ecdsa::SigningKey);
 
 impl SecretKey {

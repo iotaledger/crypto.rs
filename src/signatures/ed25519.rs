@@ -62,13 +62,6 @@ impl SecretKey {
     }
 }
 
-impl Eq for SecretKey {}
-impl PartialEq for SecretKey {
-    fn eq(&self, other: &Self) -> bool {
-        self.0.as_ref() == other.0.as_ref()
-    }
-}
-
 #[derive(Copy, Clone, Debug)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PublicKey(ed25519_zebra::VerificationKey);
