@@ -6,9 +6,11 @@
 // https://doc.rust-lang.org/std/primitive.str.html
 // "String slices are always valid UTF-8."
 
+use alloc::borrow::{Borrow, ToOwned};
 use alloc::string::{String, ToString};
 use alloc::vec::Vec;
 use core::convert::TryFrom;
+use core::fmt;
 use core::ops::Deref;
 
 use unicode_normalization::{is_nfkd, UnicodeNormalization};
@@ -36,30 +38,30 @@ pub enum Error {
 }
 
 /// Reference to a normalized (unicode NFKD) mnemonic.
-#[derive(Clone, Copy)]
-pub struct MnemonicRef<'a>(&'a str);
+pub struct MnemonicRef(str);
 
-impl<'a> Deref for MnemonicRef<'a> {
+impl Deref for MnemonicRef {
     type Target = str;
     fn deref(&self) -> &str {
-        self.0
+        unsafe { core::mem::transmute(self) }
     }
 }
 
-impl<'a> TryFrom<&'a str> for MnemonicRef<'a> {
+impl ToOwned for MnemonicRef {
+    type Owned = Mnemonic;
+    fn to_owned(&self) -> Mnemonic {
+        Mnemonic(unsafe { core::mem::transmute::<_, &str>(self).to_owned() })
+    }
+}
+
+impl<'a> TryFrom<&'a str> for &'a MnemonicRef {
     type Error = Error;
     fn try_from(mnemonic_str: &'a str) -> Result<Self, Error> {
         if is_nfkd(mnemonic_str) {
-            Ok(MnemonicRef(mnemonic_str))
+            Ok(unsafe { core::mem::transmute(mnemonic_str) })
         } else {
             Err(Error::UnnormalizedMnemonic)
         }
-    }
-}
-
-impl<'a> PartialEq<str> for MnemonicRef<'a> {
-    fn eq(&self, other: &str) -> bool {
-        self.0.eq(other)
     }
 }
 
@@ -72,6 +74,19 @@ impl<'a> PartialEq<str> for MnemonicRef<'a> {
 /// Mnemonic should be verified against a given word list before deriving a seed from it.
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Mnemonic(String);
+
+impl Deref for Mnemonic {
+    type Target = MnemonicRef;
+    fn deref(&self) -> &MnemonicRef {
+        unsafe { core::mem::transmute(self.0.as_str()) }
+    }
+}
+
+impl Borrow<MnemonicRef> for Mnemonic {
+    fn borrow(&self) -> &MnemonicRef {
+        self
+    }
+}
 
 /// Normalize the input string and use it as mnemonic.
 /// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
@@ -117,34 +132,47 @@ impl_from_words!(18);
 impl_from_words!(21);
 impl_from_words!(24);
 
-impl<'a> From<&'a Mnemonic> for MnemonicRef<'a> {
-    fn from(mnemonic_ref: &'a Mnemonic) -> Self {
-        Self(&mnemonic_ref.0)
-    }
-}
-
 impl AsRef<str> for Mnemonic {
     fn as_ref(&self) -> &str {
         &self.0
     }
 }
 
-/// Reference to a normalized (unicode NFKD) passphrase.
-#[derive(Clone, Copy)]
-pub struct PassphraseRef<'a>(&'a str);
-
-impl<'a> Deref for PassphraseRef<'a> {
-    type Target = str;
-    fn deref(&self) -> &str {
-        self.0
+impl fmt::Debug for Mnemonic {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "<bip39::Mnemonic>".fmt(f)
     }
 }
 
-impl<'a> TryFrom<&'a str> for PassphraseRef<'a> {
+/// Reference to a normalized (unicode NFKD) passphrase.
+pub struct PassphraseRef(str);
+
+impl Deref for PassphraseRef {
+    type Target = str;
+    fn deref(&self) -> &str {
+        unsafe { core::mem::transmute(self) }
+    }
+}
+
+impl ToOwned for PassphraseRef {
+    type Owned = Passphrase;
+    fn to_owned(&self) -> Passphrase {
+        Passphrase(unsafe { core::mem::transmute::<_, &str>(self).to_owned() })
+    }
+}
+
+impl<'a> From<&'a Passphrase> for &'a PassphraseRef {
+    fn from(passphrase_ref: &'a Passphrase) -> Self {
+        passphrase_ref.borrow()
+    }
+}
+
+impl<'a> TryFrom<&'a str> for &'a PassphraseRef {
     type Error = Error;
     fn try_from(passphrase_str: &'a str) -> Result<Self, Error> {
         if is_nfkd(passphrase_str) {
-            Ok(PassphraseRef(passphrase_str))
+            Ok(unsafe { core::mem::transmute(passphrase_str) })
         } else {
             Err(Error::UnnormalizedPassphrase)
         }
@@ -158,21 +186,49 @@ impl<'a> TryFrom<&'a str> for PassphraseRef<'a> {
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Passphrase(String);
 
-impl From<String> for Passphrase {
-    fn from(unnormalized_passphrase: String) -> Self {
-        Self(unnormalized_passphrase.chars().nfkd().collect())
+impl Passphrase {
+    pub fn new() -> Self {
+        Self(String::new())
     }
 }
 
-impl<'a> From<&'a Passphrase> for PassphraseRef<'a> {
-    fn from(passphrase_ref: &'a Passphrase) -> Self {
-        Self(&passphrase_ref.0)
+impl Default for Passphrase {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Deref for Passphrase {
+    type Target = PassphraseRef;
+    fn deref(&self) -> &PassphraseRef {
+        unsafe { core::mem::transmute(self.0.as_str()) }
+    }
+}
+
+impl Borrow<PassphraseRef> for Passphrase {
+    fn borrow(&self) -> &PassphraseRef {
+        self
+    }
+}
+
+impl From<String> for Passphrase {
+    fn from(mut unnormalized_passphrase: String) -> Self {
+        let passphrase = Self(unnormalized_passphrase.chars().nfkd().collect());
+        unnormalized_passphrase.zeroize();
+        passphrase
     }
 }
 
 impl AsRef<str> for Passphrase {
     fn as_ref(&self) -> &str {
         &self.0
+    }
+}
+
+impl fmt::Debug for Passphrase {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "<bip39::Passphrase>".fmt(f)
     }
 }
 
@@ -190,14 +246,27 @@ impl AsRef<[u8; 64]> for Seed {
 }
 
 impl Seed {
-    pub fn null() -> Self {
+    pub fn new() -> Self {
         Self([0_u8; 64])
+    }
+}
+
+impl Default for Seed {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl fmt::Debug for Seed {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "<bip39::Seed>".fmt(f)
     }
 }
 
 /// Derive seed from mnemonic and optional (can be empty) passphrase.
 // Return seed via mutable reference to avoid potential leaks into stack memory.
-pub fn mnemonic_to_seed(m: MnemonicRef, p: PassphraseRef, s: &mut Seed) {
+pub fn mnemonic_to_seed(m: &MnemonicRef, p: &PassphraseRef, s: &mut Seed) {
     let mut salt = [b"mnemonic", p.0.as_bytes()].concat();
     const ROUNDS: core::num::NonZeroU32 = unsafe { core::num::NonZeroU32::new_unchecked(2048) };
     crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), &salt, ROUNDS, &mut s.0);
@@ -341,7 +410,7 @@ pub mod wordlist {
     /// Be aware that the error detection has a noticable rate of false positives. Given CS
     /// checksum bits (CS := ENT / 32) the expected rate of false positives are one in 2^CS. For
     /// example given 128 bit entropy that's 1 in 16.
-    pub fn decode(mnemonic: MnemonicRef, wordlist: &Wordlist) -> Result<Zeroizing<Vec<u8>>, Error> {
+    pub fn decode(mnemonic: &MnemonicRef, wordlist: &Wordlist) -> Result<Zeroizing<Vec<u8>>, Error> {
         // allocate maximal entropy capacity of 32 bytes to avoid reallocations
         let mut entropy = Zeroizing::new(Vec::with_capacity(32));
 
@@ -387,7 +456,7 @@ pub mod wordlist {
         Ok(entropy)
     }
 
-    pub fn verify(mnemonic: MnemonicRef, wordlist: &Wordlist) -> Result<(), Error> {
+    pub fn verify(mnemonic: &MnemonicRef, wordlist: &Wordlist) -> Result<(), Error> {
         decode(mnemonic, wordlist).map(|_| ())
     }
 }
@@ -410,7 +479,7 @@ fn test_encode_decode() {
             let n = 4 * i;
 
             let mnemonic = wordlist::encode(&entropy[..n], &wordlist::ENGLISH).unwrap();
-            let decoded_entropy = wordlist::decode((&mnemonic).into(), &wordlist::ENGLISH).unwrap();
+            let decoded_entropy = wordlist::decode(&mnemonic, &wordlist::ENGLISH).unwrap();
             assert_eq!(&entropy[..n], &decoded_entropy[..]);
         }
     }

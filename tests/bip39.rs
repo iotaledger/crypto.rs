@@ -34,20 +34,21 @@ fn test_vectors() {
         let entropy = hex::decode(tv.entropy).unwrap();
         let mnemonic = hex::decode(tv.mnemonic).unwrap();
         let mnemonic = Mnemonic::from(core::str::from_utf8(&mnemonic).unwrap().to_string());
-        let mnemonic: MnemonicRef = (&mnemonic).into();
 
-        assert_eq!(wordlist::encode(&entropy, &tv.wordlist).unwrap().as_ref(), &*mnemonic);
+        assert_eq!(
+            wordlist::encode(&entropy, &tv.wordlist).unwrap().as_ref(),
+            mnemonic.as_ref()
+        );
 
-        assert_eq!(*wordlist::decode(mnemonic, &tv.wordlist).unwrap(), entropy);
+        assert_eq!(*wordlist::decode(&mnemonic, &tv.wordlist).unwrap(), entropy);
 
         let passphrase = hex::decode(tv.passphrase).unwrap();
         let passphrase = Passphrase::from(core::str::from_utf8(&passphrase).unwrap().to_string());
-        let passphrase: PassphraseRef = (&passphrase).into();
         let mut expected_seed = [0; 64];
         hex::decode_to_slice(tv.seed, &mut expected_seed).unwrap();
 
-        let mut seed = Seed::null();
-        mnemonic_to_seed(mnemonic, passphrase, &mut seed);
+        let mut seed = Seed::new();
+        mnemonic_to_seed(&mnemonic, &passphrase, &mut seed);
         assert_eq!(seed.as_ref(), &expected_seed);
     }
 }
@@ -82,8 +83,8 @@ fn test_wordlist_codec() {
 
         for ws in ALL_WORDLISTS {
             let ms = wordlist::encode(&data, ws).unwrap();
-            assert_eq!(*wordlist::decode((&ms).into(), ws).unwrap(), data);
-            assert_eq!(wordlist::verify((&ms).into(), ws), Ok(()));
+            assert_eq!(*wordlist::decode(&ms, ws).unwrap(), data);
+            assert_eq!(wordlist::verify(&ms, ws), Ok(()));
         }
     }
 }
