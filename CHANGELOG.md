@@ -1,5 +1,11 @@
 # Changelog
 
+## \[0.21.0]
+
+- [`8bc7a70`](https://www.github.com/iotaledger/crypto.rs/commit/8bc7a70f86f094e272280d06fcca0fabfb8f8345)([#200](https://www.github.com/iotaledger/crypto.rs/pull/200)) Use safety wrappers for BIP39 mnemonic and passphrase types for encapsulating normalization (UTF-8 NFKD) checks and avoid potential secret leaks.
+  More secrecy awareness in BIP39 implementation.
+- [`baf4b83`](https://www.github.com/iotaledger/crypto.rs/commit/baf4b832a104461eba6aecf3bfb14ce5dc5a16ea)([#201](https://www.github.com/iotaledger/crypto.rs/pull/201)) More static type safety for SLIP10 implementation to avoid runtime checks.
+
 ## \[0.20.1]
 
 - [`57a3251`](https://www.github.com/iotaledger/crypto.rs/commit/57a3251af8876ecf4771449fce7bf887b7ed9391)([#197](https://www.github.com/iotaledger/crypto.rs/pull/197)) Use word separator provided in `WordList` when decoding. Disallow toleration for multiple whitespace when single whitespace is defined as a word separator.
