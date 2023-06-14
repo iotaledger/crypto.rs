@@ -254,14 +254,14 @@ impl AsRef<[u8; 64]> for Seed {
 }
 
 impl Seed {
-    pub fn new() -> Self {
+    pub fn null() -> Self {
         Self([0_u8; 64])
     }
 }
 
 impl Default for Seed {
     fn default() -> Self {
-        Self::new()
+        Self::null()
     }
 }
 
