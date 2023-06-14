@@ -259,12 +259,6 @@ impl Seed {
     }
 }
 
-impl Default for Seed {
-    fn default() -> Self {
-        Self::null()
-    }
-}
-
 impl fmt::Debug for Seed {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
