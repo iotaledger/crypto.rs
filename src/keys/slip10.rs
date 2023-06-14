@@ -122,7 +122,7 @@ pub mod secp256k1 {
                 if scalar.is_zero().into() {
                     false
                 } else {
-                    key_bytes[1..].copy_from_slice(&scalar.to_bytes());
+                    key_bytes[1..].copy_from_slice(&*scalar.to_bytes());
                     true
                 }
             } else {

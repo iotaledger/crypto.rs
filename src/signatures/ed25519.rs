@@ -16,7 +16,7 @@ pub const PUBLIC_KEY_LENGTH: usize = 32;
 #[deprecated = "Use associated const Signature::LENGTH"]
 pub const SIGNATURE_LENGTH: usize = 64;
 
-#[derive(Zeroize, ZeroizeOnDrop)]
+#[derive(Zeroize, ZeroizeOnDrop, Clone)]
 pub struct SecretKey(ed25519_zebra::SigningKey);
 
 impl SecretKey {
@@ -62,7 +62,15 @@ impl SecretKey {
     }
 }
 
+impl Eq for SecretKey {}
+impl PartialEq for SecretKey {
+    fn eq(&self, other: &Self) -> bool {
+        self.0.as_ref() == other.0.as_ref()
+    }
+}
+
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PublicKey(ed25519_zebra::VerificationKey);
 
 impl PublicKey {
@@ -135,6 +143,8 @@ impl Hash for PublicKey {
     }
 }
 
+#[derive(Copy, Clone, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature(ed25519_zebra::Signature);
 
 impl Signature {
@@ -146,5 +156,23 @@ impl Signature {
 
     pub fn from_bytes(bs: [u8; Signature::LENGTH]) -> Self {
         Self(ed25519_zebra::Signature::from(bs))
+    }
+}
+
+impl PartialOrd for Signature {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        <[u8; 64]>::from(self.0).partial_cmp(&<[u8; 64]>::from(other.0))
+    }
+}
+
+impl Ord for Signature {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.partial_cmp(other).unwrap()
+    }
+}
+
+impl Hash for Signature {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        <[u8; 64]>::from(self.0).hash(state);
     }
 }
