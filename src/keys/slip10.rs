@@ -357,17 +357,19 @@ impl<K> Slip10<K> {
     }
 }
 
-impl<K: hazmat::Derivable> Slip10<K> {
-    fn key(&self) -> K {
-        K::to_key(self.key_bytes())
-    }
-
+impl<K> Slip10<K> {
     pub fn extended_bytes(&self) -> &[u8; 65] {
         &self.ext
     }
 
     pub fn chain_code(&self) -> &[u8; 32] {
         unsafe { &*(self.ext[33..].as_ptr() as *const [u8; 32]) }
+    }
+}
+
+impl<K: hazmat::Derivable> Slip10<K> {
+    fn key(&self) -> K {
+        K::to_key(self.key_bytes())
     }
 
     pub fn try_from_extended_bytes(ext_bytes: &[u8; 65]) -> crate::Result<Self> {
