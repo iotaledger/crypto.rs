@@ -38,11 +38,13 @@ pub enum Error {
 }
 
 /// Reference to a normalized (unicode NFKD) mnemonic.
+#[repr(transparent)]
 pub struct MnemonicRef(str);
 
 impl Deref for MnemonicRef {
     type Target = str;
     fn deref(&self) -> &str {
+        // SAFETY: MnemonicRef is represented exactly as str due to repr(transparent)
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -50,7 +52,7 @@ impl Deref for MnemonicRef {
 impl ToOwned for MnemonicRef {
     type Owned = Mnemonic;
     fn to_owned(&self) -> Mnemonic {
-        Mnemonic(unsafe { core::mem::transmute::<_, &str>(self).to_owned() })
+        Mnemonic(self.deref().to_owned())
     }
 }
 
@@ -58,6 +60,7 @@ impl<'a> TryFrom<&'a str> for &'a MnemonicRef {
     type Error = Error;
     fn try_from(mnemonic_str: &'a str) -> Result<Self, Error> {
         if is_nfkd(mnemonic_str) {
+            // SAFETY: MnemonicRef is represented exactly as str due to repr(transparent)
             Ok(unsafe { core::mem::transmute(mnemonic_str) })
         } else {
             Err(Error::UnnormalizedMnemonic)
@@ -78,6 +81,7 @@ pub struct Mnemonic(String);
 impl Deref for Mnemonic {
     type Target = MnemonicRef;
     fn deref(&self) -> &MnemonicRef {
+        // SAFETY: MnemonicRef is represented exactly as str due to repr(transparent)
         unsafe { core::mem::transmute(self.0.as_str()) }
     }
 }
@@ -146,11 +150,13 @@ impl fmt::Debug for Mnemonic {
 }
 
 /// Reference to a normalized (unicode NFKD) passphrase.
+#[repr(transparent)]
 pub struct PassphraseRef(str);
 
 impl Deref for PassphraseRef {
     type Target = str;
     fn deref(&self) -> &str {
+        // SAFETY: PassphraseRef is represented exactly as str due to repr(transparent)
         unsafe { core::mem::transmute(self) }
     }
 }
@@ -158,7 +164,7 @@ impl Deref for PassphraseRef {
 impl ToOwned for PassphraseRef {
     type Owned = Passphrase;
     fn to_owned(&self) -> Passphrase {
-        Passphrase(unsafe { core::mem::transmute::<_, &str>(self).to_owned() })
+        Passphrase(self.deref().to_owned())
     }
 }
 
@@ -172,6 +178,7 @@ impl<'a> TryFrom<&'a str> for &'a PassphraseRef {
     type Error = Error;
     fn try_from(passphrase_str: &'a str) -> Result<Self, Error> {
         if is_nfkd(passphrase_str) {
+            // SAFETY: PassphraseRef is represented exactly as str due to repr(transparent)
             Ok(unsafe { core::mem::transmute(passphrase_str) })
         } else {
             Err(Error::UnnormalizedPassphrase)
@@ -201,6 +208,7 @@ impl Default for Passphrase {
 impl Deref for Passphrase {
     type Target = PassphraseRef;
     fn deref(&self) -> &PassphraseRef {
+        // SAFETY: PassphraseRef is represented exactly as str due to repr(transparent)
         unsafe { core::mem::transmute(self.0.as_str()) }
     }
 }
