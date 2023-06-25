@@ -5,6 +5,7 @@
 
 use alloc::vec::Vec;
 use core::convert::TryFrom;
+use core::fmt;
 
 use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
@@ -253,6 +254,13 @@ impl Seed {
     }
 }
 
+impl fmt::Debug for Seed {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        "<slip10::Seed>".fmt(f)
+    }
+}
+
 #[cfg(feature = "bip39")]
 impl From<super::bip39::Seed> for Seed {
     fn from(seed: super::bip39::Seed) -> Self {
@@ -278,6 +286,13 @@ impl<K> Clone for Slip10<K> {
             key: core::marker::PhantomData,
             ext: self.ext,
         }
+    }
+}
+
+impl<K> fmt::Debug for Slip10<K> {
+    #[inline]
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "<slip10::Slip10<{}>>", core::any::type_name::<K>())
     }
 }
 
@@ -389,7 +404,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
 
     pub fn derive<I>(&self, chain: I) -> Self
     where
-        K: hazmat::IsSecretKey + hazmat::CalcData<<I as Iterator>::Item>,
+        K: hazmat::CalcData<<I as Iterator>::Item>,
         I: Iterator,
         <I as Iterator>::Item: Segment,
     {
@@ -508,6 +523,7 @@ impl Segment for u32 {
 
 /// Type of hardened segments.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[repr(transparent)]
 pub struct Hardened(u32);
 
 impl From<Hardened> for u32 {
@@ -541,6 +557,7 @@ impl Segment for Hardened {
 
 /// Type of non-hardened segments.
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[repr(transparent)]
 pub struct NonHardened(u32);
 
 impl From<NonHardened> for u32 {
