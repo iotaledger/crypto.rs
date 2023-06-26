@@ -1,12 +1,13 @@
 // Copyright 2023 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
+use core::cmp::Ordering;
 use core::convert::TryFrom;
 use core::hash::{Hash, Hasher};
 
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
-#[derive(ZeroizeOnDrop)]
+#[derive(Clone, ZeroizeOnDrop)]
 pub struct SecretKey(k256::ecdsa::SigningKey);
 
 impl SecretKey {
@@ -55,6 +56,7 @@ impl SecretKey {
 }
 
 #[derive(Copy, Clone, Debug, Eq, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PublicKey(k256::ecdsa::VerifyingKey);
 
 impl PublicKey {
@@ -138,7 +140,12 @@ impl Hash for PublicKey {
     }
 }
 
-pub struct Signature(k256::ecdsa::Signature, k256::ecdsa::RecoveryId);
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct Signature(
+    k256::ecdsa::Signature,
+    #[cfg_attr(feature = "serde", serde(with = "serde_recovery_id"))] k256::ecdsa::RecoveryId,
+);
 
 impl Signature {
     pub const LENGTH: usize = 65;
@@ -187,6 +194,47 @@ impl Signature {
         k256::ecdsa::VerifyingKey::recover_from_msg(msg, &self.0, self.1)
             .ok()
             .map(PublicKey)
+    }
+}
+
+#[cfg(feature = "serde")]
+mod serde_recovery_id {
+    pub fn serialize<S>(id: &k256::ecdsa::RecoveryId, s: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        s.serialize_u8(id.to_byte())
+    }
+
+    pub fn deserialize<'de, D>(d: D) -> Result<k256::ecdsa::RecoveryId, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        use k256::ecdsa::RecoveryId;
+        use serde::Deserialize;
+        RecoveryId::from_byte(u8::deserialize(d)?)
+            .ok_or_else(|| serde::de::Error::custom(format!("invalid recovery byte (max {})", RecoveryId::MAX)))
+    }
+}
+
+impl PartialOrd for Signature {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Signature {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let (r1, s1) = self.0.split_bytes();
+        let (r2, s2) = other.0.split_bytes();
+        r1.cmp(&r2).then(s1.cmp(&s2)).then(self.1.cmp(&other.1))
+    }
+}
+
+impl Hash for Signature {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bytes().hash(state);
+        self.1.to_byte().hash(state);
     }
 }
 

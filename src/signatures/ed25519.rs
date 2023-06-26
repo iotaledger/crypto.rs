@@ -16,7 +16,7 @@ pub const PUBLIC_KEY_LENGTH: usize = 32;
 #[deprecated = "Use associated const Signature::LENGTH"]
 pub const SIGNATURE_LENGTH: usize = 64;
 
-#[derive(Zeroize, ZeroizeOnDrop)]
+#[derive(Zeroize, ZeroizeOnDrop, Clone)]
 pub struct SecretKey(ed25519_zebra::SigningKey);
 
 impl SecretKey {
@@ -63,6 +63,7 @@ impl SecretKey {
 }
 
 #[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PublicKey(ed25519_zebra::VerificationKey);
 
 impl PublicKey {
@@ -111,7 +112,7 @@ impl From<PublicKey> for [u8; PublicKey::LENGTH] {
 
 impl PartialEq for PublicKey {
     fn eq(&self, other: &Self) -> bool {
-        self.as_ref() == other.as_ref()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -119,13 +120,13 @@ impl Eq for PublicKey {}
 
 impl PartialOrd for PublicKey {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.as_ref().partial_cmp(other.as_ref())
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for PublicKey {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.as_ref().cmp(other.as_ref())
+        self.as_slice().cmp(other.as_slice())
     }
 }
 
@@ -135,6 +136,8 @@ impl Hash for PublicKey {
     }
 }
 
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature(ed25519_zebra::Signature);
 
 impl Signature {
@@ -146,5 +149,25 @@ impl Signature {
 
     pub fn from_bytes(bs: [u8; Signature::LENGTH]) -> Self {
         Self(ed25519_zebra::Signature::from(bs))
+    }
+}
+
+impl PartialOrd for Signature {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Signature {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let r_cmp = self.0.r_bytes().cmp(other.0.r_bytes());
+        let s_cmp = self.0.s_bytes().cmp(other.0.s_bytes());
+        r_cmp.then(s_cmp)
+    }
+}
+
+impl Hash for Signature {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        <[u8; 64]>::from(self.0).hash(state);
     }
 }
