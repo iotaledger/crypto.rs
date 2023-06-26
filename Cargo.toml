@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.21.0"
+version = "0.21.1"
 license = "Apache-2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
@@ -94,7 +94,12 @@ age = [
   "zeroize"
 ]
 secp256k1 = [ "dep:k256", "k256?/ecdsa", "dep:tiny-keccak", "zeroize" ]
-serde = [ "dep:serde", "ed25519-zebra?/serde", "k256?/serde", "k256?/pem" ]
+serde = [
+  "dep:serde",
+  "ed25519-zebra?/serde",
+  "k256?/serde",
+  "k256?/pem"
+]
 
 [dependencies]
 aead = { version = "0.5", optional = true, default-features = false }
