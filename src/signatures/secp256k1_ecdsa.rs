@@ -140,7 +140,7 @@ impl Hash for PublicKey {
     }
 }
 
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature(
     k256::ecdsa::Signature,

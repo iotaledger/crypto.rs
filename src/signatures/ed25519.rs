@@ -112,7 +112,7 @@ impl From<PublicKey> for [u8; PublicKey::LENGTH] {
 
 impl PartialEq for PublicKey {
     fn eq(&self, other: &Self) -> bool {
-        self.as_ref() == other.as_ref()
+        self.as_slice() == other.as_slice()
     }
 }
 
@@ -126,7 +126,7 @@ impl PartialOrd for PublicKey {
 
 impl Ord for PublicKey {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.as_ref().cmp(other.as_ref())
+        self.as_slice().cmp(other.as_slice())
     }
 }
 
@@ -136,7 +136,7 @@ impl Hash for PublicKey {
     }
 }
 
-#[derive(Copy, Clone, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature(ed25519_zebra::Signature);
 
