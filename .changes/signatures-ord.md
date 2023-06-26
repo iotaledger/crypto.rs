@@ -2,4 +2,4 @@
 "iota-crypto": patch
 ---
 
-Implement `Eq`, `Ord` and `Hash` traits for public keys and signatures.
+Implement `Eq`, `Ord` and `Hash` traits for public key and signature types.
