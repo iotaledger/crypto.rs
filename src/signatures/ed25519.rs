@@ -120,7 +120,7 @@ impl Eq for PublicKey {}
 
 impl PartialOrd for PublicKey {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        self.as_ref().partial_cmp(other.as_ref())
+        Some(self.cmp(other))
     }
 }
 
@@ -154,13 +154,15 @@ impl Signature {
 
 impl PartialOrd for Signature {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        <[u8; 64]>::from(self.0).partial_cmp(&<[u8; 64]>::from(other.0))
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Signature {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
+        let r_cmp = self.0.r_bytes().cmp(other.0.r_bytes());
+        let s_cmp = self.0.s_bytes().cmp(other.0.s_bytes());
+        r_cmp.then(s_cmp)
     }
 }
 

@@ -144,7 +144,7 @@ impl Hash for PublicKey {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature(
     k256::ecdsa::Signature,
-    #[serde(with = "serde_recovery_id")] k256::ecdsa::RecoveryId,
+    #[cfg_attr(feature = "serde", serde(with = "serde_recovery_id"))] k256::ecdsa::RecoveryId,
 );
 
 impl Signature {
@@ -219,16 +219,15 @@ mod serde_recovery_id {
 
 impl PartialOrd for Signature {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        match self.0.to_bytes().partial_cmp(&other.0.to_bytes()) {
-            Some(core::cmp::Ordering::Equal) => self.1.partial_cmp(&other.1),
-            ord => ord,
-        }
+        Some(self.cmp(other))
     }
 }
 
 impl Ord for Signature {
     fn cmp(&self, other: &Self) -> Ordering {
-        self.partial_cmp(other).unwrap()
+        let (r1, s1) = self.0.split_bytes();
+        let (r2, s2) = other.0.split_bytes();
+        r1.cmp(&r2).then(s1.cmp(&s2)).then(self.1.cmp(&other.1))
     }
 }
 
