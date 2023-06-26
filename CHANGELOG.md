@@ -1,5 +1,11 @@
 # Changelog
 
+## \[0.21.1]
+
+- [`0c33ca5`](https://www.github.com/iotaledger/crypto.rs/commit/0c33ca571c6695c0f6ace53b9ef278cb74a6c969)([#204](https://www.github.com/iotaledger/crypto.rs/pull/204)) BIP39 reference types and other minor improvements.
+- [`0843e7b`](https://www.github.com/iotaledger/crypto.rs/commit/0843e7b432a4eabf369bbbd212d77c96397a59cb)([#205](https://www.github.com/iotaledger/crypto.rs/pull/205)) Implement `Eq`, `Ord` and `Hash` traits for public key and signature types.
+- [`2926f7c`](https://www.github.com/iotaledger/crypto.rs/commit/2926f7c40e429e5e4ce77a29ed132883153b23fa)([#207](https://www.github.com/iotaledger/crypto.rs/pull/207)) SLIP10 minor improvements.
+
 ## \[0.21.0]
 
 - [`8bc7a70`](https://www.github.com/iotaledger/crypto.rs/commit/8bc7a70f86f094e272280d06fcca0fabfb8f8345)([#200](https://www.github.com/iotaledger/crypto.rs/pull/200)) Use safety wrappers for BIP39 mnemonic and passphrase types for encapsulating normalization (UTF-8 NFKD) checks and avoid potential secret leaks.
