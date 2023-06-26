@@ -237,6 +237,7 @@ fn test_ord() {
             let sigi = Signature::from_bytes(bs[i]);
             let sigj = Signature::from_bytes(bs[j]);
             assert!(sigi < sigj);
+            assert!(bs[i] < bs[j]);
         }
     }
     for b in bs {

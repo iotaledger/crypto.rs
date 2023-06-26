@@ -155,6 +155,7 @@ fn test_ord() {
             let sigi = Signature::try_from_bytes(&bs[i]).unwrap();
             let sigj = Signature::try_from_bytes(&bs[j]).unwrap();
             assert!(sigi < sigj);
+            assert!(bs[i] < bs[j]);
         }
     }
     for b in bs {
