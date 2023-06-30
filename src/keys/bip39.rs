@@ -253,12 +253,6 @@ impl AsRef<[u8; 64]> for Seed {
     }
 }
 
-impl Seed {
-    pub fn null() -> Self {
-        Self([0_u8; 64])
-    }
-}
-
 impl fmt::Debug for Seed {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -268,11 +262,13 @@ impl fmt::Debug for Seed {
 
 /// Derive seed from mnemonic and optional (can be empty) passphrase.
 // Return seed via mutable reference to avoid potential leaks into stack memory.
-pub fn mnemonic_to_seed(m: &MnemonicRef, p: &PassphraseRef, s: &mut Seed) {
+pub fn mnemonic_to_seed(m: &MnemonicRef, p: &PassphraseRef) -> Seed {
     let mut salt = [b"mnemonic", p.0.as_bytes()].concat();
     const ROUNDS: core::num::NonZeroU32 = unsafe { core::num::NonZeroU32::new_unchecked(2048) };
-    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), &salt, ROUNDS, &mut s.0);
+    let mut seed = Seed([0_u8; 64]);
+    crate::keys::pbkdf::PBKDF2_HMAC_SHA512(m.as_bytes(), &salt, ROUNDS, &mut seed.0);
     salt.zeroize();
+    seed
 }
 
 pub mod wordlist {
