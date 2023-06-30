@@ -47,8 +47,7 @@ fn test_vectors() {
         let mut expected_seed = [0; 64];
         hex::decode_to_slice(tv.seed, &mut expected_seed).unwrap();
 
-        let mut seed = Seed::null();
-        mnemonic_to_seed(&mnemonic, &passphrase, &mut seed);
+        let seed = mnemonic_to_seed(&mnemonic, &passphrase);
         assert_eq!(seed.as_ref(), &expected_seed);
     }
 }
