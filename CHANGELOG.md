@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.21.2]
+
+- [`aeead20`](https://www.github.com/iotaledger/crypto.rs/commit/aeead20828ca18af61cf705b4dcf40e8281ea417)([#208](https://www.github.com/iotaledger/crypto.rs/pull/208)) Minor BIP39 API change: return seed by value.
+
 ## \[0.21.1]
 
 - [`0c33ca5`](https://www.github.com/iotaledger/crypto.rs/commit/0c33ca571c6695c0f6ace53b9ef278cb74a6c969)([#204](https://www.github.com/iotaledger/crypto.rs/pull/204)) BIP39 reference types and other minor improvements.
