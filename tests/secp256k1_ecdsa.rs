@@ -3,13 +3,12 @@
 
 #![cfg(feature = "secp256k1")]
 
-use crypto::signatures::secp256k1_ecdsa::{PublicKey, SecretKey, Signature};
+use crypto::signatures::secp256k1_ecdsa::{PublicKey, RecoverableSignature, SecretKey, Signature};
 
 mod utils;
 
-fn run_secp256k1_sign_verify(sk: SecretKey, pk: PublicKey) {
-    assert_eq!(pk.to_bytes(), sk.public_key().to_bytes());
-    let _addr = pk.to_evm_address();
+fn run_secp256k1_sha256(sk: SecretKey, pk: PublicKey) {
+    assert_eq!(pk, sk.public_key());
 
     let sk_bytes = sk.to_bytes();
     let sk2 = SecretKey::try_from_bytes(&sk_bytes).unwrap();
@@ -22,21 +21,63 @@ fn run_secp256k1_sign_verify(sk: SecretKey, pk: PublicKey) {
     assert_eq!(pk_bytes, pk2_bytes);
 
     let msg = utils::fresh::bytestring();
-    let sig = sk.sign(&msg);
+    let sig = sk.sign_sha256(&msg);
     let mut sig_bytes = sig.to_bytes();
-    let sig2 = Signature::try_from_bytes(&sig_bytes).unwrap();
+    let sig2 = RecoverableSignature::try_from_bytes(&sig_bytes).unwrap();
 
-    assert_eq!(pk, sig.verify_recover(&msg).unwrap());
+    assert_eq!(pk, sig.recover_sha256(&msg).unwrap());
 
-    assert!(pk.verify(&sig2, &msg));
+    assert!(pk.verify_sha256(sig2.as_ref(), &msg));
     #[cfg(feature = "rand")]
-    assert!(!SecretKey::generate()
-        .public_key()
-        .verify(&Signature::try_from_slice(&sig_bytes).unwrap(), &msg));
+    assert!(!SecretKey::generate().public_key().verify_sha256(
+        &Signature::try_from_slice(&sig_bytes[..Signature::LENGTH]).unwrap(),
+        &msg
+    ));
 
     // utils::corrupt(&mut sig_bytes);
     sig_bytes[7] ^= 1;
-    assert!(!pk.verify(&Signature::try_from_bytes(&sig_bytes).unwrap(), &msg));
+    assert!(!pk.verify_sha256(
+        &Signature::try_from_slice(&sig_bytes[..Signature::LENGTH]).unwrap(),
+        &msg
+    ));
+}
+
+#[cfg(feature = "keccak")]
+fn run_secp256k1_keccak256(sk: SecretKey, pk: PublicKey) {
+    assert_eq!(pk, sk.public_key());
+    let addr = pk.evm_address();
+
+    let sk_bytes = sk.to_bytes();
+    let sk2 = SecretKey::try_from_bytes(&sk_bytes).unwrap();
+    let sk2_bytes = sk2.to_bytes();
+    assert_eq!(sk_bytes, sk2_bytes);
+
+    let pk_bytes = pk.to_bytes();
+    let pk2 = PublicKey::try_from_bytes(&pk_bytes).unwrap();
+    let pk2_bytes = pk2.to_bytes();
+    assert_eq!(pk_bytes, pk2_bytes);
+
+    let msg = utils::fresh::bytestring();
+    let sig = sk.sign_keccak256(&msg);
+    let mut sig_bytes = sig.to_bytes();
+    let sig2 = RecoverableSignature::try_from_bytes(&sig_bytes).unwrap();
+
+    assert_eq!(pk, sig.recover_keccak256(&msg).unwrap());
+    assert_eq!(addr, sig.recover_evm_address(&msg).unwrap());
+
+    assert!(pk.verify_keccak256(sig2.as_ref(), &msg));
+    #[cfg(feature = "rand")]
+    assert!(!SecretKey::generate().public_key().verify_keccak256(
+        &Signature::try_from_slice(&sig_bytes[..Signature::LENGTH]).unwrap(),
+        &msg
+    ));
+
+    // utils::corrupt(&mut sig_bytes);
+    sig_bytes[7] ^= 1;
+    assert!(!pk.verify_keccak256(
+        &Signature::try_from_slice(&sig_bytes[..Signature::LENGTH]).unwrap(),
+        &msg
+    ));
 }
 
 #[test]
@@ -49,7 +90,9 @@ fn test_secp256k1_sign_verify() {
     let pkb = hex::decode("02af81cf426b23df0f01c2f6acd86a7fa24cf48c1637c320e06f40dc315b597f6d").unwrap();
     let pk = PublicKey::try_from_slice(&pkb).unwrap();
 
-    run_secp256k1_sign_verify(sk, pk);
+    run_secp256k1_sha256(sk.clone(), pk);
+    #[cfg(feature = "keccak")]
+    run_secp256k1_keccak256(sk, pk);
 }
 
 #[cfg(feature = "rand")]
@@ -57,7 +100,9 @@ fn test_secp256k1_sign_verify() {
 fn test_secp256k1_sign_verify_random() {
     let sk = SecretKey::generate();
     let pk = sk.public_key();
-    run_secp256k1_sign_verify(sk, pk);
+    run_secp256k1_sha256(sk.clone(), pk);
+    #[cfg(feature = "keccak")]
+    run_secp256k1_keccak256(sk, pk);
 }
 
 #[test]
@@ -120,14 +165,14 @@ fn test_ord() {
     let bs = [b111, b112, b121, b211, beff, bfef, bffe, bfff];
     for i in 0..bs.len() - 1 {
         for j in i + 1..bs.len() {
-            let sigi = Signature::try_from_bytes(&bs[i]).unwrap();
-            let sigj = Signature::try_from_bytes(&bs[j]).unwrap();
+            let sigi = RecoverableSignature::try_from_bytes(&bs[i]).unwrap();
+            let sigj = RecoverableSignature::try_from_bytes(&bs[j]).unwrap();
             assert!(sigi < sigj);
             assert!(bs[i] < bs[j]);
         }
     }
     for b in bs {
-        let sig = Signature::try_from_bytes(&b).unwrap();
+        let sig = RecoverableSignature::try_from_bytes(&b).unwrap();
         assert_eq!(b, sig.to_bytes());
     }
 }
