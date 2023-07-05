@@ -28,8 +28,19 @@ fn test_separator() {
 
 #[test]
 fn test_vectors() {
-    let tvs = include!("fixtures/bip39.rs");
+    #[cfg(feature = "bip39-en")]
+    {
+        let tvs_en = include!("fixtures/bip39_en.rs");
+        run_test_vectors(&tvs_en);
+    }
+    #[cfg(feature = "bip39-jp")]
+    {
+        let tvs_jp = include!("fixtures/bip39_jp.rs");
+        run_test_vectors(&tvs_jp);
+    }
+}
 
+fn run_test_vectors(tvs: &[TestVector]) {
     for tv in tvs.iter() {
         let entropy = hex::decode(tv.entropy).unwrap();
         let mnemonic = hex::decode(tv.mnemonic).unwrap();
