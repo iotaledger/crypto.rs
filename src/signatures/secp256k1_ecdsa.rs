@@ -7,6 +7,15 @@ use core::hash::{Hash, Hasher};
 
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
+fn keccak256(m: &[u8]) -> [u8; 32] {
+    use tiny_keccak::{Hasher, Keccak};
+    let mut keccak = Keccak::v256();
+    keccak.update(m);
+    let mut hash = [0u8; 32];
+    keccak.finalize(&mut hash);
+    hash
+}
+
 #[derive(Clone, ZeroizeOnDrop)]
 pub struct SecretKey(k256::ecdsa::SigningKey);
 
@@ -44,8 +53,9 @@ impl SecretKey {
     }
 
     pub fn try_sign(&self, msg: &[u8]) -> crate::Result<Signature> {
+        let prehash = keccak256(msg);
         self.0
-            .sign_recoverable(msg)
+            .sign_prehash_recoverable(&prehash)
             .map_err(|_| crate::Error::SignatureError { alg: "secp256k1 ecdsa" })
             .map(|(sig, rid)| Signature(sig, rid))
     }
@@ -63,8 +73,9 @@ impl PublicKey {
     pub const LENGTH: usize = 33;
 
     pub fn verify(&self, sig: &Signature, msg: &[u8]) -> bool {
-        use k256::ecdsa::signature::Verifier;
-        self.0.verify(msg, &sig.0).is_ok()
+        use k256::ecdsa::signature::hazmat::PrehashVerifier;
+        let prehash = keccak256(msg);
+        self.0.verify_prehash(&prehash, &sig.0).is_ok()
     }
 
     pub fn to_bytes(self) -> [u8; PublicKey::LENGTH] {
@@ -113,12 +124,7 @@ impl PublicKey {
         let public_key = self.0.to_encoded_point(/* compress = */ false);
         let public_key = public_key.as_bytes();
         debug_assert_eq!(public_key[0], 0x04);
-        // let hash = keccak256(&public_key[1..]);
-        use tiny_keccak::{Hasher, Keccak};
-        let mut keccak = Keccak::v256();
-        keccak.update(&public_key[1..]);
-        let mut hash = [0u8; 32];
-        keccak.finalize(&mut hash);
+        let hash = keccak256(&public_key[1..]);
 
         let mut bytes = [0u8; 20];
         bytes.copy_from_slice(&hash[12..]);
@@ -191,7 +197,8 @@ impl Signature {
     }
 
     pub fn verify_recover(&self, msg: &[u8]) -> Option<PublicKey> {
-        k256::ecdsa::VerifyingKey::recover_from_msg(msg, &self.0, self.1)
+        let prehash = keccak256(msg);
+        k256::ecdsa::VerifyingKey::recover_from_prehash(&prehash, &self.0, self.1)
             .ok()
             .map(PublicKey)
     }
