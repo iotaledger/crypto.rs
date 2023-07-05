@@ -61,6 +61,7 @@ wots_deprecated_do_not_use = [
   "bee-common-derive"
 ]
 sha = [ "dep:sha2", "digest" ]
+keccak = [ "dep:tiny-keccak" ]
 hmac = [ "dep:hmac" ]
 pbkdf2 = [ "dep:pbkdf2", "pbkdf2/hmac", "dep:sha2" ]
 bip39 = [
@@ -93,7 +94,7 @@ age = [
   "dep:sha2",
   "zeroize"
 ]
-secp256k1 = [ "dep:k256", "k256?/ecdsa", "dep:tiny-keccak", "zeroize" ]
+secp256k1 = [ "dep:k256", "k256?/ecdsa", "zeroize" ]
 serde = [
   "dep:serde",
   "ed25519-zebra?/serde",
