@@ -15,13 +15,15 @@ use crate::macs::hmac::HMAC_SHA512;
 // https://github.com/satoshilabs/slips/blob/master/slip-0010.md
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
+// https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
+// https://en.bitcoin.it/wiki/BIP_0044
 
 /// The traits in hazmat module are implementation internals.
 /// The traits are made public due to other public API requiring them.
 /// The traits are not exported to prevent third parties from implementing them outside this crate. This prevents third
 /// parties from importing and using them in polymorphic contexts.
 mod hazmat {
-    use super::Segment;
+    use super::{Bip44, Segment};
 
     /// Prevent external crates from deriving hazmat traits.
     pub trait Sealed {}
@@ -52,13 +54,18 @@ mod hazmat {
     pub trait CalcData<S: Segment>: Sealed {
         fn calc_data(key_bytes: &[u8; 33], segment: S) -> [u8; 33];
     }
+    /// Keys that convert BIP44 chain into a compatible segment iterator.
+    pub trait Bip44IntoIter: Sealed {
+        type Chain;
+        fn bip44_into_chain(bip44_chain: &Bip44) -> Self::Chain;
+    }
 }
 
 pub use hazmat::{CalcData, Derivable, IsPublicKey, IsSecretKey, ToPublic};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
-    use super::{hazmat::*, Hardened};
+    use super::{hazmat::*, Bip44, Hardened, Segment};
     use crate::signatures::ed25519;
 
     impl Sealed for ed25519::SecretKey {}
@@ -87,11 +94,24 @@ pub mod ed25519 {
             *key_bytes
         }
     }
+
+    impl Bip44IntoIter for ed25519::SecretKey {
+        type Chain = [Hardened; 5];
+        fn bip44_into_chain(bip44_chain: &Bip44) -> [Hardened; 5] {
+            [
+                bip44_chain.purpose.harden(),
+                bip44_chain.coin_type.harden(),
+                bip44_chain.account.harden(),
+                bip44_chain.change.harden(),
+                bip44_chain.address_index.harden(),
+            ]
+        }
+    }
 }
 
 #[cfg(feature = "secp256k1")]
 pub mod secp256k1 {
-    use super::{hazmat::*, Hardened, NonHardened, Segment};
+    use super::{hazmat::*, Bip44, Hardened, NonHardened, Segment};
     use crate::signatures::secp256k1_ecdsa;
 
     impl Sealed for secp256k1_ecdsa::SecretKey {}
@@ -169,6 +189,19 @@ pub mod secp256k1 {
             } else {
                 Self::calc_data(key_bytes, NonHardened(segment))
             }
+        }
+    }
+
+    impl Bip44IntoIter for secp256k1_ecdsa::SecretKey {
+        type Chain = [u32; 5];
+        fn bip44_into_chain(bip44_chain: &Bip44) -> [u32; 5] {
+            [
+                bip44_chain.purpose.harden().into(),
+                bip44_chain.coin_type.harden().into(),
+                bip44_chain.account.harden().into(),
+                bip44_chain.change,
+                bip44_chain.address_index,
+            ]
         }
     }
 
@@ -586,5 +619,92 @@ impl Segment for NonHardened {
     }
     fn unharden(self) -> NonHardened {
         self
+    }
+}
+
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+pub struct Bip44 {
+    pub purpose: u32,
+    pub coin_type: u32,
+    pub account: u32,
+    pub change: u32,
+    pub address_index: u32,
+}
+
+impl Bip44 {
+    pub fn derive<K>(&self, mk: &Slip10<K>) -> Slip10<K>
+    where
+        K: hazmat::Derivable
+            + hazmat::CalcData<<<K as hazmat::Bip44IntoIter>::Chain as IntoIterator>::Item>
+            + hazmat::Bip44IntoIter,
+        <K as hazmat::Bip44IntoIter>::Chain: IntoIterator,
+        <<K as hazmat::Bip44IntoIter>::Chain as IntoIterator>::Item: Segment,
+    {
+        mk.derive(K::bip44_into_chain(self).into_iter())
+    }
+}
+
+impl From<[u32; 5]> for Bip44 {
+    fn from(segments: [u32; 5]) -> Self {
+        let [purpose, coin_type, account, change, address_index] = segments;
+        Self {
+            purpose,
+            coin_type,
+            account,
+            change,
+            address_index,
+        }
+    }
+}
+
+impl From<&Bip44> for [u32; 5] {
+    fn from(bip44_chain: &Bip44) -> [u32; 5] {
+        [
+            bip44_chain.purpose,
+            bip44_chain.coin_type,
+            bip44_chain.account,
+            bip44_chain.change,
+            bip44_chain.address_index,
+        ]
+    }
+}
+
+pub struct Bip44Builder(Bip44);
+
+impl Bip44Builder {
+    pub fn new() -> Self {
+        Self(Bip44::from([0, 0, 0, 0, 0]))
+    }
+    pub fn purpose(mut self, s: u32) -> Self {
+        self.0.purpose = s;
+        self
+    }
+    pub fn coin_type(mut self, s: u32) -> Self {
+        self.0.coin_type = s;
+        self
+    }
+    pub fn account(mut self, s: u32) -> Self {
+        self.0.account = s;
+        self
+    }
+    pub fn change(mut self, s: u32) -> Self {
+        self.0.change = s;
+        self
+    }
+    pub fn address_index(mut self, s: u32) -> Self {
+        self.0.address_index = s;
+        self
+    }
+}
+
+impl Default for Bip44Builder {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl From<Bip44Builder> for Bip44 {
+    fn from(b: Bip44Builder) -> Self {
+        b.0
     }
 }
