@@ -146,14 +146,14 @@ mod slip10 {
     fn test_generic() {
         use crypto::keys::slip10;
 
-        fn derive0<K: slip10::Derivable + slip10::CalcData<slip10::Hardened>>(
+        fn derive0<K: slip10::Derivable + slip10::WithSegment<slip10::Hardened>>(
             ext: &slip10::Slip10<K>,
         ) -> slip10::Slip10<K> {
             use slip10::Segment;
             ext.child_key(0.harden())
         }
 
-        fn derive1<K: slip10::Derivable + slip10::CalcData<slip10::NonHardened>>(
+        fn derive1<K: slip10::Derivable + slip10::WithSegment<slip10::NonHardened>>(
             ext: &slip10::Slip10<K>,
         ) -> slip10::Slip10<K> {
             use slip10::Segment;

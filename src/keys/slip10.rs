@@ -51,7 +51,7 @@ mod hazmat {
         fn to_public(sk_bytes: &[u8; 33]) -> [u8; 33];
     }
     /// Keys that can be used to compute "data" argument of SLIP10 derivation algorithm for a specific segment type.
-    pub trait CalcData<S: Segment>: Sealed {
+    pub trait WithSegment<S: Segment>: Sealed {
         fn calc_data(key_bytes: &[u8; 33], segment: S) -> [u8; 33];
     }
     /// Keys that convert a prechain (BIP44) to a compatible chain.
@@ -61,7 +61,7 @@ mod hazmat {
     }
 }
 
-pub use hazmat::{CalcData, Derivable, IsPublicKey, IsSecretKey, ToPublic};
+pub use hazmat::{WithSegment, Derivable, IsPublicKey, IsSecretKey, ToPublic};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
@@ -89,7 +89,7 @@ pub mod ed25519 {
         type PublicKey = ed25519::PublicKey;
     }
 
-    impl CalcData<Hardened> for ed25519::SecretKey {
+    impl WithSegment<Hardened> for ed25519::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: Hardened) -> [u8; 33] {
             *key_bytes
         }
@@ -170,19 +170,19 @@ pub mod secp256k1 {
         }
     }
 
-    impl CalcData<Hardened> for secp256k1_ecdsa::SecretKey {
+    impl WithSegment<Hardened> for secp256k1_ecdsa::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: Hardened) -> [u8; 33] {
             *key_bytes
         }
     }
 
-    impl CalcData<NonHardened> for secp256k1_ecdsa::SecretKey {
+    impl WithSegment<NonHardened> for secp256k1_ecdsa::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: NonHardened) -> [u8; 33] {
             Self::to_public(key_bytes)
         }
     }
 
-    impl CalcData<u32> for secp256k1_ecdsa::SecretKey {
+    impl WithSegment<u32> for secp256k1_ecdsa::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], segment: u32) -> [u8; 33] {
             if segment.is_hardened() {
                 Self::calc_data(key_bytes, Hardened(segment))
@@ -249,7 +249,7 @@ pub mod secp256k1 {
         type SecretKey = secp256k1_ecdsa::SecretKey;
     }
 
-    impl CalcData<NonHardened> for secp256k1_ecdsa::PublicKey {
+    impl WithSegment<NonHardened> for secp256k1_ecdsa::PublicKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: NonHardened) -> [u8; 33] {
             *key_bytes
         }
@@ -279,7 +279,7 @@ impl Seed {
 
     pub fn derive<K, I>(&self, chain: I) -> Slip10<K>
     where
-        K: hazmat::IsSecretKey + hazmat::CalcData<<I as Iterator>::Item>,
+        K: hazmat::IsSecretKey + hazmat::WithSegment<<I as Iterator>::Item>,
         I: Iterator,
         <I as Iterator>::Item: Segment,
     {
@@ -437,7 +437,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
 
     pub fn derive<I>(&self, chain: I) -> Self
     where
-        K: hazmat::CalcData<<I as Iterator>::Item>,
+        K: hazmat::WithSegment<<I as Iterator>::Item>,
         I: Iterator,
         <I as Iterator>::Item: Segment,
     {
@@ -451,7 +451,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
     pub fn child_key<S>(&self, segment: S) -> Self
     where
         S: Segment,
-        K: hazmat::CalcData<S>,
+        K: hazmat::WithSegment<S>,
     {
         self.derive_child_key(segment)
     }
@@ -479,7 +479,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
     fn calc_data<S>(&self, segment: S) -> [u8; 33]
     where
         S: Segment,
-        K: hazmat::CalcData<S>,
+        K: hazmat::WithSegment<S>,
     {
         K::calc_data(self.key_bytes(), segment)
     }
@@ -487,7 +487,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
     fn derive_child_key<S>(&self, segment: S) -> Self
     where
         S: Segment,
-        K: hazmat::CalcData<S>,
+        K: hazmat::WithSegment<S>,
     {
         let mut data = [0u8; 33 + 4];
         data[..33].copy_from_slice(&self.calc_data(segment));
@@ -639,7 +639,7 @@ impl Bip44 {
     pub fn derive<K>(&self, mk: &Slip10<K>) -> Slip10<K>
     where
         K: hazmat::Derivable
-            + hazmat::CalcData<<<K as hazmat::ToChain<Bip44>>::Chain as IntoIterator>::Item>
+            + hazmat::WithSegment<<<K as hazmat::ToChain<Bip44>>::Chain as IntoIterator>::Item>
             + hazmat::ToChain<Bip44>,
         <K as hazmat::ToChain<Bip44>>::Chain: IntoIterator,
         <<K as hazmat::ToChain<Bip44>>::Chain as IntoIterator>::Item: Segment,
