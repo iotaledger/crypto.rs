@@ -617,6 +617,13 @@ impl Segment for NonHardened {
     }
 }
 
+/// Type of BIP44 chains that apply hardening rules depending on the derived key type.
+///
+/// For Ed225519 secret keys the final chain is as follows (all segments are hardened):
+/// m / purpose' / coin_type' / account' / change' / address_index'
+///
+/// For Secp256k1 ECDSA secret keys the final chain is as follows (the first three segments are hardened):
+/// m / purpose' / coin_type' / account' / change / address_index
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bip44 {
