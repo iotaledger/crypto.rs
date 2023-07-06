@@ -23,7 +23,7 @@ use crate::macs::hmac::HMAC_SHA512;
 /// The traits are not exported to prevent third parties from implementing them outside this crate. This prevents third
 /// parties from importing and using them in polymorphic contexts.
 mod hazmat {
-    use super::{Bip44, Segment};
+    use super::Segment;
 
     /// Prevent external crates from deriving hazmat traits.
     pub trait Sealed {}
@@ -54,10 +54,10 @@ mod hazmat {
     pub trait CalcData<S: Segment>: Sealed {
         fn calc_data(key_bytes: &[u8; 33], segment: S) -> [u8; 33];
     }
-    /// Keys that convert BIP44 chain into a compatible segment iterator.
-    pub trait Bip44IntoIter: Sealed {
+    /// Keys that convert a prechain (BIP44) to a compatible chain.
+    pub trait ToChain<C>: Sealed {
         type Chain;
-        fn bip44_into_chain(bip44_chain: &Bip44) -> Self::Chain;
+        fn to_chain(pre_chain: &C) -> Self::Chain;
     }
 }
 
@@ -95,9 +95,9 @@ pub mod ed25519 {
         }
     }
 
-    impl Bip44IntoIter for ed25519::SecretKey {
+    impl ToChain<Bip44> for ed25519::SecretKey {
         type Chain = [Hardened; 5];
-        fn bip44_into_chain(bip44_chain: &Bip44) -> [Hardened; 5] {
+        fn to_chain(bip44_chain: &Bip44) -> [Hardened; 5] {
             [
                 bip44_chain.purpose.harden(),
                 bip44_chain.coin_type.harden(),
@@ -192,9 +192,9 @@ pub mod secp256k1 {
         }
     }
 
-    impl Bip44IntoIter for secp256k1_ecdsa::SecretKey {
+    impl ToChain<Bip44> for secp256k1_ecdsa::SecretKey {
         type Chain = [u32; 5];
-        fn bip44_into_chain(bip44_chain: &Bip44) -> [u32; 5] {
+        fn to_chain(bip44_chain: &Bip44) -> [u32; 5] {
             [
                 bip44_chain.purpose.harden().into(),
                 bip44_chain.coin_type.harden().into(),
@@ -635,12 +635,12 @@ impl Bip44 {
     pub fn derive<K>(&self, mk: &Slip10<K>) -> Slip10<K>
     where
         K: hazmat::Derivable
-            + hazmat::CalcData<<<K as hazmat::Bip44IntoIter>::Chain as IntoIterator>::Item>
-            + hazmat::Bip44IntoIter,
-        <K as hazmat::Bip44IntoIter>::Chain: IntoIterator,
-        <<K as hazmat::Bip44IntoIter>::Chain as IntoIterator>::Item: Segment,
+            + hazmat::CalcData<<<K as hazmat::ToChain<Bip44>>::Chain as IntoIterator>::Item>
+            + hazmat::ToChain<Bip44>,
+        <K as hazmat::ToChain<Bip44>>::Chain: IntoIterator,
+        <<K as hazmat::ToChain<Bip44>>::Chain as IntoIterator>::Item: Segment,
     {
-        mk.derive(K::bip44_into_chain(self).into_iter())
+        mk.derive(K::to_chain(self).into_iter())
     }
 }
 
