@@ -60,7 +60,7 @@ mod hazmat {
     }
 }
 
-pub use hazmat::{WithSegment, Derivable, IsPublicKey, IsSecretKey, ToPublic};
+pub use hazmat::{Derivable, IsPublicKey, IsSecretKey, ToPublic, WithSegment};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
