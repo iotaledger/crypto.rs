@@ -632,6 +632,10 @@ pub struct Bip44 {
 }
 
 impl Bip44 {
+    pub fn builder(self) -> Bip44Builder {
+        Bip44Builder(self)
+    }
+
     pub fn to_chain<K: hazmat::ToChain<Self>>(&self) -> <K as hazmat::ToChain<Self>>::Chain {
         K::to_chain(self)
     }
