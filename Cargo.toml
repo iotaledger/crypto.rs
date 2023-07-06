@@ -77,9 +77,7 @@ bip39-jp = [ "bip39" ]
 slip10 = [
   "hmac",
   "sha",
-  "serde",
-  "zeroize",
-  "k256?/arithmetic"
+  "zeroize"
 ]
 cipher = [ "aead", "dep:cipher", "generic-array" ]
 ternary_encoding = [ "serde", "num-traits" ]

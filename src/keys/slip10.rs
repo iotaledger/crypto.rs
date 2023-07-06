@@ -7,7 +7,6 @@ use alloc::vec::Vec;
 use core::convert::TryFrom;
 use core::fmt;
 
-use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::macs::hmac::HMAC_SHA512;
@@ -294,6 +293,12 @@ impl fmt::Debug for Seed {
     }
 }
 
+impl AsRef<[u8]> for Seed {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
+    }
+}
+
 #[cfg(feature = "bip39")]
 impl From<super::bip39::Seed> for Seed {
     fn from(seed: super::bip39::Seed) -> Self {
@@ -336,9 +341,9 @@ impl<K> Zeroize for Slip10<K> {
 }
 
 impl<K: hazmat::IsSecretKey> Slip10<K> {
-    pub fn from_seed(seed: &Seed) -> Self {
+    pub fn from_seed<S: AsRef<[u8]>>(seed: &S) -> Self {
         let mut key = Self::new();
-        HMAC_SHA512(&seed.0, K::SEEDKEY, key.ext_mut());
+        HMAC_SHA512(seed.as_ref(), K::SEEDKEY, key.ext_mut());
         while !key.is_key_valid() {
             let mut tmp = [0_u8; 64];
             tmp.copy_from_slice(&key.ext[1..]);
@@ -543,7 +548,8 @@ impl Segment for u32 {
 }
 
 /// Type of hardened segments.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct Hardened(u32);
 
@@ -577,7 +583,8 @@ impl Segment for Hardened {
 }
 
 /// Type of non-hardened segments.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct NonHardened(u32);
 
@@ -610,7 +617,8 @@ impl Segment for NonHardened {
     }
 }
 
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bip44 {
     pub purpose: u32,
     pub coin_type: u32,
@@ -702,5 +710,11 @@ impl Default for Bip44Builder {
 impl From<Bip44Builder> for Bip44 {
     fn from(b: Bip44Builder) -> Self {
         b.0
+    }
+}
+
+impl From<Bip44> for Bip44Builder {
+    fn from(b: Bip44) -> Self {
+        Self(b)
     }
 }
