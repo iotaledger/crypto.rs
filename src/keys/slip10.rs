@@ -632,6 +632,10 @@ pub struct Bip44 {
 }
 
 impl Bip44 {
+    pub fn to_chain<K: hazmat::ToChain<Self>>(&self) -> <K as hazmat::ToChain<Self>>::Chain {
+        K::to_chain(self)
+    }
+
     pub fn derive<K>(&self, mk: &Slip10<K>) -> Slip10<K>
     where
         K: hazmat::Derivable
@@ -640,7 +644,7 @@ impl Bip44 {
         <K as hazmat::ToChain<Bip44>>::Chain: IntoIterator,
         <<K as hazmat::ToChain<Bip44>>::Chain as IntoIterator>::Item: Segment,
     {
-        mk.derive(K::to_chain(self).into_iter())
+        mk.derive(self.to_chain::<K>().into_iter())
     }
 }
 
