@@ -441,19 +441,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
         I: Iterator,
         <I as Iterator>::Item: Segment,
     {
-        let mut key: Self = self.clone();
-        for segment in chain {
-            key = key.derive_child_key(segment);
-        }
-        key
-    }
-
-    pub fn child_key<S>(&self, segment: S) -> Self
-    where
-        S: Segment,
-        K: hazmat::WithSegment<S>,
-    {
-        self.derive_child_key(segment)
+        chain.fold(self.clone(), |key, segment| key.child_key(segment))
     }
 
     fn ext_mut(&mut self) -> &mut [u8; 64] {
@@ -484,7 +472,7 @@ impl<K: hazmat::Derivable> Slip10<K> {
         K::calc_data(self.key_bytes(), segment)
     }
 
-    fn derive_child_key<S>(&self, segment: S) -> Self
+    pub fn child_key<S>(&self, segment: S) -> Self
     where
         S: Segment,
         K: hazmat::WithSegment<S>,
