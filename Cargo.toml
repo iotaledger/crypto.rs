@@ -151,3 +151,6 @@ age = { version = "0.9", default-features = false }
 
 [profile.dev]
 split-debuginfo = "unpacked"
+
+[patch.crates-io]
+ed25519-zebra = { git = "https://github.com/ZcashFoundation/ed25519-zebra/", branch = "main" }
