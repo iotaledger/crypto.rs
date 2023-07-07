@@ -19,8 +19,8 @@ pub struct SecretKey(k256::ecdsa::SigningKey);
 impl SecretKey {
     pub const LENGTH: usize = 32;
 
-    #[cfg(feature = "rand")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
+    #[cfg(feature = "random")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
     pub fn generate() -> Self {
         let mut rng = rand::rngs::OsRng;
         Self(k256::ecdsa::SigningKey::random(&mut rng))
