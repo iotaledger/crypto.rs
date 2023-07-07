@@ -25,4 +25,4 @@ jobs:
       uses: actions-rs/cargo@v1
       with:
         command: check
-        args: --release --target=riscv64gc-unknown-none-elf --manifest-path Cargo.toml
+        args: --no-default-features -F aes-cbc,aes-kw,aes-gcm,chacha,ed25519,x25519,rand,aes,blake2b,ternary_hashes,curl-p,ternary_signatures,sha,keccak,hmac,pbkdf2,bip39,bip39-en,bip39-jp,slip10,cipher,ternary_encoding,age,secp256k1,serde --release --target=riscv64gc-unknown-none-elf --manifest-path Cargo.toml
