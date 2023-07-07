@@ -77,7 +77,6 @@ bip39-jp = [ "bip39" ]
 slip10 = [
   "hmac",
   "sha",
-  "random",
   "serde",
   "zeroize",
   "k256?/arithmetic"
