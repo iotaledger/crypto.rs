@@ -505,18 +505,18 @@ impl<K: hazmat::Derivable> Slip10<K> {
         <I as Iterator>::Item: Segment,
     {
         Children {
-            mk: self,
+            mk: self.clone(),
             child_segments,
         }
     }
 }
 
-pub struct Children<'a, K, I> {
-    mk: &'a Slip10<K>,
+pub struct Children<K, I> {
+    mk: Slip10<K>,
     child_segments: I,
 }
 
-impl<'a, K, I> Iterator for Children<'a, K, I>
+impl<K, I> Iterator for Children<K, I>
 where
     K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
     I: Iterator,
@@ -528,7 +528,7 @@ where
     }
 }
 
-impl<'a, K, I> core::iter::FusedIterator for Children<'a, K, I>
+impl<K, I> core::iter::FusedIterator for Children<K, I>
 where
     K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
     I: core::iter::FusedIterator,
@@ -536,7 +536,7 @@ where
 {
 }
 
-impl<'a, K, I> core::iter::ExactSizeIterator for Children<'a, K, I>
+impl<K, I> core::iter::ExactSizeIterator for Children<K, I>
 where
     K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
     I: core::iter::ExactSizeIterator,
@@ -700,6 +700,56 @@ impl Bip44 {
         <<K as hazmat::ToChain<Bip44>>::Chain as IntoIterator>::Item: Segment,
     {
         mk.derive(self.to_chain::<K>().into_iter())
+    }
+
+    /// Derive a number of children keys with optimization as follows:
+    ///
+    ///     mk = m / purpose* / coin_type* / account* / change*
+    ///     child_i = mk / (address_index + i)*
+    ///     return (child_0, .., child_{address_count - 1})
+    ///
+    /// Star (*) denotes hardening rule specific for key type `K`.
+    ///
+    /// Address space should not overflow, if `k` is the first index such that `address_index + k` overflows (31-bit),
+    /// then only the first `k` children are returned.
+    pub fn derive_address_range<K, S>(
+        &self,
+        m: &Slip10<K>,
+        address_count: usize,
+    ) -> impl ExactSizeIterator<Item = Slip10<K>>
+    where
+        K: hazmat::Derivable + hazmat::WithSegment<S> + hazmat::ToChain<Bip44, Chain = [S; 5]>,
+        S: Segment + TryFrom<u32>,
+        <S as TryFrom<u32>>::Error: core::fmt::Debug,
+    {
+        let chain: [_; 5] = self.to_chain::<K>();
+
+        // maximum number segments is 2^31, trim usize value to fit u32
+        let address_count = core::cmp::min(1 << 31, address_count) as u32;
+
+        // BIP44 conversion rules are strict, the last element is address_index
+        let address_start = chain[4];
+        let hardening_bit: u32 = address_start.into() & HARDEN_MASK;
+        // strip hardening bit as it may interfere and overflow
+        let unhardened_start: u32 = address_start.unharden().into();
+        // this is guaranteed to not overflow and be <= 2^31
+        let unhardened_end: u32 = core::cmp::min(1_u32 << 31, unhardened_start + address_count);
+
+        // this is the final range guaranteed to not overflow address_index space
+        let child_segments = (unhardened_start..unhardened_end).map(move |unhardened_address_index| -> S {
+            let address_index = hardening_bit | unhardened_address_index;
+            // SAFETY: address_index is guaranteed to have the correct hardening as the target type `S`, so unwrap()
+            // can't fail
+            address_index.try_into().unwrap()
+        });
+
+        let mk = if child_segments.len() > 0 {
+            m.derive(chain[..4].iter().copied())
+        } else {
+            // no need to derive mk if there's no child_segments, just use empty/zero one
+            Slip10::new()
+        };
+        mk.children(child_segments)
     }
 }
 

@@ -5,7 +5,7 @@
 mod slip10 {
     #![allow(clippy::identity_op)]
 
-    use crypto::{keys::slip10::Seed, Result};
+    use crypto::{keys::slip10, Result};
 
     struct TestChain {
         chain: Vec<u32>,
@@ -22,11 +22,10 @@ mod slip10 {
 
     #[cfg(feature = "ed25519")]
     fn run_ed25519_test_vectors(tvs: &[TestVector]) -> Result<()> {
-        use crypto::keys::slip10;
         use crypto::signatures::ed25519;
 
         for tv in tvs {
-            let seed = Seed::from_bytes(&hex::decode(tv.seed).unwrap());
+            let seed = slip10::Seed::from_bytes(&hex::decode(tv.seed).unwrap());
 
             let m = seed.to_master_key::<ed25519::SecretKey>();
             let mut expected_master_chain_code = [0u8; 32];
@@ -56,11 +55,10 @@ mod slip10 {
 
     #[cfg(feature = "secp256k1")]
     fn run_secp256k1_test_vectors(tvs: &[TestVector]) -> Result<()> {
-        use crypto::keys::slip10;
         use crypto::signatures::secp256k1_ecdsa;
 
         for tv in tvs {
-            let seed = Seed::from_bytes(&hex::decode(tv.seed).unwrap());
+            let seed = slip10::Seed::from_bytes(&hex::decode(tv.seed).unwrap());
 
             let m = seed.to_master_key::<secp256k1_ecdsa::SecretKey>();
             let mut expected_master_chain_code = [0u8; 32];
@@ -132,7 +130,7 @@ mod slip10 {
     fn secp256k1_chain_test() {
         use crypto::signatures::secp256k1_ecdsa;
 
-        let _ = Seed::from_bytes(&[1])
+        let _ = slip10::Seed::from_bytes(&[1])
             .derive::<secp256k1_ecdsa::SecretKey, _>([0, 1, 2].into_iter())
             .derive([0, 0x80000001, 2].into_iter())
             .derive([0x80000000, 0x80000001, 0x80000002].into_iter())
@@ -177,6 +175,53 @@ mod slip10 {
             let _ = derive1(&ext_sk);
             let ext_pk = ext_sk.to_extended_public_key();
             let _ = derive1(&ext_pk);
+        }
+    }
+
+    fn run_test_bip44_address_overflow<K, S>()
+    where
+        K: slip10::IsSecretKey + slip10::WithSegment<S> + slip10::ToChain<slip10::Bip44, Chain = [S; 5]>,
+        S: slip10::Segment + TryFrom<u32>,
+        <S as TryFrom<u32>>::Error: core::fmt::Debug,
+    {
+        for address_index in [0x7ffffffd_u32, 0xfffffffd_u32] {
+            let m = slip10::Slip10::<K>::from_seed(&[0]);
+
+            let address_counts = [0, 1, 2, 3, 4, (1 << 31) - 1, 1 << 31, (1 << 31) + 1, usize::MAX];
+
+            // derive all keys explicitly
+            let eks: Vec<_> = (0..3)
+                .map(|i| {
+                    let chain = [0, 1, 2, 3, address_index + i];
+                    let bip44 = slip10::Bip44::from(chain);
+                    bip44.derive(&m)
+                })
+                .collect();
+
+            for address_count in address_counts {
+                let chain = [0, 1, 2, 3, address_index];
+                let bip44 = slip10::Bip44::from(chain);
+                // derive keys with optimization
+                let dks = bip44.derive_address_range(&m, address_count);
+
+                assert_eq!(core::cmp::min(3, address_count), dks.len());
+                dks.zip(eks.iter())
+                    .for_each(|(dk, ek)| assert_eq!(dk.extended_bytes(), ek.extended_bytes()));
+            }
+        }
+    }
+
+    #[test]
+    fn test_bip44() {
+        #[cfg(feature = "ed25519")]
+        {
+            use crypto::signatures::ed25519;
+            run_test_bip44_address_overflow::<ed25519::SecretKey, _>();
+        }
+        #[cfg(feature = "secp256k1")]
+        {
+            use crypto::signatures::secp256k1_ecdsa;
+            run_test_bip44_address_overflow::<secp256k1_ecdsa::SecretKey, _>();
         }
     }
 }
