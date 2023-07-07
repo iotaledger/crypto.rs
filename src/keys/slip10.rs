@@ -497,6 +497,54 @@ impl<K: hazmat::Derivable> Slip10<K> {
         data.zeroize();
         key
     }
+
+    pub fn children<I>(&self, child_segments: I) -> Children<K, I>
+    where
+        K: hazmat::WithSegment<<I as IntoIterator>::Item>,
+        I: Iterator,
+        <I as Iterator>::Item: Segment,
+    {
+        Children {
+            mk: self,
+            child_segments,
+        }
+    }
+}
+
+pub struct Children<'a, K, I> {
+    mk: &'a Slip10<K>,
+    child_segments: I,
+}
+
+impl<'a, K, I> Iterator for Children<'a, K, I>
+where
+    K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
+    I: Iterator,
+    <I as Iterator>::Item: Segment,
+{
+    type Item = Slip10<K>;
+    fn next(&mut self) -> Option<Slip10<K>> {
+        self.child_segments.next().map(|segment| self.mk.child_key(segment))
+    }
+}
+
+impl<'a, K, I> core::iter::FusedIterator for Children<'a, K, I>
+where
+    K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
+    I: core::iter::FusedIterator,
+    <I as Iterator>::Item: Segment,
+{
+}
+
+impl<'a, K, I> core::iter::ExactSizeIterator for Children<'a, K, I>
+where
+    K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
+    I: core::iter::ExactSizeIterator,
+    <I as Iterator>::Item: Segment,
+{
+    fn len(&self) -> usize {
+        self.child_segments.len()
+    }
 }
 
 impl<K: hazmat::Derivable> TryFrom<&[u8; 65]> for Slip10<K> {
@@ -548,7 +596,7 @@ impl Segment for u32 {
 }
 
 /// Type of hardened segments.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct Hardened(u32);
@@ -583,7 +631,7 @@ impl Segment for Hardened {
 }
 
 /// Type of non-hardened segments.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct NonHardened(u32);
