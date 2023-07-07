@@ -283,12 +283,6 @@ impl Seed {
     }
 }
 
-impl AsRef<[u8; 64]> for Seed {
-    fn as_ref(&self) -> &[u8; 64] {
-        &self.0
-    }
-}
-
 impl AsRef<[u8]> for Seed {
     fn as_ref(&self) -> &[u8] {
         &self.0
