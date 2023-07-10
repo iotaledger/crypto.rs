@@ -74,6 +74,7 @@ bip39 = [
 ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
+bip44 = [ "slip10" ]
 slip10 = [
   "hmac",
   "sha",

@@ -13,6 +13,10 @@ pub mod pbkdf;
 #[cfg_attr(docsrs, doc(cfg(feature = "bip39")))]
 pub mod bip39;
 
+#[cfg(feature = "bip44")]
+#[cfg_attr(docsrs, doc(cfg(feature = "bip44")))]
+pub mod bip44;
+
 #[cfg(feature = "slip10")]
 #[cfg_attr(docsrs, doc(cfg(feature = "slip10")))]
 pub mod slip10;
