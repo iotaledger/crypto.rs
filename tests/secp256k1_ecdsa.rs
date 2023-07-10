@@ -21,7 +21,7 @@ fn run_secp256k1_sha256(sk: SecretKey, pk: PublicKey) {
     assert_eq!(pk_bytes, pk2_bytes);
 
     let msg = utils::fresh::bytestring();
-    let sig = sk.sign_sha256(&msg);
+    let sig = sk.try_sign_sha256(&msg).unwrap();
     let mut sig_bytes = sig.to_bytes();
     let sig2 = RecoverableSignature::try_from_bytes(&sig_bytes).unwrap();
 
@@ -58,7 +58,7 @@ fn run_secp256k1_keccak256(sk: SecretKey, pk: PublicKey) {
     assert_eq!(pk_bytes, pk2_bytes);
 
     let msg = utils::fresh::bytestring();
-    let sig = sk.sign_keccak256(&msg);
+    let sig = sk.try_sign_keccak256(&msg).unwrap();
     let mut sig_bytes = sig.to_bytes();
     let sig2 = RecoverableSignature::try_from_bytes(&sig_bytes).unwrap();
 

@@ -67,12 +67,6 @@ impl SecretKey {
         self.try_sign_prehash(&prehash)
     }
 
-    /// Secp256k1 ECDSA signature of Keccak256 hash value of a message as used in Ethereum.
-    #[cfg(feature = "keccak")]
-    pub fn sign_keccak256(&self, msg: &[u8]) -> RecoverableSignature {
-        self.try_sign_keccak256(msg).expect("Secp256k1 ECDSA sign failed")
-    }
-
     /// Generate Standard Secp256k1 ECDSA signature of SHA256 hash value of a message.
     /// Signature generation can fail with a very low probability.
     pub fn try_sign_sha256(&self, msg: &[u8]) -> crate::Result<RecoverableSignature> {
@@ -80,11 +74,6 @@ impl SecretKey {
             .sign_recoverable(msg)
             .map_err(|_| crate::Error::SignatureError { alg: "Secp256k1 ECDSA" })
             .map(|(sig, rid)| RecoverableSignature(Signature(sig), rid))
-    }
-
-    /// Standard Secp256k1 ECDSA signature of SHA256 hash value of a message.
-    pub fn sign_sha256(&self, msg: &[u8]) -> RecoverableSignature {
-        self.try_sign_sha256(msg).expect("Secp256k1 ECDSA sign failed")
     }
 }
 
