@@ -1,6 +1,6 @@
 [package]
 name = "iota-crypto"
-version = "0.21.2"
+version = "0.22.0"
 license = "Apache-2.0"
 authors = [ "IOTA Stiftung" ]
 edition = "2021"
@@ -75,11 +75,7 @@ bip39 = [
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
 bip44 = [ "slip10" ]
-slip10 = [
-  "hmac",
-  "sha",
-  "zeroize"
-]
+slip10 = [ "hmac", "sha", "zeroize" ]
 cipher = [ "aead", "dep:cipher", "generic-array" ]
 ternary_encoding = [ "serde", "num-traits" ]
 age = [
