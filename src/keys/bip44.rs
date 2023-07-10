@@ -80,9 +80,9 @@ impl Bip44 {
 
     /// Derive a number of children keys with optimization as follows:
     ///
-    ///     mk = m / purpose* / coin_type* / account* / change*
-    ///     child_i = mk / (address_index + i)*
-    ///     return (child_0, .., child_{address_count - 1})
+    /// mk = m / purpose* / coin_type* / account* / change*
+    /// child_i = mk / (address_index + i)*
+    /// return (child_0, .., child_{address_count - 1})
     ///
     /// Star (*) denotes hardening rule specific for key type `K`.
     ///
