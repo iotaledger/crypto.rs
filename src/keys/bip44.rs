@@ -48,7 +48,7 @@ pub mod secp256k1 {
 ///
 /// For Secp256k1 ECDSA secret keys the final chain is as follows (the first three segments are hardened):
 /// m / purpose' / coin_type' / account' / change / address_index
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bip44 {
     pub coin_type: u32,
@@ -59,6 +59,30 @@ pub struct Bip44 {
 
 impl Bip44 {
     pub const PURPOSE: u32 = 44;
+
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn coin_type(mut self, s: u32) -> Self {
+        self.coin_type = s;
+        self
+    }
+
+    pub fn account(mut self, s: u32) -> Self {
+        self.account = s;
+        self
+    }
+
+    pub fn change(mut self, s: u32) -> Self {
+        self.change = s;
+        self
+    }
+
+    pub fn address_index(mut self, s: u32) -> Self {
+        self.address_index = s;
+        self
+    }
 
     pub fn to_chain<K: slip10::ToChain<Self>>(&self) -> <K as slip10::ToChain<Self>>::Chain {
         K::to_chain(self)
@@ -173,47 +197,5 @@ impl From<&Bip44> for [u32; 5] {
             bip44_chain.change,
             bip44_chain.address_index,
         ]
-    }
-}
-
-pub struct Bip44Builder(Bip44);
-
-impl Bip44Builder {
-    pub fn new() -> Self {
-        Self(Bip44::from([0, 0, 0, 0]))
-    }
-    pub fn coin_type(mut self, s: u32) -> Self {
-        self.0.coin_type = s;
-        self
-    }
-    pub fn account(mut self, s: u32) -> Self {
-        self.0.account = s;
-        self
-    }
-    pub fn change(mut self, s: u32) -> Self {
-        self.0.change = s;
-        self
-    }
-    pub fn address_index(mut self, s: u32) -> Self {
-        self.0.address_index = s;
-        self
-    }
-}
-
-impl Default for Bip44Builder {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
-impl From<Bip44Builder> for Bip44 {
-    fn from(b: Bip44Builder) -> Self {
-        b.0
-    }
-}
-
-impl From<Bip44> for Bip44Builder {
-    fn from(b: Bip44) -> Self {
-        Self(b)
     }
 }
