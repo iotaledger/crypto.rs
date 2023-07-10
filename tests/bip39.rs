@@ -59,7 +59,7 @@ fn run_test_vectors(tvs: &[TestVector]) {
         hex::decode_to_slice(tv.seed, &mut expected_seed).unwrap();
 
         let seed = mnemonic_to_seed(&mnemonic, &passphrase);
-        assert_eq!(seed.as_ref(), &expected_seed);
+        assert_eq!(seed.bytes(), &expected_seed);
     }
 }
 
@@ -99,6 +99,7 @@ fn test_wordlist_codec() {
     }
 }
 
+#[cfg(feature = "bip39-en")]
 #[test]
 fn test_mnemonic_phrase_additional_whitespace() {
     // additional whitespace at the beginning

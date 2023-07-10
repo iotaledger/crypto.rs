@@ -74,12 +74,11 @@ bip39 = [
 ]
 bip39-en = [ "bip39" ]
 bip39-jp = [ "bip39" ]
+bip44 = [ "slip10" ]
 slip10 = [
   "hmac",
   "sha",
-  "serde",
-  "zeroize",
-  "k256?/arithmetic"
+  "zeroize"
 ]
 cipher = [ "aead", "dep:cipher", "generic-array" ]
 ternary_encoding = [ "serde", "num-traits" ]
@@ -133,7 +132,7 @@ zeroize = { version = "1.5", optional = true, default-features = false, features
 scrypt = { version = "0.11", optional = true, default-features = false }
 hkdf = { version = "0.12", optional = true, default-features = false }
 base64 = { version = "0.21", optional = true, default-features = false }
-k256 = { version = "0.13", optional = true, default-features = false, features = [ "ecdh", "ecdsa", "sha256" ] }
+k256 = { version = "0.13", optional = true, default-features = false, features = [ "ecdsa" ] }
 
 [target."cfg(not(target_family = \"wasm\"))".dependencies]
 cpufeatures = { version = "0.2", optional = true, default-features = false }

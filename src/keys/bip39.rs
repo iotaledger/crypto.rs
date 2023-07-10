@@ -102,6 +102,24 @@ impl From<String> for Mnemonic {
     }
 }
 
+/// Normalize the input string and use it as mnemonic.
+/// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
+/// If the input is guaranteed to be normalized then consider using `MnemonicRef`.
+/// The input contains secret data and should be handled accordingly.
+impl From<&str> for Mnemonic {
+    fn from(unnormalized_mnemonic: &str) -> Self {
+        Self(unnormalized_mnemonic.chars().nfkd().collect())
+    }
+}
+
+/// Normalize the input string and use it as mnemonic.
+/// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
+impl From<Zeroizing<String>> for Mnemonic {
+    fn from(unnormalized_mnemonic: Zeroizing<String>) -> Self {
+        Self(unnormalized_mnemonic.chars().nfkd().collect())
+    }
+}
+
 /// Join the input words with the space character (U+0020) and normalize into a mnemonic.
 /// The resulting mnemonic should be verified against a given word list before deriving a seed from it.
 ///
@@ -227,6 +245,18 @@ impl From<String> for Passphrase {
     }
 }
 
+impl From<&str> for Passphrase {
+    fn from(unnormalized_passphrase: &str) -> Self {
+        Self(unnormalized_passphrase.chars().nfkd().collect())
+    }
+}
+
+impl From<Zeroizing<String>> for Passphrase {
+    fn from(unnormalized_passphrase: Zeroizing<String>) -> Self {
+        Self(unnormalized_passphrase.chars().nfkd().collect())
+    }
+}
+
 impl AsRef<str> for Passphrase {
     fn as_ref(&self) -> &str {
         &self.0
@@ -247,8 +277,14 @@ impl fmt::Debug for Passphrase {
 #[derive(Clone, Zeroize, ZeroizeOnDrop)]
 pub struct Seed([u8; 64]);
 
-impl AsRef<[u8; 64]> for Seed {
-    fn as_ref(&self) -> &[u8; 64] {
+impl Seed {
+    pub fn bytes(&self) -> &[u8; 64] {
+        &self.0
+    }
+}
+
+impl AsRef<[u8]> for Seed {
+    fn as_ref(&self) -> &[u8] {
         &self.0
     }
 }

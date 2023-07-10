@@ -5,7 +5,7 @@
 mod slip10 {
     #![allow(clippy::identity_op)]
 
-    use crypto::{keys::slip10::Seed, Result};
+    use crypto::{keys::slip10, Result};
 
     struct TestChain {
         chain: Vec<u32>,
@@ -22,11 +22,10 @@ mod slip10 {
 
     #[cfg(feature = "ed25519")]
     fn run_ed25519_test_vectors(tvs: &[TestVector]) -> Result<()> {
-        use crypto::keys::slip10;
         use crypto::signatures::ed25519;
 
         for tv in tvs {
-            let seed = Seed::from_bytes(&hex::decode(tv.seed).unwrap());
+            let seed = slip10::Seed::from_bytes(&hex::decode(tv.seed).unwrap());
 
             let m = seed.to_master_key::<ed25519::SecretKey>();
             let mut expected_master_chain_code = [0u8; 32];
@@ -56,11 +55,10 @@ mod slip10 {
 
     #[cfg(feature = "secp256k1")]
     fn run_secp256k1_test_vectors(tvs: &[TestVector]) -> Result<()> {
-        use crypto::keys::slip10;
         use crypto::signatures::secp256k1_ecdsa;
 
         for tv in tvs {
-            let seed = Seed::from_bytes(&hex::decode(tv.seed).unwrap());
+            let seed = slip10::Seed::from_bytes(&hex::decode(tv.seed).unwrap());
 
             let m = seed.to_master_key::<secp256k1_ecdsa::SecretKey>();
             let mut expected_master_chain_code = [0u8; 32];
@@ -132,7 +130,7 @@ mod slip10 {
     fn secp256k1_chain_test() {
         use crypto::signatures::secp256k1_ecdsa;
 
-        let _ = Seed::from_bytes(&[1])
+        let _ = slip10::Seed::from_bytes(&[1])
             .derive::<secp256k1_ecdsa::SecretKey, _>([0, 1, 2].into_iter())
             .derive([0, 0x80000001, 2].into_iter())
             .derive([0x80000000, 0x80000001, 0x80000002].into_iter())
@@ -146,14 +144,14 @@ mod slip10 {
     fn test_generic() {
         use crypto::keys::slip10;
 
-        fn derive0<K: slip10::Derivable + slip10::CalcData<slip10::Hardened>>(
+        fn derive0<K: slip10::Derivable + slip10::WithSegment<slip10::Hardened>>(
             ext: &slip10::Slip10<K>,
         ) -> slip10::Slip10<K> {
             use slip10::Segment;
             ext.child_key(0.harden())
         }
 
-        fn derive1<K: slip10::Derivable + slip10::CalcData<slip10::NonHardened>>(
+        fn derive1<K: slip10::Derivable + slip10::WithSegment<slip10::NonHardened>>(
             ext: &slip10::Slip10<K>,
         ) -> slip10::Slip10<K> {
             use slip10::Segment;

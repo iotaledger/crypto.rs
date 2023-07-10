@@ -7,7 +7,6 @@ use alloc::vec::Vec;
 use core::convert::TryFrom;
 use core::fmt;
 
-use serde::{Deserialize, Serialize};
 use zeroize::{Zeroize, ZeroizeOnDrop};
 
 use crate::macs::hmac::HMAC_SHA512;
@@ -15,6 +14,8 @@ use crate::macs::hmac::HMAC_SHA512;
 // https://github.com/satoshilabs/slips/blob/master/slip-0010.md
 // https://github.com/bitcoin/bips/blob/master/bip-0032.mediawiki
 // https://en.bitcoin.it/wiki/BIP_0039
+// https://github.com/bitcoin/bips/blob/master/bip-0044.mediawiki
+// https://en.bitcoin.it/wiki/BIP_0044
 
 /// The traits in hazmat module are implementation internals.
 /// The traits are made public due to other public API requiring them.
@@ -49,12 +50,17 @@ mod hazmat {
         fn to_public(sk_bytes: &[u8; 33]) -> [u8; 33];
     }
     /// Keys that can be used to compute "data" argument of SLIP10 derivation algorithm for a specific segment type.
-    pub trait CalcData<S: Segment>: Sealed {
+    pub trait WithSegment<S: Segment>: Sealed {
         fn calc_data(key_bytes: &[u8; 33], segment: S) -> [u8; 33];
+    }
+    /// Keys that convert a prechain (BIP44) to a compatible chain.
+    pub trait ToChain<C> {
+        type Chain;
+        fn to_chain(pre_chain: &C) -> Self::Chain;
     }
 }
 
-pub use hazmat::{CalcData, Derivable, IsPublicKey, IsSecretKey, ToPublic};
+pub use hazmat::{Derivable, IsPublicKey, IsSecretKey, ToChain, ToPublic, WithSegment};
 
 #[cfg(feature = "ed25519")]
 pub mod ed25519 {
@@ -82,7 +88,7 @@ pub mod ed25519 {
         type PublicKey = ed25519::PublicKey;
     }
 
-    impl CalcData<Hardened> for ed25519::SecretKey {
+    impl WithSegment<Hardened> for ed25519::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: Hardened) -> [u8; 33] {
             *key_bytes
         }
@@ -150,19 +156,19 @@ pub mod secp256k1 {
         }
     }
 
-    impl CalcData<Hardened> for secp256k1_ecdsa::SecretKey {
+    impl WithSegment<Hardened> for secp256k1_ecdsa::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: Hardened) -> [u8; 33] {
             *key_bytes
         }
     }
 
-    impl CalcData<NonHardened> for secp256k1_ecdsa::SecretKey {
+    impl WithSegment<NonHardened> for secp256k1_ecdsa::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: NonHardened) -> [u8; 33] {
             Self::to_public(key_bytes)
         }
     }
 
-    impl CalcData<u32> for secp256k1_ecdsa::SecretKey {
+    impl WithSegment<u32> for secp256k1_ecdsa::SecretKey {
         fn calc_data(key_bytes: &[u8; 33], segment: u32) -> [u8; 33] {
             if segment.is_hardened() {
                 Self::calc_data(key_bytes, Hardened(segment))
@@ -216,7 +222,7 @@ pub mod secp256k1 {
         type SecretKey = secp256k1_ecdsa::SecretKey;
     }
 
-    impl CalcData<NonHardened> for secp256k1_ecdsa::PublicKey {
+    impl WithSegment<NonHardened> for secp256k1_ecdsa::PublicKey {
         fn calc_data(key_bytes: &[u8; 33], _segment: NonHardened) -> [u8; 33] {
             *key_bytes
         }
@@ -246,7 +252,7 @@ impl Seed {
 
     pub fn derive<K, I>(&self, chain: I) -> Slip10<K>
     where
-        K: hazmat::IsSecretKey + hazmat::CalcData<<I as Iterator>::Item>,
+        K: hazmat::IsSecretKey + hazmat::WithSegment<<I as Iterator>::Item>,
         I: Iterator,
         <I as Iterator>::Item: Segment,
     {
@@ -258,6 +264,12 @@ impl fmt::Debug for Seed {
     #[inline]
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         "<slip10::Seed>".fmt(f)
+    }
+}
+
+impl AsRef<[u8]> for Seed {
+    fn as_ref(&self) -> &[u8] {
+        &self.0
     }
 }
 
@@ -303,9 +315,9 @@ impl<K> Zeroize for Slip10<K> {
 }
 
 impl<K: hazmat::IsSecretKey> Slip10<K> {
-    pub fn from_seed(seed: &Seed) -> Self {
+    pub fn from_seed<S: AsRef<[u8]>>(seed: &S) -> Self {
         let mut key = Self::new();
-        HMAC_SHA512(&seed.0, K::SEEDKEY, key.ext_mut());
+        HMAC_SHA512(seed.as_ref(), K::SEEDKEY, key.ext_mut());
         while !key.is_key_valid() {
             let mut tmp = [0_u8; 64];
             tmp.copy_from_slice(&key.ext[1..]);
@@ -364,7 +376,7 @@ impl<K: hazmat::IsPublicKey> Slip10<K> {
 }
 
 impl<K> Slip10<K> {
-    fn new() -> Self {
+    pub(crate) fn new() -> Self {
         Self {
             key: core::marker::PhantomData,
             ext: [0_u8; 65],
@@ -404,23 +416,11 @@ impl<K: hazmat::Derivable> Slip10<K> {
 
     pub fn derive<I>(&self, chain: I) -> Self
     where
-        K: hazmat::CalcData<<I as Iterator>::Item>,
+        K: hazmat::WithSegment<<I as Iterator>::Item>,
         I: Iterator,
         <I as Iterator>::Item: Segment,
     {
-        let mut key: Self = self.clone();
-        for segment in chain {
-            key = key.derive_child_key(segment);
-        }
-        key
-    }
-
-    pub fn child_key<S>(&self, segment: S) -> Self
-    where
-        S: Segment,
-        K: hazmat::CalcData<S>,
-    {
-        self.derive_child_key(segment)
+        chain.fold(self.clone(), |key, segment| key.child_key(segment))
     }
 
     fn ext_mut(&mut self) -> &mut [u8; 64] {
@@ -446,15 +446,15 @@ impl<K: hazmat::Derivable> Slip10<K> {
     fn calc_data<S>(&self, segment: S) -> [u8; 33]
     where
         S: Segment,
-        K: hazmat::CalcData<S>,
+        K: hazmat::WithSegment<S>,
     {
         K::calc_data(self.key_bytes(), segment)
     }
 
-    fn derive_child_key<S>(&self, segment: S) -> Self
+    pub fn child_key<S>(&self, segment: S) -> Self
     where
         S: Segment,
-        K: hazmat::CalcData<S>,
+        K: hazmat::WithSegment<S>,
     {
         let mut data = [0u8; 33 + 4];
         data[..33].copy_from_slice(&self.calc_data(segment));
@@ -470,6 +470,54 @@ impl<K: hazmat::Derivable> Slip10<K> {
 
         data.zeroize();
         key
+    }
+
+    pub fn children<I>(&self, child_segments: I) -> Children<K, I>
+    where
+        K: hazmat::WithSegment<<I as IntoIterator>::Item>,
+        I: Iterator,
+        <I as Iterator>::Item: Segment,
+    {
+        Children {
+            mk: self.clone(),
+            child_segments,
+        }
+    }
+}
+
+pub struct Children<K, I> {
+    mk: Slip10<K>,
+    child_segments: I,
+}
+
+impl<K, I> Iterator for Children<K, I>
+where
+    K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
+    I: Iterator,
+    <I as Iterator>::Item: Segment,
+{
+    type Item = Slip10<K>;
+    fn next(&mut self) -> Option<Slip10<K>> {
+        self.child_segments.next().map(|segment| self.mk.child_key(segment))
+    }
+}
+
+impl<K, I> core::iter::FusedIterator for Children<K, I>
+where
+    K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
+    I: core::iter::FusedIterator,
+    <I as Iterator>::Item: Segment,
+{
+}
+
+impl<K, I> core::iter::ExactSizeIterator for Children<K, I>
+where
+    K: hazmat::Derivable + hazmat::WithSegment<<I as IntoIterator>::Item>,
+    I: core::iter::ExactSizeIterator,
+    <I as Iterator>::Item: Segment,
+{
+    fn len(&self) -> usize {
+        self.child_segments.len()
     }
 }
 
@@ -493,6 +541,7 @@ pub trait Segment: Copy + Into<u32> {
 /// Error indicating unexpected/invalid segment hardening.
 /// Some keys only accept certain segments: either hardened or non-hardened.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SegmentHardeningError {
     /// Input segment is hardened, expected non-hardened segment only.
     Hardened,
@@ -506,7 +555,7 @@ impl From<SegmentHardeningError> for crate::Error {
     }
 }
 
-const HARDEN_MASK: u32 = 1 << 31;
+pub const HARDEN_MASK: u32 = 1 << 31;
 
 /// `u32` type can represent both hardened and non-hardened segments.
 impl Segment for u32 {
@@ -522,7 +571,8 @@ impl Segment for u32 {
 }
 
 /// Type of hardened segments.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct Hardened(u32);
 
@@ -556,7 +606,8 @@ impl Segment for Hardened {
 }
 
 /// Type of non-hardened segments.
-#[derive(Clone, Copy, Debug, Eq, Hash, PartialEq, Serialize, Deserialize)]
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 #[repr(transparent)]
 pub struct NonHardened(u32);
 
