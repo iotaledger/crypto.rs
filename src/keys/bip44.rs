@@ -48,7 +48,7 @@ pub mod secp256k1 {
 ///
 /// For Secp256k1 ECDSA secret keys the final chain is as follows (the first three segments are hardened):
 /// m / purpose' / coin_type' / account' / change / address_index
-#[derive(Clone, Copy, Debug, Default, Eq, Hash, PartialEq)]
+#[derive(Clone, Copy, Debug, Default, Eq, Hash, Ord, PartialEq, PartialOrd)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bip44 {
     pub coin_type: u32,
