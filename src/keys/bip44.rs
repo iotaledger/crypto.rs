@@ -60,10 +60,6 @@ pub struct Bip44 {
 impl Bip44 {
     pub const PURPOSE: u32 = 44;
 
-    pub fn builder(self) -> Bip44Builder {
-        Bip44Builder(self)
-    }
-
     pub fn to_chain<K: slip10::ToChain<Self>>(&self) -> <K as slip10::ToChain<Self>>::Chain {
         K::to_chain(self)
     }
