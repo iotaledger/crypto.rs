@@ -278,7 +278,7 @@ impl fmt::Debug for Passphrase {
 pub struct Seed([u8; 64]);
 
 impl Seed {
-    pub fn as_bytes(&self) -> &[u8; 64] {
+    pub fn bytes(&self) -> &[u8; 64] {
         &self.0
     }
 }

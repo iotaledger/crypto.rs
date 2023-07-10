@@ -59,7 +59,7 @@ fn run_test_vectors(tvs: &[TestVector]) {
         hex::decode_to_slice(tv.seed, &mut expected_seed).unwrap();
 
         let seed = mnemonic_to_seed(&mnemonic, &passphrase);
-        assert_eq!(seed.as_bytes(), &expected_seed);
+        assert_eq!(seed.bytes(), &expected_seed);
     }
 }
 
