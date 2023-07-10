@@ -1,5 +1,11 @@
 # Changelog
 
+## \[0.22.0]
+
+- [`51c0823`](https://www.github.com/iotaledger/crypto.rs/commit/51c08239e882872f9c18ae2203b0bd1deeb0cd5a)([#211](https://www.github.com/iotaledger/crypto.rs/pull/211)) Support BIP44 chains for SLIP10.
+- [`aa08ccb`](https://www.github.com/iotaledger/crypto.rs/commit/aa08ccb8bc1572d0b8d444ec3868ab1ff40cac35)([#210](https://www.github.com/iotaledger/crypto.rs/pull/210)) Added Keccak-256 hash function.
+- [`aa08ccb`](https://www.github.com/iotaledger/crypto.rs/commit/aa08ccb8bc1572d0b8d444ec3868ab1ff40cac35)([#210](https://www.github.com/iotaledger/crypto.rs/pull/210)) Use Keccak-256 hash function with Secp256k1 ECDSA.
+
 ## \[0.21.2]
 
 - [`aeead20`](https://www.github.com/iotaledger/crypto.rs/commit/aeead20828ca18af61cf705b4dcf40e8281ea417)([#208](https://www.github.com/iotaledger/crypto.rs/pull/208)) Minor BIP39 API change: return seed by value.
