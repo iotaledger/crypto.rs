@@ -64,22 +64,22 @@ impl Bip44 {
         Self::default()
     }
 
-    pub fn coin_type(mut self, s: u32) -> Self {
+    pub fn with_coin_type(mut self, s: u32) -> Self {
         self.coin_type = s;
         self
     }
 
-    pub fn account(mut self, s: u32) -> Self {
+    pub fn with_account(mut self, s: u32) -> Self {
         self.account = s;
         self
     }
 
-    pub fn change(mut self, s: u32) -> Self {
+    pub fn with_change(mut self, s: u32) -> Self {
         self.change = s;
         self
     }
 
-    pub fn address_index(mut self, s: u32) -> Self {
+    pub fn with_address_index(mut self, s: u32) -> Self {
         self.address_index = s;
         self
     }
