@@ -9,6 +9,10 @@ pub mod ternary;
 #[cfg_attr(docsrs, doc(cfg(feature = "blake2b")))]
 pub mod blake2b;
 
+#[cfg(feature = "keccak")]
+#[cfg_attr(docsrs, doc(cfg(feature = "keccak")))]
+pub mod keccak;
+
 #[cfg(feature = "sha")]
 #[cfg_attr(docsrs, doc(cfg(feature = "sha")))]
 pub mod sha;

@@ -7,14 +7,20 @@ use core::hash::{Hash, Hasher};
 
 use zeroize::{ZeroizeOnDrop, Zeroizing};
 
+#[cfg(feature = "keccak")]
+use crate::hashes::keccak::keccak256;
+
+pub const PREHASH_LENGTH: usize = 32;
+
+/// Secp256k1 ECDSA secret signing key, supports signing Keccak256 and SHA256 message hashes.
 #[derive(Clone, ZeroizeOnDrop)]
 pub struct SecretKey(k256::ecdsa::SigningKey);
 
 impl SecretKey {
     pub const LENGTH: usize = 32;
 
-    #[cfg(feature = "rand")]
-    #[cfg_attr(docsrs, doc(cfg(feature = "rand")))]
+    #[cfg(feature = "random")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "random")))]
     pub fn generate() -> Self {
         let mut rng = rand::rngs::OsRng;
         Self(k256::ecdsa::SigningKey::random(&mut rng))
@@ -38,20 +44,36 @@ impl SecretKey {
         k256::ecdsa::SigningKey::from_bytes(bytes.into())
             .map_err(|_| crate::Error::ConvertError {
                 from: "bytes",
-                to: "secp256k1 ecdsa secret key",
+                to: "Secp256k1 ECDSA secret key",
             })
             .map(Self)
     }
 
-    pub fn try_sign(&self, msg: &[u8]) -> crate::Result<Signature> {
+    /// Generate Secp256k1 ECDSA signature of message hash.
+    /// Signature generation can fail with a very low probability.
+    pub fn try_sign_prehash(&self, prehash: &[u8; PREHASH_LENGTH]) -> crate::Result<RecoverableSignature> {
         self.0
-            .sign_recoverable(msg)
-            .map_err(|_| crate::Error::SignatureError { alg: "secp256k1 ecdsa" })
-            .map(|(sig, rid)| Signature(sig, rid))
+            .sign_prehash_recoverable(prehash)
+            .map_err(|_| crate::Error::SignatureError { alg: "Secp256k1 ECDSA" })
+            .map(|(sig, rid)| RecoverableSignature(Signature(sig), rid))
     }
 
-    pub fn sign(&self, msg: &[u8]) -> Signature {
-        self.try_sign(msg).expect("secp256k1 ecdsa sign failed")
+    /// Generate Secp256k1 ECDSA signature of Keccak256 hash value of a message as used in Ethereum.
+    /// Signature generation can fail with a very low probability.
+    #[cfg(feature = "keccak")]
+    pub fn try_sign_keccak256(&self, msg: &[u8]) -> crate::Result<RecoverableSignature> {
+        let mut prehash = [0_u8; PREHASH_LENGTH];
+        keccak256(msg, &mut prehash);
+        self.try_sign_prehash(&prehash)
+    }
+
+    /// Generate Standard Secp256k1 ECDSA signature of SHA256 hash value of a message.
+    /// Signature generation can fail with a very low probability.
+    pub fn try_sign_sha256(&self, msg: &[u8]) -> crate::Result<RecoverableSignature> {
+        self.0
+            .sign_recoverable(msg)
+            .map_err(|_| crate::Error::SignatureError { alg: "Secp256k1 ECDSA" })
+            .map(|(sig, rid)| RecoverableSignature(Signature(sig), rid))
     }
 }
 
@@ -62,7 +84,22 @@ pub struct PublicKey(k256::ecdsa::VerifyingKey);
 impl PublicKey {
     pub const LENGTH: usize = 33;
 
-    pub fn verify(&self, sig: &Signature, msg: &[u8]) -> bool {
+    /// Verify Secp256k1 ECDSA signature of a message hash.
+    pub fn verify_prehash(&self, sig: &Signature, prehash: &[u8; PREHASH_LENGTH]) -> bool {
+        use k256::ecdsa::signature::hazmat::PrehashVerifier;
+        self.0.verify_prehash(prehash, &sig.0).is_ok()
+    }
+
+    /// Verify Secp256k1 ECDSA signature of Keccak256 hash of a message.
+    #[cfg(feature = "keccak")]
+    pub fn verify_keccak256(&self, sig: &Signature, msg: &[u8]) -> bool {
+        let mut prehash = [0_u8; PREHASH_LENGTH];
+        keccak256(msg, &mut prehash);
+        self.verify_prehash(sig, &prehash)
+    }
+
+    /// Verify Secp256k1 ECDSA signature of SHA256 hash of a message.
+    pub fn verify_sha256(&self, sig: &Signature, msg: &[u8]) -> bool {
         use k256::ecdsa::signature::Verifier;
         self.0.verify(msg, &sig.0).is_ok()
     }
@@ -107,18 +144,16 @@ impl PublicKey {
         }
     }
 
+    /// EVM Address is the last 20 bytes of Keccak256 hash of uncompressed public key coordinates.
     // credit: [secret_key_to_address](https://github.com/gakonst/ethers-rs/)
-    pub fn to_evm_address(&self) -> EvmAddress {
+    #[cfg(feature = "keccak")]
+    pub fn evm_address(&self) -> EvmAddress {
         // let public_key = secret_key.verifying_key();
         let public_key = self.0.to_encoded_point(/* compress = */ false);
         let public_key = public_key.as_bytes();
         debug_assert_eq!(public_key[0], 0x04);
-        // let hash = keccak256(&public_key[1..]);
-        use tiny_keccak::{Hasher, Keccak};
-        let mut keccak = Keccak::v256();
-        keccak.update(&public_key[1..]);
-        let mut hash = [0u8; 32];
-        keccak.finalize(&mut hash);
+        let mut hash = [0_u8; 32];
+        keccak256(&public_key[1..], &mut hash);
 
         let mut bytes = [0u8; 20];
         bytes.copy_from_slice(&hash[12..]);
@@ -142,56 +177,119 @@ impl Hash for PublicKey {
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct Signature(
-    k256::ecdsa::Signature,
+pub struct Signature(k256::ecdsa::Signature);
+
+impl Signature {
+    pub const LENGTH: usize = 64;
+
+    pub fn to_bytes(&self) -> [u8; Self::LENGTH] {
+        self.0.to_bytes().into()
+    }
+
+    pub fn try_from_bytes(sig: &[u8; Self::LENGTH]) -> crate::Result<Self> {
+        Self::try_from_slice(sig)
+    }
+
+    pub fn try_from_slice(sig: &[u8]) -> crate::Result<Self> {
+        k256::ecdsa::Signature::from_slice(sig)
+            .map_err(|_| crate::Error::ConvertError {
+                from: "bytes",
+                to: "Secp256k1 ECDSA signature",
+            })
+            .map(Self)
+    }
+}
+
+impl PartialOrd for Signature {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for Signature {
+    fn cmp(&self, other: &Self) -> Ordering {
+        let (r1, s1) = self.0.split_bytes();
+        let (r2, s2) = other.0.split_bytes();
+        r1.cmp(&r2).then(s1.cmp(&s2))
+    }
+}
+
+impl Hash for Signature {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.0.to_bytes().hash(state);
+    }
+}
+
+#[derive(Clone, Debug, PartialEq, Eq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct RecoverableSignature(
+    Signature,
     #[cfg_attr(feature = "serde", serde(with = "serde_recovery_id"))] k256::ecdsa::RecoveryId,
 );
 
-impl Signature {
+impl AsRef<Signature> for RecoverableSignature {
+    fn as_ref(&self) -> &Signature {
+        &self.0
+    }
+}
+
+impl RecoverableSignature {
     pub const LENGTH: usize = 65;
 
-    pub fn to_bytes(&self) -> [u8; Signature::LENGTH] {
-        let mut bytes = [0_u8; Signature::LENGTH];
+    pub fn to_bytes(&self) -> [u8; Self::LENGTH] {
+        let mut bytes = [0_u8; Self::LENGTH];
         bytes[0..64].copy_from_slice(&self.0.to_bytes());
         bytes[64] = self.1.into();
         bytes
     }
 
-    pub fn try_from_bytes(sig: &[u8; Signature::LENGTH]) -> crate::Result<Self> {
-        let rid = k256::ecdsa::RecoveryId::from_byte(sig[64]).ok_or(crate::Error::ConvertError {
-            from: "bytes",
-            to: "secp256k1 ecdsa signature",
-        })?;
+    const FROM_BYTES_CONVERT_ERROR: crate::Error = crate::Error::ConvertError {
+        from: "bytes",
+        to: "Secp256k1 ECDSA signature",
+    };
+
+    pub fn try_from_bytes(sig: &[u8; Self::LENGTH]) -> crate::Result<Self> {
+        let rid = k256::ecdsa::RecoveryId::from_byte(sig[64]).ok_or(Self::FROM_BYTES_CONVERT_ERROR)?;
         k256::ecdsa::Signature::from_slice(&sig[..64])
-            .map_err(|_| crate::Error::ConvertError {
-                from: "bytes",
-                to: "secp256k1 ecdsa signature",
-            })
-            .map(|s| Self(s, rid))
+            .map_err(|_| Self::FROM_BYTES_CONVERT_ERROR)
+            .map(|s| Self(Signature(s), rid))
     }
 
     pub fn try_from_slice(sig: &[u8]) -> crate::Result<Self> {
-        if sig.len() != Signature::LENGTH {
-            Err(crate::Error::ConvertError {
-                from: "slice",
-                to: "secp256k1 ecdsa signature",
-            })
+        if sig.len() != Self::LENGTH {
+            Err(Self::FROM_BYTES_CONVERT_ERROR)
         } else {
-            let rid = k256::ecdsa::RecoveryId::from_byte(sig[64]).ok_or(crate::Error::ConvertError {
-                from: "bytes",
-                to: "secp256k1 ecdsa signature",
-            })?;
+            let rid = k256::ecdsa::RecoveryId::from_byte(sig[64]).ok_or(Self::FROM_BYTES_CONVERT_ERROR)?;
             k256::ecdsa::Signature::from_slice(&sig[..64])
-                .map_err(|_| crate::Error::ConvertError {
-                    from: "slice",
-                    to: "secp256k1 ecdsa signature",
-                })
-                .map(|s| Self(s, rid))
+                .map_err(|_| Self::FROM_BYTES_CONVERT_ERROR)
+                .map(|s| Self(Signature(s), rid))
         }
     }
 
-    pub fn verify_recover(&self, msg: &[u8]) -> Option<PublicKey> {
-        k256::ecdsa::VerifyingKey::recover_from_msg(msg, &self.0, self.1)
+    /// Recover public key from a Secp256k1 ECDSA signature of a message hash.
+    pub fn recover_prehash(&self, prehash: &[u8; PREHASH_LENGTH]) -> Option<PublicKey> {
+        k256::ecdsa::VerifyingKey::recover_from_prehash(prehash, &self.0 .0, self.1)
+            .ok()
+            .map(PublicKey)
+    }
+
+    /// Recover public key from a Secp256k1 ECDSA signature of Keccak256 hash of a message.
+    #[cfg(feature = "keccak")]
+    pub fn recover_keccak256(&self, msg: &[u8]) -> Option<PublicKey> {
+        let mut prehash = [0_u8; PREHASH_LENGTH];
+        keccak256(msg, &mut prehash);
+        self.recover_prehash(&prehash)
+    }
+
+    /// Recover EVM Address from a Secp256k1 ECDSA signature of Keccak256 hash of a transaction.
+    #[cfg(feature = "keccak")]
+    pub fn recover_evm_address(&self, tx: &[u8]) -> Option<EvmAddress> {
+        self.recover_keccak256(tx).map(|pk| pk.evm_address())
+    }
+
+    /// Recover public key from a Secp256k1 ECDSA signature of SHA256 hash of a message.
+    pub fn recover_sha256(&self, msg: &[u8]) -> Option<PublicKey> {
+        k256::ecdsa::VerifyingKey::recover_from_msg(msg, &self.0 .0, self.1)
             .ok()
             .map(PublicKey)
     }
@@ -217,21 +315,19 @@ mod serde_recovery_id {
     }
 }
 
-impl PartialOrd for Signature {
+impl PartialOrd for RecoverableSignature {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         Some(self.cmp(other))
     }
 }
 
-impl Ord for Signature {
+impl Ord for RecoverableSignature {
     fn cmp(&self, other: &Self) -> Ordering {
-        let (r1, s1) = self.0.split_bytes();
-        let (r2, s2) = other.0.split_bytes();
-        r1.cmp(&r2).then(s1.cmp(&s2)).then(self.1.cmp(&other.1))
+        self.0.cmp(&other.0).then(self.1.cmp(&other.1))
     }
 }
 
-impl Hash for Signature {
+impl Hash for RecoverableSignature {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.to_bytes().hash(state);
         self.1.to_byte().hash(state);

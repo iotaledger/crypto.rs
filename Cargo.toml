@@ -61,6 +61,7 @@ wots_deprecated_do_not_use = [
   "bee-common-derive"
 ]
 sha = [ "dep:sha2", "digest" ]
+keccak = [ "dep:tiny-keccak" ]
 hmac = [ "dep:hmac" ]
 pbkdf2 = [ "dep:pbkdf2", "pbkdf2/hmac", "dep:sha2" ]
 bip39 = [
@@ -76,7 +77,6 @@ bip39-jp = [ "bip39" ]
 slip10 = [
   "hmac",
   "sha",
-  "random",
   "serde",
   "zeroize",
   "k256?/arithmetic"
@@ -93,7 +93,7 @@ age = [
   "dep:sha2",
   "zeroize"
 ]
-secp256k1 = [ "dep:k256", "k256?/ecdsa", "dep:tiny-keccak", "zeroize" ]
+secp256k1 = [ "dep:k256", "k256?/ecdsa", "zeroize" ]
 serde = [
   "dep:serde",
   "ed25519-zebra?/serde",
@@ -112,7 +112,7 @@ cbc = { version = "0.1", optional = true, default-features = false }
 chacha20poly1305 = { version = "0.10", optional = true, default-features = false }
 cipher = { version = "0.4", optional = true, default-features = false, features = [ "block-padding" ] }
 digest = { version = "0.10", optional = true, default-features = false }
-ed25519-zebra = { version = "4.0", optional = true, default-features = false }
+ed25519-zebra = { version = "4.0.1", optional = true, default-features = false }
 generic-array = { version = "0.14", optional = true, default-features = false }
 getrandom = { version = "0.2", optional = true, default-features = false, features = [ "js" ] }
 hmac = { version = "0.12", optional = true, default-features = false }
