@@ -19,14 +19,14 @@ mod bip44 {
             // derive all keys explicitly
             let eks: Vec<_> = (0..3)
                 .map(|i| {
-                    let chain = [0, 1, 2, 3, address_index + i];
+                    let chain = [1, 2, 3, address_index + i];
                     let bip44 = bip44::Bip44::from(chain);
                     bip44.derive(&m)
                 })
                 .collect();
 
             for address_count in address_counts {
-                let chain = [0, 1, 2, 3, address_index];
+                let chain = [1, 2, 3, address_index];
                 let bip44 = bip44::Bip44::from(chain);
                 // derive keys with optimization
                 let dks = bip44.derive_address_range(&m, address_count);

@@ -12,7 +12,7 @@ pub mod ed25519 {
         type Chain = [slip10::Hardened; 5];
         fn to_chain(bip44_chain: &Bip44) -> [slip10::Hardened; 5] {
             [
-                bip44_chain.purpose.harden(),
+                Bip44::PURPOSE.harden(),
                 bip44_chain.coin_type.harden(),
                 bip44_chain.account.harden(),
                 bip44_chain.change.harden(),
@@ -31,7 +31,7 @@ pub mod secp256k1 {
         type Chain = [u32; 5];
         fn to_chain(bip44_chain: &Bip44) -> [u32; 5] {
             [
-                bip44_chain.purpose.harden().into(),
+                Bip44::PURPOSE.harden().into(),
                 bip44_chain.coin_type.harden().into(),
                 bip44_chain.account.harden().into(),
                 bip44_chain.change,
@@ -51,7 +51,6 @@ pub mod secp256k1 {
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Bip44 {
-    pub purpose: u32,
     pub coin_type: u32,
     pub account: u32,
     pub change: u32,
@@ -59,6 +58,8 @@ pub struct Bip44 {
 }
 
 impl Bip44 {
+    pub const PURPOSE: u32 = 44;
+
     pub fn builder(self) -> Bip44Builder {
         Bip44Builder(self)
     }
@@ -129,11 +130,36 @@ impl Bip44 {
     }
 }
 
-impl From<[u32; 5]> for Bip44 {
-    fn from(segments: [u32; 5]) -> Self {
-        let [purpose, coin_type, account, change, address_index] = segments;
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct BadPurpose;
+
+impl From<BadPurpose> for crate::Error {
+    fn from(inner: BadPurpose) -> Self {
+        crate::Error::Bip44Error(inner)
+    }
+}
+
+impl TryFrom<[u32; 5]> for Bip44 {
+    type Error = BadPurpose;
+    fn try_from(segments: [u32; 5]) -> Result<Self, Self::Error> {
+        if let [Bip44::PURPOSE, coin_type, account, change, address_index] = segments {
+            Ok(Self {
+                coin_type,
+                account,
+                change,
+                address_index,
+            })
+        } else {
+            Err(BadPurpose)
+        }
+    }
+}
+
+impl From<[u32; 4]> for Bip44 {
+    fn from(segments: [u32; 4]) -> Self {
+        let [coin_type, account, change, address_index] = segments;
         Self {
-            purpose,
             coin_type,
             account,
             change,
@@ -145,7 +171,7 @@ impl From<[u32; 5]> for Bip44 {
 impl From<&Bip44> for [u32; 5] {
     fn from(bip44_chain: &Bip44) -> [u32; 5] {
         [
-            bip44_chain.purpose,
+            Bip44::PURPOSE,
             bip44_chain.coin_type,
             bip44_chain.account,
             bip44_chain.change,
@@ -158,11 +184,7 @@ pub struct Bip44Builder(Bip44);
 
 impl Bip44Builder {
     pub fn new() -> Self {
-        Self(Bip44::from([44, 0, 0, 0, 0]))
-    }
-    pub fn purpose(mut self, s: u32) -> Self {
-        self.0.purpose = s;
-        self
+        Self(Bip44::from([0, 0, 0, 0]))
     }
     pub fn coin_type(mut self, s: u32) -> Self {
         self.0.coin_type = s;

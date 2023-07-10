@@ -541,6 +541,7 @@ pub trait Segment: Copy + Into<u32> {
 /// Error indicating unexpected/invalid segment hardening.
 /// Some keys only accept certain segments: either hardened or non-hardened.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum SegmentHardeningError {
     /// Input segment is hardened, expected non-hardened segment only.
     Hardened,

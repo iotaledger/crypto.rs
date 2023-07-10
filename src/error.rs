@@ -15,6 +15,9 @@ pub enum Error {
     /// Bip39 Error
     #[cfg(feature = "bip39")]
     Bip39Error(crate::keys::bip39::Error),
+    /// Bip44 Bad Purpose Segment
+    #[cfg(feature = "bip44")]
+    Bip44Error(crate::keys::bip44::BadPurpose),
     /// Buffer Error
     BufferSize {
         name: &'static str,
@@ -48,6 +51,8 @@ impl Display for Error {
             Error::AgeFormatError(inner) => write!(f, "failed to decode/decrypt age format: {inner:?}"),
             #[cfg(feature = "bip39")]
             Error::Bip39Error(inner) => write!(f, "bip39 error: {inner:?}"),
+            #[cfg(feature = "bip44")]
+            Error::Bip44Error(inner) => write!(f, "bip44 error: {inner:?}"),
             Error::BufferSize { name, needs, has } => {
                 write!(f, "{} buffer needs {} bytes, but it only has {}", name, needs, has)
             }
