@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.22.1]
+
+- [`51491f0`](https://www.github.com/iotaledger/crypto.rs/commit/51491f05bc830874f5926c39998a26d1081b37d3)([#213](https://www.github.com/iotaledger/crypto.rs/pull/213)) Fixed "rand"/"random" feature inconsistencies.
+
 ## \[0.22.0]
 
 - [`51c0823`](https://www.github.com/iotaledger/crypto.rs/commit/51c08239e882872f9c18ae2203b0bd1deeb0cd5a)([#211](https://www.github.com/iotaledger/crypto.rs/pull/211)) Support BIP44 chains for SLIP10.
