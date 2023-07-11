@@ -28,7 +28,7 @@ fn run_secp256k1_sha256(sk: SecretKey, pk: PublicKey) {
     assert_eq!(pk, sig.recover_sha256(&msg).unwrap());
 
     assert!(pk.verify_sha256(sig2.as_ref(), &msg));
-    #[cfg(feature = "rand")]
+    #[cfg(all(feature = "rand", feature = "random"))]
     assert!(!SecretKey::generate().public_key().verify_sha256(
         &Signature::try_from_slice(&sig_bytes[..Signature::LENGTH]).unwrap(),
         &msg
@@ -95,7 +95,7 @@ fn test_secp256k1_sign_verify() {
     run_secp256k1_keccak256(sk, pk);
 }
 
-#[cfg(feature = "rand")]
+#[cfg(all(feature = "rand", feature = "random"))]
 #[test]
 fn test_secp256k1_sign_verify_random() {
     let sk = SecretKey::generate();
