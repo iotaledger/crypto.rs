@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.22.2]
+
+- [`3e52160`](https://www.github.com/iotaledger/crypto.rs/commit/3e521603e97b8bd8be5f715e621829bf4aefca7f)([#215](https://www.github.com/iotaledger/crypto.rs/pull/215)) BIP44 improvements: derive_from_seed and IntoIterator instance.
+
 ## \[0.22.1]
 
 - [`51491f0`](https://www.github.com/iotaledger/crypto.rs/commit/51491f05bc830874f5926c39998a26d1081b37d3)([#213](https://www.github.com/iotaledger/crypto.rs/pull/213)) Fixed "rand"/"random" feature inconsistencies.
