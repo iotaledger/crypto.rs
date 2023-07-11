@@ -99,6 +99,18 @@ impl Bip44 {
         mk.derive(self.to_chain::<K>().into_iter())
     }
 
+    pub fn derive_from_seed<K, S>(&self, seed: &S) -> slip10::Slip10<K>
+    where
+        K: slip10::IsSecretKey
+            + slip10::WithSegment<<<K as slip10::ToChain<Bip44>>::Chain as IntoIterator>::Item>
+            + slip10::ToChain<Bip44>,
+        <K as slip10::ToChain<Bip44>>::Chain: IntoIterator,
+        <<K as slip10::ToChain<Bip44>>::Chain as IntoIterator>::Item: Segment,
+        S: AsRef<[u8]>,
+    {
+        self.derive(&slip10::Slip10::from_seed(seed))
+    }
+
     /// Derive a number of children keys with optimization as follows:
     ///
     /// mk = m / purpose* / coin_type* / account* / change*
@@ -197,5 +209,13 @@ impl From<&Bip44> for [u32; 5] {
             bip44_chain.change,
             bip44_chain.address_index,
         ]
+    }
+}
+
+impl IntoIterator for Bip44 {
+    type Item = u32;
+    type IntoIter = core::array::IntoIter<u32, 5>;
+    fn into_iter(self) -> Self::IntoIter {
+        <[u32; 5]>::from(&self).into_iter()
     }
 }

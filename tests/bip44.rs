@@ -21,7 +21,10 @@ mod bip44 {
                 .map(|i| {
                     let chain = [1, 2, 3, address_index + i];
                     let bip44 = bip44::Bip44::from(chain);
-                    bip44.derive(&m)
+                    let ek = bip44.derive(&m);
+                    let ek_from_seed = bip44.derive_from_seed::<K, _>(&[0]);
+                    assert_eq!(ek.extended_bytes(), ek_from_seed.extended_bytes());
+                    ek
                 })
                 .collect();
 
@@ -50,5 +53,14 @@ mod bip44 {
             use crypto::signatures::secp256k1_ecdsa;
             run_test_bip44_address_overflow::<secp256k1_ecdsa::SecretKey, _>();
         }
+    }
+
+    #[test]
+    fn test_bip44_convert() {
+        let bip44 = bip44::Bip44::from([1, 2, 3, 4]);
+        assert_eq!(<[u32; 5]>::from(&bip44), [44, 1, 2, 3, 4]);
+        assert_eq!(bip44, bip44::Bip44::try_from([44, 1, 2, 3, 4]).unwrap());
+        assert!(bip44::Bip44::try_from([43, 1, 2, 3, 4]).is_err());
+        assert_eq!(bip44.into_iter().collect::<Vec<_>>(), vec![44, 1, 2, 3, 4]);
     }
 }
