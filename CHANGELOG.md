@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.23.0]
+
+- [`e8db042`](https://www.github.com/iotaledger/crypto.rs/commit/e8db042bb3fb731458a80098d9c3bfb6109a5aad)([#217](https://www.github.com/iotaledger/crypto.rs/pull/217)) BIP44 improvements: made coin_type a mandatory constructor parameter, removed Default impl.
+
 ## \[0.22.2]
 
 - [`3e52160`](https://www.github.com/iotaledger/crypto.rs/commit/3e521603e97b8bd8be5f715e621829bf4aefca7f)([#215](https://www.github.com/iotaledger/crypto.rs/pull/215)) BIP44 improvements: derive_from_seed and IntoIterator instance.
