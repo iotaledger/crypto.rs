@@ -328,6 +328,10 @@ pub mod wordlist {
     #[cfg_attr(docsrs, doc(cfg(feature = "bip39-jp")))]
     include!("bip39.jp.rs");
 
+    #[cfg(feature = "bip39-pt")]
+    #[cfg_attr(docsrs, doc(cfg(feature = "bip39-pt")))]
+    include!("bip39.pt.rs");
+
     impl<'a> Wordlist<'a> {
         const fn new_unchecked(separator: char, words: &'a [&'a str; 2048]) -> Self {
             Self { words, separator }
