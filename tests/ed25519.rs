@@ -1,4 +1,4 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg(feature = "ed25519")]

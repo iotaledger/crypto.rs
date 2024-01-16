@@ -1,4 +1,4 @@
-// Copyright 2023 IOTA Stiftung
+// Copyright 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 // https://age-encryption.org/v1
