@@ -136,6 +136,91 @@ impl Hash for PublicKey {
     }
 }
 
+#[derive(Copy, Clone, Debug)]
+#[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
+pub struct PublicKeyBytes(ed25519_zebra::VerificationKeyBytes);
+
+impl PublicKeyBytes {
+    pub const LENGTH: usize = PublicKey::LENGTH;
+
+    pub fn verify(&self, sig: &Signature, msg: &[u8]) -> crate::Result<bool> {
+        Ok(self.into_public_key()?.verify(sig, msg))
+    }
+
+    pub fn into_public_key(self) -> crate::Result<PublicKey> {
+        Ok(PublicKey(self.0.try_into().map_err(|_| {
+            crate::Error::ConvertError {
+                from: "Ed25519 public key bytes",
+                to: "Ed25519 public key",
+            }
+        })?))
+    }
+
+    pub fn as_slice(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+
+    pub fn to_bytes(self) -> [u8; PublicKey::LENGTH] {
+        self.0.into()
+    }
+
+    pub fn from_bytes(bytes: [u8; PublicKey::LENGTH]) -> Self {
+        Self(ed25519_zebra::VerificationKeyBytes::from(bytes))
+    }
+}
+
+impl TryFrom<PublicKeyBytes> for PublicKey {
+    type Error = crate::Error;
+
+    fn try_from(value: PublicKeyBytes) -> Result<Self, Self::Error> {
+        value.into_public_key()
+    }
+}
+
+impl AsRef<[u8]> for PublicKeyBytes {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
+
+impl From<[u8; PublicKey::LENGTH]> for PublicKeyBytes {
+    fn from(bytes: [u8; PublicKey::LENGTH]) -> Self {
+        Self::from_bytes(bytes)
+    }
+}
+
+impl From<PublicKeyBytes> for [u8; PublicKey::LENGTH] {
+    fn from(pk: PublicKeyBytes) -> Self {
+        pk.to_bytes()
+    }
+}
+
+impl PartialEq for PublicKeyBytes {
+    fn eq(&self, other: &Self) -> bool {
+        self.as_slice() == other.as_slice()
+    }
+}
+
+impl Eq for PublicKeyBytes {}
+
+impl PartialOrd for PublicKeyBytes {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for PublicKeyBytes {
+    fn cmp(&self, other: &Self) -> Ordering {
+        self.as_slice().cmp(other.as_slice())
+    }
+}
+
+impl Hash for PublicKeyBytes {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        (self.as_slice()).hash(state);
+    }
+}
+
 #[derive(Copy, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct Signature(ed25519_zebra::Signature);
