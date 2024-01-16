@@ -119,8 +119,8 @@ pub mod secp256k1 {
             let sk_bytes: &[u8; 32] = unsafe { &*(key_bytes[1..].as_ptr() as *const [u8; 32]) };
 
             if let Ok(sk_delta) = k256::SecretKey::from_bytes(sk_bytes.into()) {
-                let sk = k256::SecretKey::from_bytes((&parent_key[1..]).try_into().unwrap())
-                    .expect("valid Secp256k1 parent secret key");
+                let sk =
+                    k256::SecretKey::from_bytes((&parent_key[1..]).into()).expect("valid Secp256k1 parent secret key");
 
                 let scalar_delta = sk_delta.to_nonzero_scalar();
                 let mut scalar = *sk.to_nonzero_scalar().as_ref();
@@ -129,7 +129,7 @@ pub mod secp256k1 {
                 if scalar.is_zero().into() {
                     false
                 } else {
-                    key_bytes[1..].copy_from_slice(&scalar.to_bytes());
+                    key_bytes[1..].copy_from_slice(&*scalar.to_bytes());
                     true
                 }
             } else {

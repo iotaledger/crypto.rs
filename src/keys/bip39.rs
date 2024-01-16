@@ -44,8 +44,7 @@ pub struct MnemonicRef(str);
 impl Deref for MnemonicRef {
     type Target = str;
     fn deref(&self) -> &str {
-        // SAFETY: MnemonicRef is represented exactly as str due to repr(transparent)
-        unsafe { core::mem::transmute(self) }
+        &self.0
     }
 }
 

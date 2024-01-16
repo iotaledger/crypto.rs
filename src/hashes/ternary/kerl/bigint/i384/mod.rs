@@ -168,6 +168,12 @@ impl PartialEq for I384<BigEndian, U8Repr> {
 
 impl PartialOrd for I384<BigEndian, U8Repr> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for I384<BigEndian, U8Repr> {
+    fn cmp(&self, other: &Self) -> Ordering {
         use Ordering::*;
 
         let mut zipped_iter = self.inner.iter().zip(other.inner.iter());
@@ -183,25 +189,25 @@ impl PartialOrd for I384<BigEndian, U8Repr> {
         const UMAX: u8 = core::u8::MAX;
         let numbers_negative = match zipped_iter.next() {
             // Case 1: both numbers are negative, s is less.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Some(Greater),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Greater,
 
             // Case 2: both numbers are negative, s is greater.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Some(Less),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Less,
 
             // Case 3: both numbers are negative, but equal.
             Some((NEGBIT..=UMAX, NEGBIT..=UMAX)) => true,
 
             // Case 4: only s is negative.
-            Some((NEGBIT..=UMAX, _)) => return Some(Less),
+            Some((NEGBIT..=UMAX, _)) => return Less,
 
             // Case 5: only o is negative.
-            Some((_, NEGBIT..=UMAX)) => return Some(Greater),
+            Some((_, NEGBIT..=UMAX)) => return Greater,
 
             // Case 6: both are positive, s is greater.
-            Some((s, o)) if s > o => return Some(Greater),
+            Some((s, o)) if s > o => return Greater,
 
             // Case 7: both are positive, s is less.
-            Some((s, o)) if s < o => return Some(Less),
+            Some((s, o)) if s < o => return Less,
 
             // Fallthrough case; only happens if s == o.
             Some(_) => false,
@@ -212,24 +218,13 @@ impl PartialOrd for I384<BigEndian, U8Repr> {
 
         for (s, o) in zipped_iter {
             match s.cmp(o) {
-                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
-                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Greater => return if numbers_negative { Less } else { Greater },
+                Ordering::Less => return if numbers_negative { Greater } else { Less },
                 Ordering::Equal => continue,
             }
         }
 
-        Some(Equal)
-    }
-}
-
-impl Ord for I384<BigEndian, U8Repr> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self.partial_cmp(other) {
-            Some(ordering) => ordering,
-
-            // The ordering is total, hence `partial_cmp` will never return `None`.
-            None => unreachable!(),
-        }
+        Equal
     }
 }
 
@@ -401,23 +396,6 @@ impl From<I384<BigEndian, U8Repr>> for I384<BigEndian, U32Repr> {
 
 impl Ord for I384<BigEndian, U32Repr> {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.partial_cmp(other) {
-            Some(ordering) => ordering,
-
-            // The ordering is total, hence `partial_cmp` will never return `None`.
-            None => unreachable!(),
-        }
-    }
-}
-
-impl PartialEq for I384<BigEndian, U32Repr> {
-    fn eq(&self, other: &Self) -> bool {
-        self.inner == other.inner
-    }
-}
-
-impl PartialOrd for I384<BigEndian, U32Repr> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
         let mut zipped_iter = self.inner.iter().zip(other.inner.iter());
@@ -433,25 +411,25 @@ impl PartialOrd for I384<BigEndian, U32Repr> {
         const UMAX: u32 = core::u32::MAX;
         let numbers_negative = match zipped_iter.next() {
             // Case 1: both numbers are negative, s is less.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Some(Greater),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Greater,
 
             // Case 2: both numbers are negative, s is greater.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Some(Less),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Less,
 
             // Case 3: both numbers are negative, but equal.
             Some((NEGBIT..=UMAX, NEGBIT..=UMAX)) => true,
 
             // Case 4: only s is negative.
-            Some((NEGBIT..=UMAX, _)) => return Some(Less),
+            Some((NEGBIT..=UMAX, _)) => return Less,
 
             // Case 5: only o is negative.
-            Some((_, NEGBIT..=UMAX)) => return Some(Greater),
+            Some((_, NEGBIT..=UMAX)) => return Greater,
 
             // Case 6: both are positive, s is greater.
-            Some((s, o)) if s > o => return Some(Greater),
+            Some((s, o)) if s > o => return Greater,
 
             // Case 7: both are positive, s is less.
-            Some((s, o)) if s < o => return Some(Less),
+            Some((s, o)) if s < o => return Less,
 
             // Fallthrough case; only happens if s == o.
             Some(_) => false,
@@ -462,13 +440,25 @@ impl PartialOrd for I384<BigEndian, U32Repr> {
 
         for (s, o) in zipped_iter {
             match s.cmp(o) {
-                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
-                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Greater => return if numbers_negative { Less } else { Greater },
+                Ordering::Less => return if numbers_negative { Greater } else { Less },
                 Ordering::Equal => continue,
             }
         }
 
-        Some(Equal)
+        Equal
+    }
+}
+
+impl PartialEq for I384<BigEndian, U32Repr> {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner
+    }
+}
+
+impl PartialOrd for I384<BigEndian, U32Repr> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -502,27 +492,6 @@ impl From<I384<LittleEndian, U32Repr>> for I384<LittleEndian, U8Repr> {
 
 impl Ord for I384<LittleEndian, U8Repr> {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.partial_cmp(other) {
-            Some(ordering) => ordering,
-
-            // The ordering is total, hence `partial_cmp` will never return `None`.
-            None => unreachable!(),
-        }
-    }
-}
-
-impl PartialEq for I384<LittleEndian, U8Repr> {
-    fn eq(&self, other: &Self) -> bool {
-        let mut are_equal = true;
-        for (a, b) in self.inner.iter().zip(other.inner.iter()) {
-            are_equal &= a == b
-        }
-        are_equal
-    }
-}
-
-impl PartialOrd for I384<LittleEndian, U8Repr> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
         let mut zipped_iter = self.inner.iter().rev().zip(other.inner.iter().rev());
@@ -538,25 +507,25 @@ impl PartialOrd for I384<LittleEndian, U8Repr> {
         const UMAX: u8 = core::u8::MAX;
         let numbers_negative = match zipped_iter.next() {
             // Case 1: both numbers are negative, s is less.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Some(Greater),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Greater,
 
             // Case 2: both numbers are negative, s is greater.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Some(Less),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Less,
 
             // Case 3: both numbers are negative, but equal.
             Some((NEGBIT..=UMAX, NEGBIT..=UMAX)) => true,
 
             // Case 4: only s is negative.
-            Some((NEGBIT..=UMAX, _)) => return Some(Less),
+            Some((NEGBIT..=UMAX, _)) => return Less,
 
             // Case 5: only o is negative.
-            Some((_, NEGBIT..=UMAX)) => return Some(Greater),
+            Some((_, NEGBIT..=UMAX)) => return Greater,
 
             // Case 6: both are positive, s is greater.
-            Some((s, o)) if s > o => return Some(Greater),
+            Some((s, o)) if s > o => return Greater,
 
             // Case 7: both are positive, s is less.
-            Some((s, o)) if s < o => return Some(Less),
+            Some((s, o)) if s < o => return Less,
 
             // Fallthrough case; only happens if s == o.
             Some(_) => false,
@@ -567,13 +536,29 @@ impl PartialOrd for I384<LittleEndian, U8Repr> {
 
         for (s, o) in zipped_iter {
             match s.cmp(o) {
-                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
-                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Greater => return if numbers_negative { Less } else { Greater },
+                Ordering::Less => return if numbers_negative { Greater } else { Less },
                 Ordering::Equal => continue,
             }
         }
 
-        Some(Equal)
+        Equal
+    }
+}
+
+impl PartialEq for I384<LittleEndian, U8Repr> {
+    fn eq(&self, other: &Self) -> bool {
+        let mut are_equal = true;
+        for (a, b) in self.inner.iter().zip(other.inner.iter()) {
+            are_equal &= a == b
+        }
+        are_equal
+    }
+}
+
+impl PartialOrd for I384<LittleEndian, U8Repr> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 
@@ -737,23 +722,6 @@ impl From<I384<LittleEndian, U8Repr>> for I384<LittleEndian, U32Repr> {
 
 impl Ord for I384<LittleEndian, U32Repr> {
     fn cmp(&self, other: &Self) -> Ordering {
-        match self.partial_cmp(other) {
-            Some(ordering) => ordering,
-
-            // The ordering is total, hence `partial_cmp` will never return `None`.
-            None => unreachable!(),
-        }
-    }
-}
-
-impl PartialEq for I384<LittleEndian, U32Repr> {
-    fn eq(&self, other: &Self) -> bool {
-        self.inner == other.inner
-    }
-}
-
-impl PartialOrd for I384<LittleEndian, U32Repr> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
         use Ordering::*;
 
         let mut zipped_iter = self.inner.iter().rev().zip(other.inner.iter().rev());
@@ -770,25 +738,25 @@ impl PartialOrd for I384<LittleEndian, U32Repr> {
 
         let numbers_negative = match zipped_iter.next() {
             // Case 1: both numbers are negative, s is less.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Some(Greater),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s > o => return Greater,
 
             // Case 2: both numbers are negative, s is greater.
-            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Some(Less),
+            Some((s @ NEGBIT..=UMAX, o @ NEGBIT..=UMAX)) if s < o => return Less,
 
             // Case 3: both numbers are negative, but equal.
             Some((NEGBIT..=UMAX, NEGBIT..=UMAX)) => true,
 
             // Case 4: only s is negative.
-            Some((NEGBIT..=UMAX, _)) => return Some(Less),
+            Some((NEGBIT..=UMAX, _)) => return Less,
 
             // Case 5: only o is negative.
-            Some((_, NEGBIT..=UMAX)) => return Some(Greater),
+            Some((_, NEGBIT..=UMAX)) => return Greater,
 
             // Case 6: both are positive, s is greater.
-            Some((s, o)) if s > o => return Some(Greater),
+            Some((s, o)) if s > o => return Greater,
 
             // Case 7: both are positive, s is less.
-            Some((s, o)) if s < o => return Some(Less),
+            Some((s, o)) if s < o => return Less,
 
             // Fallthrough case; only happens if s == o and positive.
             Some(_) => false,
@@ -799,13 +767,25 @@ impl PartialOrd for I384<LittleEndian, U32Repr> {
 
         for (s, o) in zipped_iter {
             match s.cmp(o) {
-                Ordering::Greater => return if numbers_negative { Some(Less) } else { Some(Greater) },
-                Ordering::Less => return if numbers_negative { Some(Greater) } else { Some(Less) },
+                Ordering::Greater => return if numbers_negative { Less } else { Greater },
+                Ordering::Less => return if numbers_negative { Greater } else { Less },
                 Ordering::Equal => continue,
             }
         }
 
-        Some(Equal)
+        Equal
+    }
+}
+
+impl PartialEq for I384<LittleEndian, U32Repr> {
+    fn eq(&self, other: &Self) -> bool {
+        self.inner == other.inner
+    }
+}
+
+impl PartialOrd for I384<LittleEndian, U32Repr> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
     }
 }
 

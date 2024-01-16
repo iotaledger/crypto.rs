@@ -431,29 +431,25 @@ impl PartialEq for U384<LittleEndian, U32Repr> {
 
 impl PartialOrd for U384<LittleEndian, U32Repr> {
     fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(other))
+    }
+}
+
+impl Ord for U384<LittleEndian, U32Repr> {
+    fn cmp(&self, other: &Self) -> Ordering {
         use Ordering::*;
 
         let zipped_iter = self.inner.iter().rev().zip(other.inner.iter().rev());
 
         for (s, o) in zipped_iter {
             match s.cmp(o) {
-                Ordering::Greater => return Some(Greater),
-                Ordering::Less => return Some(Less),
+                Ordering::Greater => return Greater,
+                Ordering::Less => return Less,
                 Ordering::Equal => continue,
             }
         }
 
-        Some(Equal)
-    }
-}
-
-impl Ord for U384<LittleEndian, U32Repr> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        match self.partial_cmp(other) {
-            Some(ordering) => ordering,
-            // The ordering is total, hence `partial_cmp` will never return `None`.
-            None => unreachable!(),
-        }
+        Equal
     }
 }
 
