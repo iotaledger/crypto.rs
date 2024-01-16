@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.23.1]
+
+- [`65c49a4`](https://www.github.com/iotaledger/crypto.rs/commit/65c49a4108906c4000fe5702fdee3148dd3c641e)([#221](https://www.github.com/iotaledger/crypto.rs/pull/221)) Added ed25519 PublicKeyBytes wrapper that does not require validation to use.
+
 ## \[0.23.0]
 
 - [`e8db042`](https://www.github.com/iotaledger/crypto.rs/commit/e8db042bb3fb731458a80098d9c3bfb6109a5aad)([#217](https://www.github.com/iotaledger/crypto.rs/pull/217)) BIP44 improvements: made coin_type a mandatory constructor parameter, removed Default impl.
