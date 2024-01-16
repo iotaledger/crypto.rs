@@ -24,13 +24,16 @@ fn test_zip215() -> crypto::Result<()> {
     for tv in tvs.iter() {
         let mut pkb = [0; PUBLIC_KEY_LENGTH];
         hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
-        let pk = PublicKeyBytes::from_bytes(pkb);
+        let pk = PublicKey::try_from_bytes(pkb)?;
+        let pkb = PublicKeyBytes::from_bytes(pkb);
 
         let mut sigb = [0; SIGNATURE_LENGTH];
         hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
         let sig = Signature::from_bytes(sigb);
 
-        assert!(pk.verify(&sig, ms)?);
+        assert!(pk.verify(&sig, ms));
+        assert!(pkb.verify(&sig, ms)?);
+        assert_eq!(pkb.into_public_key()?, pk);
     }
 
     Ok(())
@@ -55,9 +58,12 @@ fn test_malleability() -> crypto::Result<()> {
         0x7d, 0x4d, 0x0e, 0x7f, 0x61, 0x53, 0xa6, 0x9b, 0x62, 0x42, 0xb5, 0x22, 0xab, 0xbe, 0xe6, 0x85, 0xfd, 0xa4,
         0x42, 0x0f, 0x88, 0x34, 0xb1, 0x08, 0xc3, 0xbd, 0xae, 0x36, 0x9e, 0xf5, 0x49, 0xfa,
     ];
-    let pk = PublicKeyBytes::from_bytes(pkb);
+    let pk = PublicKey::try_from_bytes(pkb)?;
+    let pkb = PublicKeyBytes::from_bytes(pkb);
 
-    assert!(!pk.verify(&sig, &ms)?);
+    assert!(!pk.verify(&sig, &ms));
+    assert!(!pkb.verify(&sig, &ms)?);
+    assert_eq!(pkb.into_public_key()?, pk);
 
     Ok(())
 }

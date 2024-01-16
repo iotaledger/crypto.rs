@@ -148,12 +148,13 @@ impl PublicKeyBytes {
     }
 
     pub fn into_public_key(self) -> crate::Result<PublicKey> {
-        Ok(PublicKey(self.0.try_into().map_err(|_| {
-            crate::Error::ConvertError {
+        self.0
+            .try_into()
+            .map_err(|_| crate::Error::ConvertError {
                 from: "Ed25519 public key bytes",
                 to: "Ed25519 public key",
-            }
-        })?))
+            })
+            .map(PublicKey)
     }
 
     pub fn as_slice(&self) -> &[u8] {
