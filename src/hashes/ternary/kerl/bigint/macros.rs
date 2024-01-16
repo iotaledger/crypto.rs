@@ -1,4 +1,4 @@
-// Copyright 2020-2021 IOTA Stiftung
+// Copyright 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 macro_rules! def_and_impl_ternary {
@@ -126,24 +126,20 @@ macro_rules! def_and_impl_ternary {
 
         impl<T: Trit> Ord for $ident<T> {
             fn cmp(&self, other: &Self) -> Ordering {
-                match self.partial_cmp(other) {
-                    Some(ordering) => ordering,
-                    // Cannot be reached because the order is total.
-                    None => unreachable!(),
+                use Ordering::Equal;
+                for (a, b) in self.0.iter().zip(other.0.iter()).rev() {
+                    match a.cmp(&b) {
+                        Equal => continue,
+                        other_ordering => return other_ordering,
+                    }
                 }
+                Equal
             }
         }
 
         impl<T: Trit> PartialOrd for $ident<T> {
             fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-                use Ordering::Equal;
-                for (a, b) in self.0.iter().zip(other.0.iter()).rev() {
-                    match a.cmp(&b) {
-                        Equal => continue,
-                        other_ordering => return Some(other_ordering),
-                    }
-                }
-                Some(Equal)
+                Some(self.cmp(other))
             }
         }
     };

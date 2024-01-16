@@ -1,4 +1,4 @@
-// Copyright 2020 IOTA Stiftung
+// Copyright 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 // https://en.bitcoin.it/wiki/BIP_0039
@@ -44,8 +44,7 @@ pub struct MnemonicRef(str);
 impl Deref for MnemonicRef {
     type Target = str;
     fn deref(&self) -> &str {
-        // SAFETY: MnemonicRef is represented exactly as str due to repr(transparent)
-        unsafe { core::mem::transmute(self) }
+        &self.0
     }
 }
 

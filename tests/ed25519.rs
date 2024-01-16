@@ -1,4 +1,4 @@
-// Copyright 2021 IOTA Stiftung
+// Copyright 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 #![cfg(feature = "ed25519")]
@@ -9,7 +9,7 @@ pub const SECRET_KEY_LENGTH: usize = 32;
 pub const PUBLIC_KEY_LENGTH: usize = 32;
 pub const SIGNATURE_LENGTH: usize = 64;
 
-use crypto::signatures::ed25519::{PublicKey, SecretKey, Signature};
+use crypto::signatures::ed25519::{PublicKey, PublicKeyBytes, SecretKey, Signature};
 
 #[test]
 fn test_zip215() -> crypto::Result<()> {
@@ -25,12 +25,15 @@ fn test_zip215() -> crypto::Result<()> {
         let mut pkb = [0; PUBLIC_KEY_LENGTH];
         hex::decode_to_slice(tv.public_key, &mut pkb as &mut [u8]).unwrap();
         let pk = PublicKey::try_from_bytes(pkb)?;
+        let pkb = PublicKeyBytes::from_bytes(pkb);
 
         let mut sigb = [0; SIGNATURE_LENGTH];
         hex::decode_to_slice(tv.signature, &mut sigb as &mut [u8]).unwrap();
         let sig = Signature::from_bytes(sigb);
 
-        assert!(PublicKey::verify(&pk, &sig, ms));
+        assert!(pk.verify(&sig, ms));
+        assert!(pkb.verify(&sig, ms)?);
+        assert_eq!(pkb.into_public_key()?, pk);
     }
 
     Ok(())
@@ -56,8 +59,11 @@ fn test_malleability() -> crypto::Result<()> {
         0x42, 0x0f, 0x88, 0x34, 0xb1, 0x08, 0xc3, 0xbd, 0xae, 0x36, 0x9e, 0xf5, 0x49, 0xfa,
     ];
     let pk = PublicKey::try_from_bytes(pkb)?;
+    let pkb = PublicKeyBytes::from_bytes(pkb);
 
-    assert!(!PublicKey::verify(&pk, &sig, &ms));
+    assert!(!pk.verify(&sig, &ms));
+    assert!(!pkb.verify(&sig, &ms)?);
+    assert_eq!(pkb.into_public_key()?, pk);
 
     Ok(())
 }

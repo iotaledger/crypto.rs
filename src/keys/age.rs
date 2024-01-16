@@ -1,4 +1,4 @@
-// Copyright 2023 IOTA Stiftung
+// Copyright 2024 IOTA Stiftung
 // SPDX-License-Identifier: Apache-2.0
 
 // https://age-encryption.org/v1
@@ -629,8 +629,7 @@ pub fn enc_vec(
     nonce: &[u8; 16],
     plaintext: &[u8],
 ) -> Vec<u8> {
-    let mut age = Vec::new();
-    age.resize(enc_len(work_factor, plaintext.len()), 0_u8);
+    let mut age = vec![0u8; enc_len(work_factor, plaintext.len())];
     let h = enc_header(password, salt, file_key, work_factor.0, &mut age[..]);
     enc_payload(file_key, nonce, plaintext, &mut age[h..]);
     age
@@ -703,8 +702,7 @@ pub fn decrypt_vec(password: &[u8], max_work_factor: u8, age: &[u8]) -> Result<V
     let mut file_key = [0_u8; 16];
     let r = dec_header(password, max_work_factor, age, &mut file_key).and_then(|header_len| {
         if let Some(plaintext_len) = dec_payload_len(age.len() - header_len) {
-            let mut plaintext = Vec::new();
-            plaintext.resize(plaintext_len, 0_u8);
+            let mut plaintext = vec![0u8; plaintext_len];
             let _ = dec_payload(&file_key, &age[header_len..], &mut plaintext[..])?;
             Ok(plaintext)
         } else {
