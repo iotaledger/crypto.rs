@@ -38,6 +38,11 @@ fn test_vectors() {
         let tvs_jp = include!("fixtures/bip39_jp.rs");
         run_test_vectors(&tvs_jp);
     }
+    #[cfg(feature = "bip39-pt")]
+    {
+        let tvs_pt = include!("fixtures/bip39_pt.rs");
+        run_test_vectors(&tvs_pt);
+    }
 }
 
 fn run_test_vectors(tvs: &[TestVector]) {
@@ -68,6 +73,8 @@ const ALL_WORDLISTS: &[wordlist::Wordlist<'static>] = &[
     wordlist::ENGLISH,
     #[cfg(feature = "bip39-jp")]
     wordlist::JAPANESE,
+    #[cfg(feature = "bip39-pt")]
+    wordlist::PORTUGUESE,
 ];
 
 #[test]
