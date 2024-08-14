@@ -145,3 +145,6 @@ age = { version = "0.10", default-features = false }
 
 [profile.dev]
 split-debuginfo = "unpacked"
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(has_i128)', 'cfg(has_u128)'] }

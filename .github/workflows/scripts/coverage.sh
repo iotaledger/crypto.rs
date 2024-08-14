@@ -7,7 +7,7 @@ mkdir coverage
 
 # Run tests with profiling instrumentation
 echo "Running instrumented unit tests..."
-RUSTFLAGS="-Zinstrument-coverage" LLVM_PROFILE_FILE="crypto-rs-%m.profraw" cargo +nightly test --tests --all --all-features
+RUSTFLAGS="-Cinstrument-coverage" LLVM_PROFILE_FILE="crypto-rs-%m.profraw" cargo +nightly test --tests --all --all-features
 
 # Merge all .profraw files into "crypto-rs.profdata"
 echo "Merging coverage data..."
@@ -19,7 +19,7 @@ BINARIES=""
 
 for file in \
   $( \
-    RUSTFLAGS="-Zinstrument-coverage" \
+    RUSTFLAGS="-Cinstrument-coverage" \
       cargo +nightly test --tests --all --all-features --no-run --message-format=json \
         | jq -r "select(.profile.test == true) | .filenames[]" \
         | grep -v dSYM - \
