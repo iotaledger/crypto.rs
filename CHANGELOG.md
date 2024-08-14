@@ -1,5 +1,9 @@
 # Changelog
 
+## \[0.23.2]
+
+- [`d8fb4ed`](https://www.github.com/iotaledger/crypto.rs/commit/d8fb4ed71eb320caf605438986639510b484f6ca) ([#225](https://www.github.com/iotaledger/crypto.rs/pull/225)) Bump dependencies to fix vulnerability from `cargo audit` (`curve25519-dalek`: 3.2 -> 4.1.3, `x25519-dalek`: 1.1 -> 2.0.1, `age`: 0.9 -> 0.10).
+
 ## \[0.23.1]
 
 - [`65c49a4`](https://www.github.com/iotaledger/crypto.rs/commit/65c49a4108906c4000fe5702fdee3148dd3c641e)([#221](https://www.github.com/iotaledger/crypto.rs/pull/221)) Added ed25519 PublicKeyBytes wrapper that does not require validation to use.
